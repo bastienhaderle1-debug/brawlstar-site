@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MyBrawl</title>
+  <link rel="stylesheet" href="../style.css" />
+  <style>
+    .grid-2 { display:grid; grid-template-columns: 1fr 1fr; gap:12px; }
+    .statbar { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+    .statchip { display:flex; gap:8px; align-items:center; padding:8px 10px; border-radius:999px; background: rgba(255,255,255,0.06); }
+    .statnum { font-weight:700; }
+    .stats-grid { display:grid; grid-template-columns: repeat(3, minmax(160px, 1fr)); gap:12px; }
+    .stat { padding:12px; border-radius:12px; background: rgba(255,255,255,0.06); }
+    .stat-label { font-size:12px; opacity:0.8; }
+    .stat-value { font-size:22px; font-weight:700; margin-top:6px; }
+    .progress { height:10px; border-radius:999px; background: rgba(255,255,255,0.10); overflow:hidden; margin-top: 12px; }
+    .progress-bar { height:100%; border-radius:999px; background: rgba(255,255,255,0.55); width:0%; }
+
+    .pill.rarity-rare { background: rgba(0, 200, 80, 0.20); border: 1px solid rgba(0, 200, 80, 0.45); }
+    .pill.rarity-super-rare { background: rgba(0, 120, 255, 0.20); border: 1px solid rgba(0, 120, 255, 0.45); }
+    .pill.rarity-epic { background: rgba(170, 0, 255, 0.20); border: 1px solid rgba(170, 0, 255, 0.45); }
+    .pill.rarity-mythic { background: rgba(255, 80, 0, 0.20); border: 1px solid rgba(255, 80, 0, 0.50); }
+    .pill.rarity-legendary { background: rgba(255, 220, 80, 0.20); border: 1px solid rgba(255, 220, 80, 0.55); }
+    .pill.rarity-hypercharge { background: rgba(220, 0, 255, 0.22); border: 1px solid rgba(220, 0, 255, 0.60); }
+
+    @media (max-width: 980px) {
+      .stats-grid { grid-template-columns: 1fr; }
+      .grid-2 { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+
+<body>
+  <header class="header">
+    <h1>👤 MyBrawl</h1>
+    <p>Connecte-toi et coche les skins que tu possèdes.</p>
+
+    <nav class="nav">
+      <a href="../index.html">Accueil</a>
+      <a href="./brawlers.html">Brawlers</a>
+      <a href="./skins.html">Skins</a>
+      <a href="./themes.html">Thèmes</a>
+      <a href="./mybrawl.html">MyBrawl</a>
+      <a href="./profile.html">Profil</a>
+    </nav>
+  </header>
+
+  <main class="container">
+    <!-- AUTH -->
+    <section class="card" id="authCard">
+      <h2>Connexion</h2>
+
+      <div class="grid-2">
+        <div class="filter">
+          <label for="email">Email</label>
+          <input class="input" id="email" type="email" placeholder="toi@email.com" />
+        </div>
+        <div class="filter">
+          <label for="password">Mot de passe</label>
+          <input class="input" id="password" type="password" placeholder="••••••••" />
+        </div>
+      </div>
+
+      <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:12px;">
+        <button class="seg-btn is-active" id="btnLogin" type="button">Se connecter</button>
+        <button class="seg-btn" id="btnSignup" type="button">Créer un compte</button>
+      </div>
+
+      <p class="muted" id="authMsg" style="margin-top:10px;"></p>
+    </section>
+
+    <!-- APP -->
+    <section id="app" style="display:none;">
+      <!-- TOOLBAR -->
+      <section class="toolbar">
+        <div class="filter">
+          <label>Utilisateur</label>
+          <div class="muted" id="userLine">—</div>
+        </div>
+
+        <div style="display:flex; align-items:end; gap:10px; flex-wrap:wrap;">
+          <button class="seg-btn" id="btnReload" type="button">🔄 Recharger</button>
+          <button class="seg-btn" id="btnLogout" type="button">🚪 Déconnexion</button>
+        </div>
+
+        <div class="filter" style="min-width:220px;">
+          <label for="search">Recherche</label>
+          <input class="input" id="search" type="text" placeholder="ex: shelly, star, pirate..." />
+        </div>
+
+        <div class="filter" style="min-width:220px;">
+          <label for="filterBrawler">Brawler</label>
+          <select id="filterBrawler" class="select"></select>
+        </div>
+
+        <div class="filter" style="min-width:220px;">
+          <label for="filterRarity">Rareté</label>
+          <select id="filterRarity" class="select"></select>
+        </div>
+
+        <div class="filter" style="min-width:220px;">
+          <label>Affichage</label>
+          <label style="display:flex; gap:8px; align-items:center; user-select:none;">
+            <input type="checkbox" id="onlyOwned" />
+            <span>Uniquement mes skins</span>
+          </label>
+        </div>
+      </section>
+
+      <!-- STATS -->
+      <section class="card">
+        <h2>📊 Mes stats</h2>
+
+        <div class="stats-grid">
+          <div class="stat">
+            <div class="stat-label">Possédés</div>
+            <div class="stat-value" id="statOwned">0</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">Total</div>
+            <div class="stat-value" id="statTotal">0</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">Progression</div>
+            <div class="stat-value" id="statPct">0%</div>
+          </div>
+        </div>
+
+        <div class="progress">
+          <div class="progress-bar" id="progressBar"></div>
+        </div>
+
+        <div class="statbar" style="margin-top:12px;" id="rarityBar"></div>
+
+        <p class="muted" id="status" style="margin-top:10px;"></p>
+      </section>
+
+      <!-- PROFILE PUBLIC -->
+      <section class="card">
+        <h2>🌍 Profil public</h2>
+        <p class="muted">Tu choisis si ton profil est public et si ta liste de skins est visible. Puis tu peux publier tes skins cochés.</p>
+
+        <div class="grid-2">
+          <div class="filter">
+            <label for="displayName">Pseudo (public)</label>
+            <input class="input" id="displayName" type="text" placeholder="ex: Bastien" />
+          </div>
+
+          <div class="filter">
+            <label for="bio">Bio (public)</label>
+            <input class="input" id="bio" type="text" placeholder="ex: Fan de Brawl Stars" />
+          </div>
+        </div>
+
+        <div style="display:flex; gap:18px; flex-wrap:wrap; margin-top:10px;">
+          <label style="display:flex; gap:8px; align-items:center; user-select:none;">
+            <input type="checkbox" id="isPublic" checked />
+            <span>Profil public</span>
+          </label>
+
+          <label style="display:flex; gap:8px; align-items:center; user-select:none;">
+            <input type="checkbox" id="showOwned" checked />
+            <span>Afficher mes skins</span>
+          </label>
+        </div>
+
+        <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:12px;">
+          <button class="seg-btn" id="btnSaveProfile" type="button">💾 Enregistrer profil</button>
+          <button class="seg-btn" id="btnPublishOwned" type="button">📤 Publier mes skins cochés</button>
+          <button class="seg-btn" id="btnOpenProfile" type="button">🔗 Ouvrir mon profil public</button>
+          <button class="seg-btn" id="btnCopyProfile" type="button">📋 Copier le lien</button>
+        </div>
+
+        <p class="muted" id="profileMsg" style="margin-top:10px;"></p>
+      </section>
+
+      <!-- SKINS LIST -->
+      <section>
+        <h2>✅ Mes skins</h2>
+        <p class="muted" id="resultCount"></p>
+        <div class="cards" id="cards"></div>
+      </section>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <a href="../index.html">⬅ Retour à l’accueil</a>
+  </footer>
+
+  <!-- 1) Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- 2) Ton client Supabase -->
+  <script src="../data/supabase-client.js"></script>
+  <!-- 3) Données skins -->
+  <script src="../data/skins-data.js"></script>
+
+  <script>
+    // ---------- Guard ----------
+    if (!window.supabaseClient) {
+      alert("❌ supabaseClient introuvable. Vérifie ../data/supabase-client.js et l’ordre des scripts.");
+      throw new Error("supabaseClient introuvable");
+    }
+    const supa = window.supabaseClient;
+
+    const SKINS = Array.isArray(window.SKINS) ? window.SKINS : [];
+
+    const RARITY_ORDER = ["Rare","Super Rare","Epic","Mythique","Légendaire","Hypercharge"];
+    const RARITY_CLASS = {
+      "Rare": "rarity-rare",
+      "Super Rare": "rarity-super-rare",
+      "Epic": "rarity-epic",
+      "Mythique": "rarity-mythic",
+      "Légendaire": "rarity-legendary",
+      "Hypercharge": "rarity-hypercharge",
+    };
+
+    // ---------- Elements ----------
+    const authCard = document.getElementById("authCard");
+    const app = document.getElementById("app");
+    const authMsg = document.getElementById("authMsg");
+
+    const email = document.getElementById("email");
+    const password = document.getElementById("password");
+    const btnLogin = document.getElementById("btnLogin");
+    const btnSignup = document.getElementById("btnSignup");
+
+    const btnLogout = document.getElementById("btnLogout");
+    const btnReload = document.getElementById("btnReload");
+
+    const userLine = document.getElementById("userLine");
+    const search = document.getElementById("search");
+    const filterBrawler = document.getElementById("filterBrawler");
+    const filterRarity = document.getElementById("filterRarity");
+    const onlyOwned = document.getElementById("onlyOwned");
+
+    const cards = document.getElementById("cards");
+    const resultCount = document.getElementById("resultCount");
+    const status = document.getElementById("status");
+
+    const statOwned = document.getElementById("statOwned");
+    const statTotal = document.getElementById("statTotal");
+    const statPct = document.getElementById("statPct");
+    const progressBar = document.getElementById("progressBar");
+    const rarityBar = document.getElementById("rarityBar");
+
+    const displayName = document.getElementById("displayName");
+    const bio = document.getElementById("bio");
+    const isPublic = document.getElementById("isPublic");
+    const showOwned = document.getElementById("showOwned");
+    const btnSaveProfile = document.getElementById("btnSaveProfile");
+    const btnPublishOwned = document.getElementById("btnPublishOwned");
+    const btnOpenProfile = document.getElementById("btnOpenProfile");
+    const btnCopyProfile = document.getElementById("btnCopyProfile");
+    const profileMsg = document.getElementById("profileMsg");
+
+    // ---------- State ----------
+    let currentUser = null;
+    let ownedSet = new Set(); // skin_name
+    let loadingToken = 0;     // anti-concurrence (évite AbortError)
+
+    // ---------- Utils ----------
+    function setAuthMessage(msg) { authMsg.textContent = msg || ""; }
+    function setStatus(msg) { status.textContent = msg || ""; }
+    function setProfileMsg(msg) { profileMsg.textContent = msg || ""; }
+
+    function uniqueSorted(arr) {
+      return [...new Set(arr)].filter(Boolean).sort((a,b) => String(a).localeCompare(String(b), "fr"));
+    }
+
+    function buildBrawlerFilter() {
+      filterBrawler.innerHTML = "";
+      const optAll = document.createElement("option");
+      optAll.value = "all";
+      optAll.textContent = "Tous";
+      filterBrawler.appendChild(optAll);
+
+      uniqueSorted(SKINS.map(s => s.brawler)).forEach(b => {
+        const opt = document.createElement("option");
+        opt.value = b;
+        opt.textContent = b;
+        filterBrawler.appendChild(opt);
+      });
+    }
+
+    function buildRarityFilter() {
+      filterRarity.innerHTML = "";
+      const optAll = document.createElement("option");
+      optAll.value = "all";
+      optAll.textContent = "Toutes";
+      filterRarity.appendChild(optAll);
+
+      RARITY_ORDER.forEach(r => {
+        const opt = document.createElement("option");
+        opt.value = r;
+        opt.textContent = r;
+        filterRarity.appendChild(opt);
+      });
+    }
+
+    function showLoggedIn(user) {
+      currentUser = user;
+      authCard.style.display = "none";
+      app.style.display = "block";
+      userLine.textContent = user.email ?? user.id;
+    }
+
+    function showLoggedOut() {
+      currentUser = null;
+      ownedSet = new Set();
+      authCard.style.display = "block";
+      app.style.display = "none";
+      setAuthMessage("");
+      setStatus("");
+      setProfileMsg("");
+    }
+
+    // ---------- Supabase Auth ----------
+    async function signup() {
+      setAuthMessage("Création du compte...");
+      const { error } = await supa.auth.signUp({
+        email: email.value.trim(),
+        password: password.value
+      });
+      if (error) return setAuthMessage("❌ " + error.message);
+      setAuthMessage("✅ Compte créé. Vérifie ton email si Supabase demande une confirmation.");
+    }
+
+    async function login() {
+      setAuthMessage("Connexion...");
+      const { data, error } = await supa.auth.signInWithPassword({
+        email: email.value.trim(),
+        password: password.value
+      });
+      if (error) return setAuthMessage("❌ " + error.message);
+
+      showLoggedIn(data.user);
+      await refreshAll();
+    }
+
+    async function logout() {
+      await supa.auth.signOut();
+      showLoggedOut();
+    }
+
+    // ---------- Data load (anti AbortError) ----------
+    async function loadOwned() {
+      if (!currentUser) return;
+
+      const myToken = ++loadingToken; // seul le dernier gagne
+      setStatus("Chargement de tes skins...");
+      try {
+        const { data, error } = await supa
+          .from("user_skins")
+          .select("skin_name")
+          .eq("user_id", currentUser.id);
+
+        if (myToken !== loadingToken) return; // une requête plus récente est passée
+
+        if (error) {
+          setStatus("❌ Erreur chargement: " + error.message);
+          return;
+        }
+
+        const next = new Set();
+        (data || []).forEach(row => next.add(row.skin_name));
+        ownedSet = next;
+
+        setStatus(`✅ ${ownedSet.size} skin(s) cochés enregistrés.`);
+      } catch (e) {
+        // Ignore les aborts si jamais (et évite d’affoler l’UI)
+        if (e && e.name === "AbortError") return;
+        setStatus("❌ Erreur chargement: " + (e.message || String(e)));
+      }
+    }
+
+    async function setOwned(skinName, isOwned) {
+      if (!currentUser) return;
+
+      if (isOwned) {
+        const { error } = await supa
+          .from("user_skins")
+          .insert([{ user_id: currentUser.id, skin_name: skinName }]);
+
+        if (error && !String(error.message).toLowerCase().includes("duplicate")) {
+          console.error(error);
+          setStatus("❌ " + error.message);
+          return;
+        }
+        ownedSet.add(skinName);
+      } else {
+        const { error } = await supa
+          .from("user_skins")
+          .delete()
+          .eq("user_id", currentUser.id)
+          .eq("skin_name", skinName);
+
+        if (error) {
+          console.error(error);
+          setStatus("❌ " + error.message);
+          return;
+        }
+        ownedSet.delete(skinName);
+      }
+
+      updateStats();
+      render();
+      setStatus(`✅ ${ownedSet.size} skin(s) cochés enregistrés.`);
+    }
+
+    // ---------- Public profile ----------
+    async function loadPublicProfile() {
+      if (!currentUser) return;
+
+      setProfileMsg("Chargement profil public...");
+      const { data, error } = await supa
+        .from("public_profiles")
+        .select("display_name, bio, is_public, show_owned")
+        .eq("user_id", currentUser.id)
+        .maybeSingle();
+
+      if (error) {
+        setProfileMsg("❌ " + error.message);
+        return;
+      }
+
+      if (data) {
+        displayName.value = data.display_name ?? "";
+        bio.value = data.bio ?? "";
+        isPublic.checked = data.is_public ?? true;
+        showOwned.checked = data.show_owned ?? true;
+        setProfileMsg("✅ Profil chargé.");
+      } else {
+        // Valeurs par défaut
+        displayName.value = (currentUser.email || "").split("@")[0] || "Moi";
+        bio.value = "";
+        isPublic.checked = true;
+        showOwned.checked = true;
+        setProfileMsg("ℹ️ Pas de profil encore. Tu peux l’enregistrer.");
+      }
+    }
+
+    async function savePublicProfile() {
+      if (!currentUser) return;
+
+      setProfileMsg("Enregistrement...");
+      const payload = {
+        user_id: currentUser.id,
+        display_name: (displayName.value || "Profil").trim(),
+        bio: (bio.value || "").trim(),
+        is_public: !!isPublic.checked,
+        show_owned: !!showOwned.checked,
+        updated_at: new Date().toISOString(),
+      };
+
+      const { error } = await supa
+        .from("public_profiles")
+        .upsert(payload, { onConflict: "user_id" });
+
+      if (error) return setProfileMsg("❌ " + error.message);
+      setProfileMsg("✅ Profil enregistré.");
+    }
+
+    async function publishOwnedToPublic() {
+      if (!currentUser) return;
+
+      setProfileMsg("Publication des skins cochés...");
+      // 1) s'assurer que profil existe
+      await savePublicProfile();
+
+      // 2) remplacer tout par les skins possédés (simple et propre)
+      const { error: delErr } = await supa
+        .from("public_user_skins")
+        .delete()
+        .eq("user_id", currentUser.id);
+
+      if (delErr) return setProfileMsg("❌ " + delErr.message);
+
+      if (ownedSet.size === 0) {
+        setProfileMsg("✅ Aucun skin coché → liste publique vidée.");
+        return;
+      }
+
+      const rows = [...ownedSet].map(name => ({ user_id: currentUser.id, skin_name: name }));
+      const { error: insErr } = await supa
+        .from("public_user_skins")
+        .insert(rows);
+
+      if (insErr) return setProfileMsg("❌ " + insErr.message);
+      setProfileMsg(`✅ Publié: ${ownedSet.size} skin(s).`);
+    }
+
+    function profileUrl() {
+      return `${location.origin}/pages/profile.html?u=${encodeURIComponent(currentUser.id)}`;
+    }
+
+    async function copyProfileLink() {
+      if (!currentUser) return;
+      try {
+        await navigator.clipboard.writeText(profileUrl());
+        setProfileMsg("✅ Lien copié.");
+      } catch {
+        setProfileMsg("⚠️ Copie impossible. Copie manuellement l’URL.");
+      }
+    }
+
+    function openProfile() {
+      if (!currentUser) return;
+      window.open(profileUrl(), "_blank");
+    }
+
+    // ---------- Render / Stats ----------
+    function updateStats() {
+      const total = SKINS.length;
+      const owned = ownedSet.size;
+
+      statTotal.textContent = String(total);
+      statOwned.textContent = String(owned);
+
+      const pct = total > 0 ? Math.round((owned / total) * 100) : 0;
+      statPct.textContent = pct + "%";
+      progressBar.style.width = pct + "%";
+
+      // count owned by rarity
+      const byRarity = {};
+      RARITY_ORDER.forEach(r => byRarity[r] = 0);
+
+      SKINS.forEach(s => {
+        if (!s || !s.name) return;
+        if (!ownedSet.has(s.name)) return;
+        if (s.rarity && byRarity[s.rarity] !== undefined) byRarity[s.rarity]++;
+      });
+
+      rarityBar.innerHTML = "";
+      RARITY_ORDER.forEach(r => {
+        const el = document.createElement("span");
+        el.className = "statchip";
+        el.innerHTML = `
+          <span class="pill ${RARITY_CLASS[r] ?? ""}">${r}</span>
+          <span class="muted"><span class="statnum">${byRarity[r] ?? 0}</span> skin(s)</span>
+        `;
+        rarityBar.appendChild(el);
+      });
+    }
+
+    function render() {
+      const q = (search.value || "").toLowerCase().trim();
+      const b = filterBrawler.value || "all";
+      const r = filterRarity.value || "all";
+      const only = !!onlyOwned.checked;
+
+      const list = SKINS.filter(s => {
+        if (!s) return false;
+
+        if (only && !ownedSet.has(s.name)) return false;
+        if (b !== "all" && s.brawler !== b) return false;
+        if (r !== "all" && s.rarity !== r) return false;
+
+        if (!q) return true;
+        return String(s.name).toLowerCase().includes(q)
+          || String(s.brawler).toLowerCase().includes(q)
+          || String(s.category).toLowerCase().includes(q)
+          || String(s.rarity).toLowerCase().includes(q);
+      });
+
+      resultCount.textContent = `${list.length} skin(s) affiché(s)`;
+      cards.innerHTML = "";
+
+      list.forEach(s => {
+        const checked = ownedSet.has(s.name);
+
+        const el = document.createElement("article");
+        el.className = "card";
+        el.innerHTML = `
+          <div style="display:flex; justify-content:space-between; gap:12px; align-items:flex-start; flex-wrap:wrap;">
+            <div>
+              <div class="row">
+                <span class="pill">${s.category ?? "—"}</span>
+                <span class="pill ${RARITY_CLASS[s.rarity] ?? ""}">${s.rarity ?? "—"}</span>
+              </div>
+              <h3 style="margin:8px 0 6px 0;">${s.name}</h3>
+              <p class="muted" style="margin:0;">Brawler : <strong>${s.brawler ?? "—"}</strong></p>
+            </div>
+
+            <label style="display:flex; gap:8px; align-items:center; user-select:none;">
+              <input type="checkbox" ${checked ? "checked" : ""} />
+              <span>Je l’ai</span>
+            </label>
+          </div>
+        `;
+
+        const cb = el.querySelector("input[type='checkbox']");
+        cb.addEventListener("change", async (e) => {
+          await setOwned(s.name, e.target.checked);
+        });
+
+        cards.appendChild(el);
+      });
+    }
+
+    async function refreshAll() {
+      await loadOwned();
+      updateStats();
+      render();
+      await loadPublicProfile();
+    }
+
+    // ---------- Events ----------
+    btnSignup.addEventListener("click", signup);
+    btnLogin.addEventListener("click", login);
+    btnLogout.addEventListener("click", logout);
+
+    btnReload.addEventListener("click", refreshAll);
+
+    search.addEventListener("input", render);
+    filterBrawler.addEventListener("change", render);
+    filterRarity.addEventListener("change", render);
+    onlyOwned.addEventListener("change", render);
+
+    btnSaveProfile.addEventListener("click", savePublicProfile);
+    btnPublishOwned.addEventListener("click", publishOwnedToPublic);
+    btnOpenProfile.addEventListener("click", openProfile);
+    btnCopyProfile.addEventListener("click", copyProfileLink);
+
+    // ---------- Init ----------
+    buildBrawlerFilter();
+    buildRarityFilter();
+    updateStats();
+    render();
+
+    (async () => {
+      const { data } = await supa.auth.getSession();
+      const user = data.session?.user;
+
+      if (user) {
+        showLoggedIn(user);
+        await refreshAll();
+      } else {
+        showLoggedOut();
+      }
+
+      // IMPORTANT: on évite les doubles refresh aggressifs
+      let authEventToken = 0;
+      supa.auth.onAuthStateChange(async (_event, session) => {
+        const t = ++authEventToken;
+        const u = session?.user;
+
+        if (u) {
+          showLoggedIn(u);
+          // petit "debounce" logique
+          setTimeout(async () => {
+            if (t !== authEventToken) return;
+            await refreshAll();
+          }, 50);
+        } else {
+          showLoggedOut();
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

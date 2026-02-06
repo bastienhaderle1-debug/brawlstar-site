@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brawl Star Skin Site</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+     <header class="header">
+    <h1>🔥 Brawl Stars Site 🔥</h1>
+    <p>Guides, brawlers, astuces — fait par moi.</p>
+
+    <nav class="nav">
+      <a href="#brawlers">Brawlers</a>
+      <a href="#guides">Guides</a>
+      <a href="#contact">Contact</a>
+    </nav>
+  </header>
+
+  <main class="container">
+    <section id="brawlers">
+      <h2>⭐ Brawlers</h2>
+      <div class="cards">
+        <article class="card">
+          <h3>Shelly</h3>
+          <p>Facile à jouer, parfaite pour débuter.</p>
+        </article>
+
+        <article class="card">
+          <h3>Colt</h3>
+          <p>Gros dégâts si tu vises bien.</p>
+        </article>
+
+        <article class="card">
+          <h3>Nita</h3>
+          <p>Son ours met la pression en contrôle.</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="guides">
+      <h2>📘 Guides</h2>
+      <ul class="list">
+        <li>Choisir son brawler selon le mode de jeu</li>
+        <li>Bien gérer ses gadgets et pouvoirs stars</li>
+        <li>3 erreurs de débutant à éviter</li>
+      </ul>
+    </section>
+
+    <section id="contact">
+      <h2>📩 Contact</h2>
+      <p>Tu peux me proposer des idées de pages ou des brawlers à ajouter.</p>
+      <button class="btn">Proposer une idée</button>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>Fan site non officiel — créé pour apprendre le code.</p>
+  </footer>
+</body>
+</html> 
+<a href="pages/brawlers.html">Brawlers</a>
+
+

@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Thèmes</title>
+  <link rel="stylesheet" href="../style.css" />
+</head>
+
+<body>
+  <header class="header">
+    <h1>📚 Thèmes</h1>
+    <p>Classement des skins par thème.</p>
+
+    <nav class="nav">
+      <a href="../index.html">Accueil</a>
+      <a href="./brawlers.html">Brawlers</a>
+      <a href="./skins.html">Skins</a>
+      <a href="./themes.html">Thèmes</a>
+    </nav>
+  </header>
+
+  <main class="container">
+    <section class="cards" id="cards"></section>
+  </main>
+
+  <footer class="footer">
+    <a href="../index.html">⬅ Retour à l’accueil</a>
+  </footer>
+
+  <!-- Données -->
+  <script src="../data/skins-data.js"></script>
+
+  <!-- Logique -->
+  <script>
+    const skins = window.SKINS ?? [];
+    const cards = document.getElementById("cards");
+
+    // Compter les skins par Thème
+    const map = {};
+
+    skins.forEach(s => {
+      if (!s.category) return;
+      map[s.category] = (map[s.category] || 0) + 1;
+    });
+
+    const themes = Object.keys(map).sort((a, b) =>
+      a.localeCompare(b, "fr")
+    );
+
+    themes.forEach(cat => {
+      const el = document.createElement("article");
+      el.className = "card clickable";
+
+      el.innerHTML = `
+        <h3>${cat}</h3>
+        <p class="muted">${map[cat]} skin(s)</p>
+        <p class="muted">Voir les skins ➜</p>
+      `;
+
+      el.addEventListener("click", () => {
+        window.location.href = `skins.html?category=${encodeURIComponent(cat)}`;
+      });
+
+      cards.appendChild(el);
+    });
+  </script>
+</body>
+</html>

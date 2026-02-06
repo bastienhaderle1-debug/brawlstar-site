@@ -1,0 +1,243 @@
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #0f1020;
+  color: white;
+  padding: 24px;
+}
+
+a {
+  color: #ffcc00;
+}
+/* --- UI --- */
+.toolbar {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin: 18px 0;
+  flex-wrap: wrap;
+}
+
+.input {
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(255,255,255,0.06);
+  color: white;
+  outline: none;
+}
+
+.input::placeholder {
+  color: rgba(255,255,255,0.6);
+}
+
+.tag {
+  display: inline-block;
+  font-size: 12px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(255,255,255,0.06);
+  margin-bottom: 10px;
+}
+/* --- Skins UI --- */
+.toolbar {
+  display: flex;
+  gap: 14px;
+  align-items: end;
+  flex-wrap: wrap;
+  margin: 18px 0;
+}
+
+.filter {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 220px;
+}
+
+.select {
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(255,255,255,0.06);
+  color: white;
+  outline: none;
+}
+
+.select option {
+  color: black;
+}
+
+.segmented {
+  display: inline-flex;
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.seg-btn {
+  padding: 10px 12px;
+  background: rgba(255,255,255,0.06);
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+.seg-btn.is-active {
+  background: rgba(255,255,255,0.16);
+}
+
+.muted {
+  opacity: 0.8;
+}
+
+.row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.pill {
+  display: inline-block;
+  font-size: 12px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(255,255,255,0.06);
+}
+
+.muted-pill {
+  opacity: 0.7;
+}
+.rarity-rare {
+  background: #2ecc71; /* vert */
+}
+
+.rarity-super-rare {
+  background: #3498db; /* bleu */
+}
+
+.rarity-epic {
+  background: #9b59b6; /* violet */
+}
+
+.rarity-mythic {
+  background: linear-gradient(135deg, #c0392b, #e67e22);
+}
+
+.rarity-legendary {
+  background: #f1c40f;
+  color: #000;
+}
+
+.rarity-hypercharge {
+  background: linear-gradient(135deg, #b026ff, #ff4dff);
+}
+/* ---------- MyBrawl UI helpers ---------- */
+.btn-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: end;
+}
+
+.toggle {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  user-select: none;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(140px, 1fr));
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.stat {
+  padding: 12px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.06);
+}
+
+.stat-label {
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+.stat-value {
+  font-size: 22px;
+  font-weight: 700;
+  margin-top: 6px;
+}
+
+.progress {
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.10);
+  overflow: hidden;
+  margin-top: 12px;
+}
+
+.progress-bar {
+  height: 100%;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.55);
+}
+
+.rarity-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.rarity-stat {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.mybrawl-card .row {
+  gap: 8px;
+}
+
+.mybrawl-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+.mybrawl-title {
+  margin: 0 0 8px 0;
+}
+
+.own-toggle {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  user-select: none;
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.06);
+}
+
+/* ---------- Rarity colors (pills) ---------- */
+/* Tu m’as donné les couleurs; je les applique en CSS */
+.pill.rarity-rare { background: rgba(0, 200, 80, 0.20); border: 1px solid rgba(0, 200, 80, 0.45); }
+.pill.rarity-super-rare { background: rgba(0, 120, 255, 0.20); border: 1px solid rgba(0, 120, 255, 0.45); }
+.pill.rarity-epic { background: rgba(170, 0, 255, 0.20); border: 1px solid rgba(170, 0, 255, 0.45); }
+.pill.rarity-mythic { background: rgba(255, 80, 0, 0.20); border: 1px solid rgba(255, 80, 0, 0.50); }
+.pill.rarity-legendary { background: rgba(255, 220, 80, 0.20); border: 1px solid rgba(255, 220, 80, 0.55); }
+.pill.rarity-hypercharge { background: rgba(220, 0, 255, 0.22); border: 1px solid rgba(220, 0, 255, 0.60); }
+
+/* Responsive */
+@media (max-width: 900px) {
+  .stats-grid { grid-template-columns: 1fr; }
+  .mybrawl-top { flex-direction: column; align-items: stretch; }
+  .own-toggle { width: fit-content; }
+}
