@@ -70,7 +70,7 @@ a{
 a:hover{ text-decoration: underline; }
 
 .container{ max-width: 1120px; margin: 0 auto; }
-.muted{ opacity:.85; }
+.muted{ color: var(--muted); }
 
 /* ---------- Titles ---------- */
 h1,h2,h3{
@@ -135,8 +135,8 @@ h3{
 }
 
 .headerbar .muted{
-  opacity: .88;
   color:#1b0f3b;
+  opacity: .88;
 }
 
 .nav{
@@ -263,7 +263,7 @@ label{
 }
 
 .input::placeholder{ color: rgba(255,255,255,0.62); }
-.select option{ color:black; }
+.select option{ color:#111; }
 
 /* ---------- Segmented ---------- */
 .segmented{

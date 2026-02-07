@@ -1,4 +1,4 @@
-<!--public.html-->
+<!-- pages/public.html -->
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -6,6 +6,79 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Profil public</title>
   <link rel="stylesheet" href="../style.css" />
+  <style>
+    /* micro polish spécifique à la page (garde la DA globale) */
+    .profile-hero{
+      display:flex;
+      gap:14px;
+      align-items:center;
+      flex-wrap:wrap;
+      margin-bottom: 10px;
+    }
+    .avatar{
+      width: 56px;
+      height: 56px;
+      border-radius: 18px;
+      border: 2px solid rgba(255,204,0,.75);
+      background:
+        radial-gradient(18px 18px at 30% 30%, rgba(255,255,255,.22), transparent 60%),
+        linear-gradient(180deg, rgba(255,79,216,.55), rgba(59,214,255,.35));
+      box-shadow: 0 10px 0 rgba(0,0,0,.22);
+      flex: 0 0 auto;
+    }
+    .hero-lines{ display:flex; flex-direction:column; gap:4px; }
+    .hero-lines .sub{
+      opacity:.88;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: .4px;
+      font-size: 12px;
+    }
+    .helper-grid{
+      display:grid;
+      grid-template-columns: 1.15fr .85fr;
+      gap: 14px;
+      margin: 18px 0;
+    }
+    .helper-box{
+      padding: 14px;
+      border-radius: 18px;
+      border: 2px solid rgba(255,204,0,.55);
+      background: rgba(255,255,255,.07);
+      box-shadow: 0 10px 0 rgba(0,0,0,.22);
+    }
+    .helper-actions{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top:10px;
+    }
+    .skeleton{
+      border-radius: 18px;
+      border: 2px solid rgba(255,204,0,.45);
+      background: rgba(255,255,255,.06);
+      box-shadow: 0 10px 0 rgba(0,0,0,.18);
+      padding: 14px;
+      overflow:hidden;
+      position:relative;
+    }
+    .skeleton:before{
+      content:"";
+      position:absolute;
+      inset:0;
+      background: linear-gradient(120deg, transparent, rgba(255,255,255,.18), transparent);
+      transform: translateX(-120%);
+      animation: shimmer 1.15s linear infinite;
+    }
+    @keyframes shimmer{
+      0%{ transform: translateX(-120%); }
+      100%{ transform: translateX(120%); }
+    }
+    .skeleton-line{ height: 12px; border-radius: 999px; background: rgba(255,255,255,.10); margin: 10px 0; }
+    .skeleton-line.big{ height: 18px; width: min(420px, 92%); }
+    .skeleton-line.mid{ width: min(520px, 96%); }
+    .skeleton-line.small{ width: min(260px, 70%); }
+  </style>
 </head>
 
 <body>
@@ -20,6 +93,8 @@
           <a href="./mybrawl.html">MyBrawl</a>
           <a href="./profile.html">Profil</a>
           <a href="./public.html">Public</a>
+          <a href="./brawlers.html">Brawlers</a>
+          <a href="./skins.html">Skins</a>
         </nav>
       </div>
 
@@ -35,74 +110,160 @@
   </header>
 
   <main class="container">
-    <section class="nav-helper card">
-      <h2>🌍 Profil public</h2>
-      <p class="muted">
-        Cette page est partageable. Pour explorer le site, retourne à l’accueil.
-      </p>
 
-      <div class="actions">
-        <a class="seg-btn" href="../index.html">🏠 Accueil</a>
-        <a class="seg-btn" href="./skins.html">🎨 Skins</a>
-      </div>
+    <!-- Helper / navigation -->
+    <section class="helper-grid">
+      <section class="helper-box">
+        <h2>🌍 Partage</h2>
+        <p class="muted">
+          Cette page affiche le profil public d’un joueur. L’URL contient un identifiant utilisateur.
+          Si le profil est privé, l’accès est bloqué.
+        </p>
+        <div class="helper-actions">
+          <a class="seg-btn" href="../index.html">🏠 Accueil</a>
+          <a class="seg-btn" href="./skins.html">🎨 Skins</a>
+          <a class="seg-btn" href="./mybrawl.html">🔧 Gérer mon profil</a>
+        </div>
+      </section>
+
+      <section class="helper-box">
+        <h2>🔎 Astuce</h2>
+        <p class="muted">
+          Si tu veux partager ton profil, va sur <strong>MyBrawl</strong> puis “Copier le lien”.
+        </p>
+        <div class="helper-actions">
+          <a class="seg-btn" href="./mybrawl.html">➡ Ouvrir MyBrawl</a>
+        </div>
+      </section>
     </section>
 
+    <!-- Loading skeleton (visible avant que public.js affiche les vraies cartes) -->
+    <section class="skeleton" id="loadingCard">
+      <div class="skeleton-line big"></div>
+      <div class="skeleton-line mid"></div>
+      <div class="skeleton-line small"></div>
+      <div class="skeleton-line mid"></div>
+    </section>
+
+    <!-- Error -->
     <section class="card" id="errorCard" style="display:none;">
       <h2>❌ Erreur</h2>
       <p class="muted" id="errorMsg"></p>
+      <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:12px;">
+        <a class="seg-btn" href="../index.html">🏠 Retour accueil</a>
+        <a class="seg-btn" href="./mybrawl.html">🔧 Aller sur MyBrawl</a>
+      </div>
     </section>
 
+    <!-- Profile -->
     <section class="card" id="profileCard" style="display:none;">
-      <h2 id="displayName">—</h2>
-      <p class="muted" id="bio">—</p>
-      <p class="muted" id="updatedLine"></p>
+      <div class="profile-hero">
+        <div class="avatar" aria-hidden="true"></div>
+        <div class="hero-lines">
+          <div class="sub">Profil public</div>
+          <h2 id="displayName">—</h2>
+          <p class="muted" id="bio" style="margin:0;">—</p>
+        </div>
+      </div>
+
+      <div class="row" style="margin:10px 0 0 0;">
+        <span class="pill">Brawldex</span>
+        <span class="pill" id="publicModeLine">—</span>
+      </div>
+
+      <p class="muted" id="updatedLine" style="margin-top:10px;"></p>
       <p class="muted" id="shareLine"></p>
 
-      <div class="stats-grid">
-        <div class="stat"><div class="stat-label">Skins possédés (public)</div><div class="stat-value" id="statOwned">0</div></div>
-        <div class="stat"><div class="stat-label">Total skins (base)</div><div class="stat-value" id="statTotal">0</div></div>
-        <div class="stat"><div class="stat-label">Progression</div><div class="stat-value" id="statPct">0%</div></div>
+      <div class="stats-grid" style="margin-top:12px;">
+        <div class="stat">
+          <div class="stat-label">Skins possédés (public)</div>
+          <div class="stat-value" id="statOwned">0</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Total skins (base)</div>
+          <div class="stat-value" id="statTotal">0</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Progression</div>
+          <div class="stat-value" id="statPct">0%</div>
+        </div>
       </div>
 
       <div class="progress"><div class="progress-bar" id="progressBar" style="width:0%"></div></div>
-      <p class="muted" id="publicModeLine" style="margin-top:12px;"></p>
 
-      <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:12px;">
+      <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:14px;">
         <button class="seg-btn" id="btnCopyLink" type="button">🔗 Copier le lien</button>
+        <a class="seg-btn" href="./mybrawl.html">👤 Créer mon profil</a>
       </div>
     </section>
 
+    <!-- Toolbar (visible uniquement si show_owned = true) -->
     <section class="toolbar" id="toolbar" style="display:none;">
-      <div class="filter">
+      <div class="filter" style="min-width:260px;">
         <label for="search">Recherche</label>
         <input id="search" class="input" type="text" placeholder="ex: shelly, star..." />
       </div>
 
-      <div class="filter">
+      <div class="filter" style="min-width:220px;">
         <label for="filterRarity">Rareté</label>
         <select id="filterRarity" class="select"></select>
       </div>
     </section>
 
+    <!-- Skins -->
     <section id="skinsSection" style="display:none;">
-      <h2>Skins publics</h2>
+      <h2>✅ Skins publics</h2>
       <p class="muted" id="resultCount"></p>
       <div class="cards" id="cards"></div>
     </section>
+
   </main>
 
   <footer class="footer container">
     <a href="../index.html">⬅ Retour à l’accueil</a>
   </footer>
 
- <script src="../js/toast.js"></script>
-<script src="../js/guard.js"></script>
+  <!-- Scripts (ordre important) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../data/supabase-client.js"></script>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="../data/supabase-client.js"></script>
-<script src="../data/skins-data.js"></script>
+  <script src="../js/toast.js"></script>
+  <script src="../js/guard.js"></script>
 
-<script src="../js/mybrawl.js"></script>
-<script src="../js/site.js"></script>
+  <script src="../data/skins-data.js"></script>
+  <script src="../js/owned-service.js"></script>
 
+  <script src="../js/site.js"></script>
+  <script src="../js/public.js"></script>
+
+  <script>
+    // Cache le skeleton dès que public.js a affiché une carte (profil ou erreur).
+    (function () {
+      const loading = document.getElementById("loadingCard");
+      const profile = document.getElementById("profileCard");
+      const error = document.getElementById("errorCard");
+
+      const tick = () => {
+        const showSomething =
+          (profile && profile.style.display !== "none") ||
+          (error && error.style.display !== "none");
+
+        if (showSomething && loading) loading.style.display = "none";
+      };
+
+      // petit polling safe (pas dépendant de public.js)
+      const t = setInterval(() => {
+        tick();
+        const done = loading && loading.style.display === "none";
+        if (done) clearInterval(t);
+      }, 60);
+
+      setTimeout(() => {
+        tick();
+        if (loading && loading.style.display !== "none") loading.style.display = "none";
+        clearInterval(t);
+      }, 5000);
+    })();
+  </script>
+</body>
 </html>
