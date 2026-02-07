@@ -152,11 +152,14 @@
 
     setAuthBusy(true, "Création du compte...");
     try {
-      const { error } = await supa.auth.signUp({ email: em, password: pw });
-      if (error) {
-        setAuthBusy(false, "❌ " + error.message);
-        return;
-      }
+     const { error } = await supa.auth.signUp({
+  email: email.value.trim(),
+  password: password.value,
+  options: {
+    emailRedirectTo: "https://brawlstar-site.vercel.app/pages/mybrawl.html"
+  }
+});
+
       setAuthBusy(false, "✅ Compte créé. Vérifie ton email si confirmation activée.");
     } catch (e) {
       setAuthBusy(false, "❌ " + (e?.message || String(e)));
