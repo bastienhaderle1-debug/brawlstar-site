@@ -913,3 +913,38 @@ label{
 @media (max-width: 600px){
   .filter{ min-width: 100%; }
 }
+/* =========================
+   Segmented control — logique correcte
+   Inactif = gris / Actif = jaune
+   ========================= */
+
+.segmented .seg-btn{
+  background: rgba(255,255,255,.10);
+  color: #fff;
+
+  border: 2px solid rgba(255,255,255,.18);
+  outline: 2px solid rgba(0,0,0,.25);
+
+  box-shadow: 0 6px 0 rgba(0,0,0,.18);
+}
+
+/* hover léger uniquement */
+.segmented .seg-btn:hover{
+  background: rgba(255,255,255,.14);
+}
+
+/* bouton sélectionné */
+.segmented .seg-btn.is-active{
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.24), rgba(255,255,255,0)),
+    var(--y);
+
+  color: #1b0f3b;
+
+  border: 2px solid rgba(0,0,0,.14);
+  outline: 2px solid rgba(0,0,0,.22);
+
+  box-shadow:
+    0 6px 0 var(--y2),
+    0 12px 22px rgba(0,0,0,.18);
+}
