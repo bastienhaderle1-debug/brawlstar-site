@@ -1,3 +1,4 @@
+<!--pages/skins.html-->
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -8,15 +9,28 @@
 </head>
 
 <body>
-  <header class="header">
-    <h1>🎨 Skins</h1>
-    <p>Classement des skins par brawler ou par thème.</p>
+  <header class="header container">
+    <div class="headerbar">
+      <div>
+        <h1>🎨 Skins</h1>
+        <p class="muted">Classement des skins par brawler ou par thème. Si tu es connecté, tu peux cocher tes skins.</p>
 
-    <nav class="nav">
-      <a href="../index.html">Accueil</a>
-      <a href="./brawlers.html">Brawlers</a>
-      <a href="./skins.html">Skins</a>
-    </nav>
+        <nav class="nav">
+          <a href="../index.html">Accueil</a>
+          <a href="./brawlers.html">Brawlers</a>
+          <a href="./skins.html">Skins</a>
+        </nav>
+      </div>
+
+      <div class="header-right">
+        <div class="badge ko" id="globalAuthBadge">
+          <span class="dot"></span>
+          <span>Non connecté</span>
+        </div>
+
+        <a class="seg-btn" href="./mybrawl.html">👤 Mon compte</a>
+      </div>
+    </div>
   </header>
 
   <main class="container">
@@ -33,9 +47,7 @@
 
       <div class="filter">
         <label for="rarity">Rareté</label>
-        <select id="rarity" class="select">
-          <option value="all">Toutes</option>
-        </select>
+        <select id="rarity" class="select"></select>
       </div>
 
       <div class="filter">
@@ -47,173 +59,23 @@
     <section>
       <h2 id="resultTitle">Résultats</h2>
       <p class="muted" id="resultCount"></p>
-
       <div class="cards" id="cards"></div>
     </section>
   </main>
 
-  <footer class="footer">
+  <footer class="footer container">
     <a href="../index.html">⬅ Retour à l’accueil</a>
   </footer>
 
-  <!-- 1) On charge d'abord les données -->
-  <script src="../data/skins-data.js"></script>
+ <script src="../js/toast.js"></script>
+<script src="../js/guard.js"></script>
 
-  <!-- 2) Puis la logique de la page -->
-  <script>
-    // Données
-    const skins = window.SKINS ?? [];
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../data/supabase-client.js"></script>
+<script src="../data/skins-data.js"></script>
 
-    // Ordre de rareté (comme tu l'as donné)
-    const RARITY_ORDER = [
-      "Rare",
-      "Super Rare",
-      "Epic",
-      "Mythique",
-      "Légendaire",
-      "Hypercharge",
-    ];
+<script src="../js/mybrawl.js"></script>
+<script src="../js/site.js"></script>
 
-    // Classe CSS associée à chaque rareté
-    const RARITY_CLASS = {
-      "Rare": "rarity-rare",
-      "Super Rare": "rarity-super-rare",
-      "Epic": "rarity-epic",
-      "Mythique": "rarity-mythic",
-      "Légendaire": "rarity-legendary",
-      "Hypercharge": "rarity-hypercharge",
-    };
-
-    // --- State ---
-    let mode = "brawler"; // "brawler" | "category"
-
-    // --- Elements ---
-    const modeBrawlerBtn = document.getElementById("modeBrawler");
-    const modeCategoryBtn = document.getElementById("modeCategory");
-    const selectLabel = document.getElementById("selectLabel");
-    const select = document.getElementById("select");
-    const rarity = document.getElementById("rarity");
-    const search = document.getElementById("search");
-    const cards = document.getElementById("cards");
-    const resultCount = document.getElementById("resultCount");
-    const resultTitle = document.getElementById("resultTitle");
-
-    // --- Utils ---
-    function uniqueSorted(arr) {
-      return [...new Set(arr)].sort((a, b) => a.localeCompare(b, "fr"));
-    }
-
-    // Remplit le select Brawler / Thème selon le mode
-    function buildOptions() {
-      const values = mode === "brawler"
-        ? uniqueSorted(skins.map(s => s.brawler).filter(Boolean))
-        : uniqueSorted(skins.map(s => s.category).filter(Boolean));
-
-      select.innerHTML = "";
-
-      const optAll = document.createElement("option");
-      optAll.value = "all";
-      optAll.textContent = "Tous";
-      select.appendChild(optAll);
-
-      values.forEach(v => {
-        const opt = document.createElement("option");
-        opt.value = v;
-        opt.textContent = v;
-        select.appendChild(opt);
-      });
-
-      selectLabel.textContent = mode === "brawler" ? "Choisir un brawler" : "Choisir un thème";
-      resultTitle.textContent = mode === "brawler" ? "Skins par brawler" : "Skins par thème";
-    }
-
-    // Remplit le select Rareté dans l'ordre officiel
-    function buildRarities() {
-      rarity.innerHTML = `<option value="all">Toutes</option>`;
-
-      // Optionnel : si tu veux n'afficher que celles qui existent dans tes données, décommente le bloc ci-dessous
-      // const existing = new Set(skins.map(s => s.rarity).filter(Boolean));
-
-      RARITY_ORDER.forEach(r => {
-        // Si tu veux n'afficher que les raretés présentes dans tes données, utilise :
-        // if (!existing.has(r)) return;
-
-        const opt = document.createElement("option");
-        opt.value = r;
-        opt.textContent = r;
-        rarity.appendChild(opt);
-      });
-    }
-
-    // Affiche les cartes selon les filtres
-    function render() {
-      const selected = select.value || "all";
-      const selectedRarity = rarity.value || "all";
-      const q = (search.value || "").toLowerCase().trim();
-
-      const filtered = skins.filter(s => {
-        const matchMode =
-          selected === "all" ||
-          (mode === "brawler" ? s.brawler === selected : s.category === selected);
-
-        const matchRarity =
-          selectedRarity === "all" || s.rarity === selectedRarity;
-
-        const matchSearch =
-          q === "" ||
-          (s.name || "").toLowerCase().includes(q) ||
-          (s.brawler || "").toLowerCase().includes(q) ||
-          (s.category || "").toLowerCase().includes(q) ||
-          (s.rarity || "").toLowerCase().includes(q);
-
-        return matchMode && matchRarity && matchSearch;
-      });
-
-      cards.innerHTML = "";
-
-      filtered.forEach(s => {
-        const el = document.createElement("article");
-        el.className = "card";
-
-        const rarityClass = RARITY_CLASS[s.rarity] ?? "";
-
-        el.innerHTML = `
-          <div class="row">
-            <span class="pill">${s.category ?? "—"}</span>
-            <span class="pill ${rarityClass}">${s.rarity ?? "—"}</span>
-          </div>
-          <h3>${s.name ?? "—"}</h3>
-          <p class="muted">Brawler : <strong>${s.brawler ?? "—"}</strong></p>
-        `;
-
-        cards.appendChild(el);
-      });
-
-      resultCount.textContent = `${filtered.length} skin(s) affiché(s)`;
-    }
-
-    function setMode(nextMode) {
-      mode = nextMode;
-
-      const brawlerActive = mode === "brawler";
-      modeBrawlerBtn.classList.toggle("is-active", brawlerActive);
-      modeCategoryBtn.classList.toggle("is-active", !brawlerActive);
-
-      buildOptions();
-      render();
-    }
-
-    // --- Events ---
-    modeBrawlerBtn.addEventListener("click", () => setMode("brawler"));
-    modeCategoryBtn.addEventListener("click", () => setMode("category"));
-    select.addEventListener("change", render);
-    rarity.addEventListener("change", render);
-    search.addEventListener("input", render);
-
-    // --- Init ---
-    buildRarities();
-    buildOptions();
-    render();
-  </script>
 </body>
 </html>

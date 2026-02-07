@@ -1,374 +1,69 @@
+<!--profile.html-->
 <!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Profil public</title>
+  <title>Profil</title>
   <link rel="stylesheet" href="../style.css" />
-  <style>
-    /* Petit renfort si jamais */
-    .profile-head { display:flex; justify-content:space-between; gap:14px; align-items:flex-start; flex-wrap:wrap; }
-    .profile-title { margin:0; }
-    .profile-meta { margin:8px 0 0 0; }
-    .stats-grid { display:grid; grid-template-columns: repeat(3, minmax(140px, 1fr)); gap:12px; margin-top: 10px; }
-    .stat { padding:12px; border-radius:12px; background: rgba(255,255,255,0.06); }
-    .stat-label { font-size:12px; opacity:0.8; }
-    .stat-value { font-size:22px; font-weight:700; margin-top:6px; }
-    .progress { height:10px; border-radius:999px; background: rgba(255,255,255,0.10); overflow:hidden; margin-top: 12px; }
-    .progress-bar { height:100%; border-radius:999px; background: rgba(255,255,255,0.55); }
-    .btn-row { display:flex; gap:10px; flex-wrap:wrap; align-items:end; }
-
-    /* Pills rareté (si tu as déjà dans style.css, aucun souci) */
-    .pill.rarity-rare { background: rgba(0, 200, 80, 0.20); border: 1px solid rgba(0, 200, 80, 0.45); }
-    .pill.rarity-super-rare { background: rgba(0, 120, 255, 0.20); border: 1px solid rgba(0, 120, 255, 0.45); }
-    .pill.rarity-epic { background: rgba(170, 0, 255, 0.20); border: 1px solid rgba(170, 0, 255, 0.45); }
-    .pill.rarity-mythic { background: rgba(255, 80, 0, 0.20); border: 1px solid rgba(255, 80, 0, 0.50); }
-    .pill.rarity-legendary { background: rgba(255, 220, 80, 0.20); border: 1px solid rgba(255, 220, 80, 0.55); }
-    .pill.rarity-hypercharge { background: rgba(220, 0, 255, 0.22); border: 1px solid rgba(220, 0, 255, 0.60); }
-
-    @media (max-width: 900px) { .stats-grid { grid-template-columns: 1fr; } }
-  </style>
 </head>
 
 <body>
-  <header class="header">
-    <h1>👤 Profil public</h1>
-    <p>Page partageable (stats + skins si activé).</p>
+  <header class="header container">
+    <div class="headerbar">
+      <div>
+        <h1>👤 Profil</h1>
+        <p class="muted">La gestion du profil (public/skins) se fait dans MyBrawl.</p>
 
-    <nav class="nav">
-      <a href="../index.html">Accueil</a>
-      <a href="./brawlers.html">Brawlers</a>
-      <a href="./skins.html">Skins</a>
-      <a href="./themes.html">Thèmes</a>
-      <a href="./mybrawl.html">MyBrawl</a>
-      <a href="./profile.html">Profil</a>
-    </nav>
+        <nav class="nav">
+          <a href="../index.html">Accueil</a>
+          <a href="./mybrawl.html">MyBrawl</a>
+          <a href="./profile.html">Profil</a>
+          <a href="./public.html">Public</a>
+        </nav>
+      </div>
+
+      <div class="header-right">
+        <div class="badge ko" id="globalAuthBadge">
+          <span class="dot"></span>
+          <span>Non connecté</span>
+        </div>
+
+        <a class="seg-btn" href="./mybrawl.html">👤 Mon compte</a>
+      </div>
+    </div>
   </header>
 
   <main class="container">
-    <section class="card" id="errorCard" style="display:none;">
-      <h2>❌ Erreur</h2>
-      <p class="muted" id="errorMsg"></p>
-    </section>
+    <section class="nav-helper card">
+      <h2>👤 Profil</h2>
+      <p class="muted">
+        Ton profil public est géré dans MyBrawl. Retourne à l'accueil pour voir les skins.
+      </p>
 
-    <section class="card" id="profileCard" style="display:none;">
-      <div class="profile-head">
-        <div>
-          <h2 class="profile-title" id="displayName">—</h2>
-          <p class="muted profile-meta" id="bio">—</p>
-          <p class="muted profile-meta" id="updatedLine"></p>
-          <p class="muted profile-meta" id="shareLine"></p>
-        </div>
-
-        <div class="btn-row">
-          <button class="seg-btn" id="btnCopyLink" type="button">🔗 Copier le lien</button>
-          <button class="seg-btn" id="btnOpenSkins" type="button">🎨 Voir Skins</button>
-        </div>
-      </div>
-
-      <div class="stats-grid">
-        <div class="stat">
-          <div class="stat-label">Skins possédés (public)</div>
-          <div class="stat-value" id="statOwned">0</div>
-        </div>
-        <div class="stat">
-          <div class="stat-label">Total skins (base)</div>
-          <div class="stat-value" id="statTotal">0</div>
-        </div>
-        <div class="stat">
-          <div class="stat-label">Progression</div>
-          <div class="stat-value" id="statPct">0%</div>
-        </div>
-      </div>
-
-      <div class="progress">
-        <div class="progress-bar" id="progressBar" style="width:0%"></div>
-      </div>
-
-      <p class="muted" id="publicModeLine" style="margin-top:12px;"></p>
-    </section>
-
-    <section class="toolbar" id="toolbar" style="display:none;">
-      <div class="filter" style="min-width:220px;">
-        <label for="search">Recherche</label>
-        <input id="search" class="input" type="text" placeholder="ex: shelly, star..." />
-      </div>
-
-      <div class="filter" style="min-width:220px;">
-        <label for="filterRarity">Rareté</label>
-        <select id="filterRarity" class="select"></select>
+      <div class="actions">
+        <a class="seg-btn" href="../index.html">🏠 Accueil</a>
+        <a class="seg-btn" href="./mybrawl.html">🔧 Mon compte</a>
+        <a class="seg-btn" href="./public.html">🌍 Voir public</a>
       </div>
     </section>
 
-    <section id="skinsSection" style="display:none;">
-      <h2>Skins publics</h2>
-      <p class="muted" id="resultCount"></p>
-      <div class="cards" id="cards"></div>
+    <section class="card">
+      <h2>Où modifier ton profil ?</h2>
+      <p class="muted">
+        Va sur <strong>MyBrawl</strong> pour te connecter, modifier ton pseudo/bio, et publier tes skins.
+      </p>
+      <p><a href="./mybrawl.html">➡ Ouvrir MyBrawl</a></p>
     </section>
   </main>
 
-  <footer class="footer">
-    <a href="../index.html">⬅ Retour à l’accueil</a>
+  <footer class="footer container">
+    <a href="../index.html">⬅ Retour</a>
   </footer>
 
-  <!-- 1) Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <!-- 2) Ton client Supabase -->
   <script src="../data/supabase-client.js"></script>
-  <!-- 3) Données skins -->
-  <script src="../data/skins-data.js"></script>
-
-  <script>
-    // ---------- Setup ----------
-    if (!window.supabaseClient) {
-      document.getElementById("errorCard").style.display = "block";
-      document.getElementById("errorMsg").textContent =
-        "supabaseClient introuvable. Vérifie ../data/supabase-client.js et l’ordre des scripts.";
-      throw new Error("supabaseClient introuvable");
-    }
-
-    const supa = window.supabaseClient;
-    const allSkins = Array.isArray(window.SKINS) ? window.SKINS : [];
-
-    const RARITY_ORDER = ["Rare","Super Rare","Epic","Mythique","Légendaire","Hypercharge"];
-    const RARITY_CLASS = {
-      "Rare": "rarity-rare",
-      "Super Rare": "rarity-super-rare",
-      "Epic": "rarity-epic",
-      "Mythique": "rarity-mythic",
-      "Légendaire": "rarity-legendary",
-      "Hypercharge": "rarity-hypercharge",
-    };
-
-    // Elements
-    const errorCard = document.getElementById("errorCard");
-    const errorMsg = document.getElementById("errorMsg");
-
-    const profileCard = document.getElementById("profileCard");
-    const displayNameEl = document.getElementById("displayName");
-    const bioEl = document.getElementById("bio");
-    const updatedLine = document.getElementById("updatedLine");
-    const shareLine = document.getElementById("shareLine");
-    const publicModeLine = document.getElementById("publicModeLine");
-
-    const statOwned = document.getElementById("statOwned");
-    const statTotal = document.getElementById("statTotal");
-    const statPct = document.getElementById("statPct");
-    const progressBar = document.getElementById("progressBar");
-
-    const btnCopyLink = document.getElementById("btnCopyLink");
-    const btnOpenSkins = document.getElementById("btnOpenSkins");
-
-    const toolbar = document.getElementById("toolbar");
-    const skinsSection = document.getElementById("skinsSection");
-    const cards = document.getElementById("cards");
-    const resultCount = document.getElementById("resultCount");
-
-    const search = document.getElementById("search");
-    const filterRarity = document.getElementById("filterRarity");
-
-    // ---------- Helpers ----------
-    function fail(msg) {
-      errorCard.style.display = "block";
-      errorMsg.textContent = msg;
-      profileCard.style.display = "none";
-      toolbar.style.display = "none";
-      skinsSection.style.display = "none";
-    }
-
-    function buildRarityFilter() {
-      filterRarity.innerHTML = "";
-      const optAll = document.createElement("option");
-      optAll.value = "all";
-      optAll.textContent = "Toutes";
-      filterRarity.appendChild(optAll);
-
-      RARITY_ORDER.forEach(r => {
-        const opt = document.createElement("option");
-        opt.value = r;
-        opt.textContent = r;
-        filterRarity.appendChild(opt);
-      });
-    }
-
-    function parseUserId() {
-      const params = new URLSearchParams(window.location.search);
-      return params.get("u"); // uuid
-    }
-
-    function fmtDate(iso) {
-      if (!iso) return "";
-      try {
-        const d = new Date(iso);
-        return d.toLocaleString("fr-FR");
-      } catch { return ""; }
-    }
-
-    // ---------- State ----------
-    let profileUserId = null;
-    let profile = null;
-    let publicOwnedNames = []; // ["Star Shelly", ...]
-    let publicOwnedSet = new Set();
-
-    // ---------- Load ----------
-    async function loadProfile(userId) {
-      // public_profiles: row unique par user_id
-      const { data, error } = await supa
-        .from("public_profiles")
-        .select("user_id, display_name, bio, is_public, show_owned, updated_at")
-        .eq("user_id", userId)
-        .maybeSingle();
-
-      if (error) throw error;
-      return data;
-    }
-
-    async function loadPublicOwned(userId) {
-      const { data, error } = await supa
-        .from("public_user_skins")
-        .select("skin_name")
-        .eq("user_id", userId);
-
-      if (error) throw error;
-      return (data || []).map(r => r.skin_name).filter(Boolean);
-    }
-
-    function updateHeaderUI() {
-      profileCard.style.display = "block";
-
-      displayNameEl.textContent = profile.display_name || "Profil";
-      bioEl.textContent = profile.bio || "—";
-      updatedLine.textContent = profile.updated_at ? ("Dernière mise à jour : " + fmtDate(profile.updated_at)) : "";
-
-      const shareUrl = window.location.href;
-      shareLine.textContent = "Lien : " + shareUrl;
-
-      statTotal.textContent = String(allSkins.length);
-
-      const ownedCount = publicOwnedSet.size;
-      statOwned.textContent = String(ownedCount);
-
-      const pct = allSkins.length > 0 ? Math.round((ownedCount / allSkins.length) * 100) : 0;
-      statPct.textContent = pct + "%";
-      progressBar.style.width = pct + "%";
-
-      if (!profile.is_public) {
-        publicModeLine.textContent = "⚠️ Profil non-public.";
-      } else if (!profile.show_owned) {
-        publicModeLine.textContent = "ℹ️ Ce profil est public, mais la liste des skins est masquée.";
-      } else {
-        publicModeLine.textContent = "✅ Profil public + liste des skins visible.";
-      }
-    }
-
-    function getSkinByName(name) {
-      return allSkins.find(s => s && s.name === name) || { name, brawler: "—", category: "—", rarity: "—" };
-    }
-
-    function renderCards() {
-      if (!profile.show_owned) return;
-
-      const q = (search.value || "").toLowerCase().trim();
-      const r = filterRarity.value || "all";
-
-      const list = publicOwnedNames
-        .map(getSkinByName)
-        .filter(s => {
-          if (r !== "all" && s.rarity !== r) return false;
-          if (!q) return true;
-          return String(s.name).toLowerCase().includes(q)
-            || String(s.brawler).toLowerCase().includes(q)
-            || String(s.category).toLowerCase().includes(q)
-            || String(s.rarity).toLowerCase().includes(q);
-        })
-        .sort((a, b) => {
-          const ra = RARITY_ORDER.indexOf(a.rarity);
-          const rb = RARITY_ORDER.indexOf(b.rarity);
-          if (ra !== rb) return (ra === -1 ? 999 : ra) - (rb === -1 ? 999 : rb);
-          return String(a.name).localeCompare(String(b.name), "fr");
-        });
-
-      resultCount.textContent = `${list.length} skin(s) affiché(s)`;
-      cards.innerHTML = "";
-
-      list.forEach(s => {
-        const el = document.createElement("article");
-        el.className = "card";
-        el.innerHTML = `
-          <div class="row">
-            <span class="pill">${s.category ?? "—"}</span>
-            <span class="pill ${RARITY_CLASS[s.rarity] ?? ""}">${s.rarity ?? "—"}</span>
-          </div>
-          <h3>${s.name}</h3>
-          <p class="muted">Brawler : <strong>${s.brawler ?? "—"}</strong></p>
-        `;
-        cards.appendChild(el);
-      });
-    }
-
-    // ---------- Actions ----------
-    btnCopyLink.addEventListener("click", async () => {
-      try {
-        await navigator.clipboard.writeText(window.location.href);
-        btnCopyLink.textContent = "✅ Lien copié";
-        setTimeout(() => btnCopyLink.textContent = "🔗 Copier le lien", 1200);
-      } catch {
-        alert("Copie impossible. Copie manuellement l’URL dans la barre d’adresse.");
-      }
-    });
-
-    btnOpenSkins.addEventListener("click", () => {
-      // Ouvre la page skins avec un filtre bête (tu peux améliorer plus tard)
-      // Ici on ne filtre pas, juste navigation.
-      window.location.href = "./skins.html";
-    });
-
-    search.addEventListener("input", renderCards);
-    filterRarity.addEventListener("change", renderCards);
-
-    // ---------- Init ----------
-    (async () => {
-      buildRarityFilter();
-
-      profileUserId = parseUserId();
-      if (!profileUserId) {
-        fail("Il manque l’ID utilisateur dans l’URL. Exemple : profile.html?u=UUID");
-        return;
-      }
-
-      try {
-        profile = await loadProfile(profileUserId);
-        if (!profile) {
-          fail("Profil introuvable (ou non public).");
-          return;
-        }
-
-        if (!profile.is_public) {
-          fail("Ce profil n’est pas public.");
-          return;
-        }
-
-        // Si show_owned = false => on affiche stats "0" et pas de liste.
-        if (profile.show_owned) {
-          publicOwnedNames = await loadPublicOwned(profileUserId);
-          publicOwnedSet = new Set(publicOwnedNames);
-        } else {
-          publicOwnedNames = [];
-          publicOwnedSet = new Set();
-        }
-
-        updateHeaderUI();
-
-        if (profile.show_owned) {
-          toolbar.style.display = "flex";
-          skinsSection.style.display = "block";
-          renderCards();
-        }
-      } catch (e) {
-        console.error(e);
-        fail("Erreur Supabase : " + (e.message || String(e)));
-      }
-    })();
-  </script>
+  <script src="../js/toast.js"></script>
+  <script src="../js/site.js"></script>
 </body>
 </html>

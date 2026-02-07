@@ -1,25 +1,56 @@
+<!--index.html-->
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Brawl Stars Fan Site</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css" />
 </head>
-
 <body>
-  <h1>🔥 Brawl Stars Fan Site 🔥</h1>
+<header class="header container">
+  <div class="headerbar">
+    <div>
+      <h1>🔥 Brawl Stars Site 🔥</h1>
+      <p class="muted">Brawldex</p>
 
-  <nav>
-    <a href="pages/mybrawl.html">MyBrawl</a><br>
-    <a href="pages/brawlers.html">Brawlers</a><br>
-    <a href="pages/skins.html">Skins</a><br>
-    <a href="pages/themes.html">Thèmes</a>
-    
+      <nav class="nav">
+        <a href="pages/mybrawl.html">MyBrawl</a>
+        <a href="pages/profile.html">Profil</a>
+        <a href="pages/public.html">Public</a>
+        <a href="pages/brawlers.html">Brawlers</a>
+        <a href="pages/skins.html">Skins</a>
+      </nav>
+    </div>
 
-  </nav>
+    <div class="header-right">
+      <div class="badge ko" id="globalAuthBadge">
+        <span class="dot"></span>
+        <span>Non connecté</span>
+      </div>
 
-  <p>Bienvenue sur mon site Brawl Stars.</p>
+      <a class="seg-btn" href="pages/mybrawl.html">👤 Mon compte</a>
+    </div>
+  </div>
+</header>
+
+
+
+  <main class="container">
+    <section class="card">
+      <h2>Bienvenue</h2>
+      <p class="muted">
+        - <strong>MyBrawl</strong> : connexion + cocher tes skins + publier.
+        <br/>- <strong>Public</strong> : page partageable via URL.
+      </p>
+    </section>
+  </main>
+
+  <footer class="footer container">
+    <p class="muted">Fan site non officiel — créé pour apprendre.</p>
+  </footer>
+
+<script src="js/toast.js"></script>
+<script src="js/site.js"></script>
 </body>
 </html>
-

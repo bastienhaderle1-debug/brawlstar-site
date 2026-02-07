@@ -1,4 +1,4 @@
-// Remplace par TES valeurs Supabase
+// data/supabase-client.js
 const SUPABASE_URL = "https://dfactzpzoyrfmhmwmdgj.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_AOpBdmAhYEbq1iFkheM24w_dbpKtCa6";
 

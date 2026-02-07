@@ -1,76 +1,64 @@
+<!--brawler.html-->
 <!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Brawlers</title>
-  <link rel="stylesheet" href="../style.css">
+  <link rel="stylesheet" href="../style.css" />
 </head>
-<body>
-  <header class="header">
-    <h1>⭐ Liste des Brawlers</h1>
-    <p>Liste de brawlers (exemple). On améliorera ensuite.</p>
 
-    <nav class="nav">
-      <a href="../index.html">Accueil</a>
-      <a href="./brawlers.html">Brawlers</a>
-    </nav>
+<body>
+  <header class="header container">
+    <div class="headerbar">
+      <div>
+        <h1>⭐ Liste des Brawlers</h1>
+        <p class="muted">Exemple simple (tu pourras enrichir après).</p>
+
+        <nav class="nav">
+          <a href="../index.html">Accueil</a>
+          <a href="./mybrawl.html">MyBrawl</a>
+          <a href="./brawlers.html">Brawlers</a>
+          <a href="./skins.html">Skins</a>
+        </nav>
+      </div>
+
+      <div class="header-right">
+        <div class="badge ko" id="globalAuthBadge">
+          <span class="dot"></span>
+          <span>Non connecté</span>
+        </div>
+
+        <a class="seg-btn" href="./mybrawl.html">👤 Mon compte</a>
+      </div>
+    </div>
   </header>
 
   <main class="container">
     <div class="toolbar">
-      <label for="search">🔎 Rechercher</label>
-      <input id="search" class="input" type="text" placeholder="ex: Shelly, Colt..." />
+      <div class="filter" style="min-width:260px;">
+        <label for="search">🔎 Rechercher</label>
+        <input id="search" class="input" type="text" placeholder="ex: Shelly, Colt..." />
+      </div>
     </div>
 
     <section class="cards" id="cards">
-      <article class="card">
-        <div class="tag">Dégâts</div>
-        <h3>Shelly</h3>
-        <p>Facile à jouer, parfaite pour débuter.</p>
-      </article>
-
-      <article class="card">
-        <div class="tag">Tireur</div>
-        <h3>Colt</h3>
-        <p>Gros dégâts si tu vises bien.</p>
-      </article>
-
-      <article class="card">
-        <div class="tag">Contrôle</div>
-        <h3>Nita</h3>
-        <p>Son ours met la pression en zone.</p>
-      </article>
-
-      <article class="card">
-        <div class="tag">Tank</div>
-        <h3>Bull</h3>
-        <p>Fort au corps à corps, attention au burst.</p>
-      </article>
-
-      <article class="card">
-        <div class="tag">Support</div>
-        <h3>Poco</h3>
-        <p>Soigne l’équipe et tient les fights.</p>
-      </article>
-
-      <article class="card">
-        <div class="tag">Contrôle</div>
-        <h3>Jessie</h3>
-        <p>Sa tourelle peut retourner une partie.</p>
-      </article>
+      <article class="card"><div class="pill">Dégâts</div><h3>Shelly</h3><p class="muted">Facile à jouer, parfaite pour débuter.</p></article>
+      <article class="card"><div class="pill">Tireur</div><h3>Colt</h3><p class="muted">Gros dégâts si tu vises bien.</p></article>
+      <article class="card"><div class="pill">Contrôle</div><h3>Nita</h3><p class="muted">Son ours met la pression en zone.</p></article>
+      <article class="card"><div class="pill">Tank</div><h3>Bull</h3><p class="muted">Fort au corps à corps.</p></article>
+      <article class="card"><div class="pill">Support</div><h3>Poco</h3><p class="muted">Soigne l’équipe.</p></article>
+      <article class="card"><div class="pill">Contrôle</div><h3>Jessie</h3><p class="muted">Sa tourelle peut retourner une partie.</p></article>
     </section>
   </main>
 
-  <footer class="footer">
+  <footer class="footer container">
     <a href="../index.html">⬅ Retour à l’accueil</a>
   </footer>
 
   <script>
-    // Filtre simple (recherche par nom)
     const search = document.getElementById("search");
     const cards = document.querySelectorAll(".card");
-
     search.addEventListener("input", () => {
       const q = search.value.toLowerCase().trim();
       cards.forEach(card => {
@@ -79,5 +67,10 @@
       });
     });
   </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../data/supabase-client.js"></script>
+  <script src="../js/toast.js"></script>
+<script src="../js/site.js"></script>
 </body>
 </html>
