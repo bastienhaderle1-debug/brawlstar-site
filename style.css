@@ -948,3 +948,220 @@ label{
     0 6px 0 var(--y2),
     0 12px 22px rgba(0,0,0,.18);
 }
+/* =========================
+   THEMES (Skins page) — grouped + accordion
+   Ajoute en BAS du style.css
+   ========================= */
+
+.theme-controls{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  align-items:center;
+  margin: 6px 0 16px 0;
+  padding: 10px 12px;
+  border-radius: 0;
+  background: rgba(255,255,255,0.06);
+  border: 2px solid rgba(255,255,255,0.14);
+  outline: 2px solid rgba(0,0,0,.22);
+  box-shadow: 0 10px 0 rgba(0,0,0,.18);
+}
+
+.theme-controls .theme-mini{
+  padding: 9px 12px;
+  border-radius: 14px;
+  font-size: 12px;
+  letter-spacing: .45px;
+}
+
+.theme-controls .theme-hint{
+  font-size: 12px;
+  opacity: .85;
+}
+
+/* Section thème */
+.theme-group{
+  margin: 14px 0 18px 0;
+  padding: 12px;
+  border-radius: 0;
+
+  background:
+    radial-gradient(260px 160px at 12% 0%, rgba(255,255,255,.10), transparent 60%),
+    linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.03)),
+    linear-gradient(180deg, rgba(62,33,140,.45), rgba(20,10,55,.86));
+
+  border: 2px solid rgba(255,255,255,.14);
+  outline: 3px solid rgba(0,0,0,.34);
+  box-shadow: var(--shadowHard), var(--shadowSoft);
+
+  overflow:hidden;
+}
+
+@supports (clip-path: polygon(0 0)){
+  .theme-group{
+    -webkit-clip-path: polygon(
+      var(--cut) 0,
+      calc(100% - var(--cut)) 0,
+      100% var(--cut),
+      100% calc(100% - var(--cut)),
+      calc(100% - var(--cut)) 100%,
+      var(--cut) 100%,
+      0 calc(100% - var(--cut)),
+      0 var(--cut)
+    );
+    clip-path: polygon(
+      var(--cut) 0,
+      calc(100% - var(--cut)) 0,
+      100% var(--cut),
+      100% calc(100% - var(--cut)),
+      calc(100% - var(--cut)) 100%,
+      var(--cut) 100%,
+      0 calc(100% - var(--cut)),
+      0 var(--cut)
+    );
+  }
+}
+
+.theme-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  padding: 6px 6px 10px 6px;
+  border-bottom: 2px solid rgba(255,255,255,.10);
+}
+
+.theme-toggle{
+  appearance:none;
+  border:none;
+  background:transparent;
+  color:#fff;
+  cursor:pointer;
+
+  display:flex;
+  align-items:center;
+  gap:10px;
+
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: .9px;
+  font-size: 14px;
+
+  padding: 8px 10px;
+  border-radius: 14px;
+
+  background: rgba(255,255,255,.08);
+  border: 2px solid rgba(255,255,255,.14);
+  outline: 2px solid rgba(0,0,0,.20);
+  box-shadow: 0 6px 0 rgba(0,0,0,.16);
+
+  transition: transform var(--t) ease, filter var(--t) ease, background var(--t) ease;
+}
+
+.theme-toggle:hover{
+  transform: translateY(-1px);
+  filter: brightness(1.04);
+  background: rgba(255,255,255,.12);
+}
+
+.theme-title{
+  -webkit-text-stroke: 2px rgba(0,0,0,.35);
+  paint-order: stroke fill;
+  text-shadow: 0 2px 0 rgba(0,0,0,.28);
+}
+
+.theme-caret{
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  background: rgba(255,204,0,.18);
+  border: 2px solid rgba(255,204,0,.60);
+  outline: 2px solid rgba(0,0,0,.20);
+  box-shadow: 0 4px 0 rgba(0,0,0,.14);
+  position: relative;
+}
+.theme-caret::after{
+  content:"";
+  position:absolute;
+  left: 3px;
+  top: 2px;
+  width: 0;
+  height: 0;
+  border-left: 4px solid rgba(255,255,255,.95);
+  border-top: 3px solid transparent;
+  border-bottom: 3px solid transparent;
+  transform: rotate(0deg);
+  transition: transform var(--t) ease;
+}
+
+/* Métadonnées (compteurs) */
+.theme-meta{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  align-items:center;
+}
+.theme-chip{
+  display:inline-flex;
+  align-items:baseline;
+  gap:6px;
+  padding: 7px 10px;
+  border-radius: 999px;
+
+  background: rgba(255,255,255,.08);
+  border: 2px solid rgba(255,255,255,.14);
+  outline: 2px solid rgba(0,0,0,.18);
+
+  box-shadow: 0 5px 0 rgba(0,0,0,.16);
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: .55px;
+  font-size: 11px;
+}
+.theme-chip.ok{
+  border-color: rgba(0,212,106,.45);
+  background: rgba(0,212,106,.10);
+}
+.theme-num{
+  font-size: 14px;
+  -webkit-text-stroke: 2px rgba(0,0,0,.25);
+  paint-order: stroke fill;
+}
+.theme-lbl{
+  opacity: .85;
+}
+
+/* Body */
+.theme-body{
+  padding: 12px 6px 6px 6px;
+}
+
+/* Collapse behavior */
+.theme-group[data-collapsed="1"] .theme-body{
+  display:none;
+}
+.theme-group[data-collapsed="1"] .theme-caret::after{
+  transform: rotate(0deg);
+}
+.theme-group[data-collapsed="0"] .theme-caret::after{
+  transform: rotate(90deg);
+}
+
+/* Mobile: sections plus compactes */
+@media (max-width: 980px){
+  .theme-head{
+    align-items:flex-start;
+    gap:12px;
+  }
+  .theme-toggle{
+    width: 100%;
+    justify-content:flex-start;
+  }
+  .theme-meta{
+    width: 100%;
+    justify-content:flex-start;
+  }
+  .theme-controls{
+    padding: 10px;
+  }
+}
