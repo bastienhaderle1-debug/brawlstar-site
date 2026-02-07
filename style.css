@@ -1,15 +1,10 @@
 /* =========================
-   style.css — BrawlDex PREMIUM (v8)
-   Objectif: rendu pro "Supercell-ish"
-   - Cut-corners (sans casser l'UX)
-   - Hiérarchie typo (titres/logo, UI, texte)
-   - Micro-animations (hover/press, shimmer, progress)
-   - Composants: header, nav, cards, pills, stats, badge, toast
+   style.css — BrawlDex PREMIUM (clean v9)
+   Objectif: rendu pro "Supercell-ish" (stable + maintenable)
    Compatible avec tes classes existantes
    ========================= */
 
-
-/* ---------- Font (Option B) ---------- */
+/* ---------- Font ---------- */
 @font-face{
   font-family: "BrawlHead";
   src: url("/assets/fonts/BrawlHead.woff2") format("woff2");
@@ -17,7 +12,6 @@
   font-style: normal;
   font-display: swap;
 }
-
 
 /* ---------- Tokens ---------- */
 :root{
@@ -50,7 +44,6 @@
   --stroke: rgba(255,255,255,.16);
   --strokeStrong: rgba(255,255,255,.26);
   --ink: rgba(0,0,0,.72);
-  --inkSoft: rgba(0,0,0,.38);
 
   /* Radius + Cut */
   --r: 22px;
@@ -98,7 +91,7 @@ body{
 }
 
 /* film grain */
-body:before{
+body::before{
   content:"";
   position: fixed;
   inset:0;
@@ -110,7 +103,7 @@ body:before{
 }
 
 /* vignette + depth */
-body:after{
+body::after{
   content:"";
   position: fixed;
   inset:-15%;
@@ -150,6 +143,7 @@ h1{
   font-size: 32px;
   text-transform: uppercase;
 
+  /* On garde UN SEUL système: stroke natif */
   -webkit-text-stroke: 4px rgba(0,0,0,.55);
   paint-order: stroke fill;
 
@@ -176,6 +170,9 @@ h3{
 }
 
 p{ margin: 0 0 10px 0; }
+
+/* IMPORTANT: désactive définitivement la fausse écriture */
+h1::before{ content: none !important; }
 
 /* =========================
    Utilities: cut corners
@@ -212,7 +209,7 @@ p{ margin: 0 0 10px 0; }
 }
 
 /* =========================
-   Header premium
+   Header premium (stable)
    ========================= */
 .header{ margin-bottom: 18px; }
 
@@ -222,7 +219,8 @@ p{ margin: 0 0 10px 0; }
   align-items:flex-start;
   gap:16px;
 
-  padding: 18px;
+  /* espace sous le band */
+  padding: 34px 18px 18px 18px;
   border-radius: 0;
 
   background:
@@ -266,22 +264,23 @@ p{ margin: 0 0 10px 0; }
   .headerbar{ border-radius: calc(var(--r) + 2px); }
 }
 
-/* Supercell band */
-.headerbar:before{
+/* Supercell band (ne touche plus le titre) */
+.headerbar::before{
   content:"";
   position:absolute;
   left:-18%;
   right:-18%;
-  top:-22px;
-  height: 64px;
+  top:-18px;
+  height: 46px;
   transform: rotate(-2deg);
   background: linear-gradient(90deg, rgba(255,79,216,.95), rgba(255,204,0,.95), rgba(59,214,255,.95));
-  opacity:.92;
+  opacity:.95;
   filter: saturate(1.10);
+  z-index: 0;
 }
 
 /* Gloss */
-.headerbar:after{
+.headerbar::after{
   content:"";
   position:absolute;
   inset:-40% -20% auto -20%;
@@ -290,9 +289,17 @@ p{ margin: 0 0 10px 0; }
   transform: rotate(-10deg);
   opacity:.56;
   pointer-events:none;
+  z-index: 0;
 }
 
 .headerbar > *{ position:relative; z-index:1; }
+
+.headerbar h1{
+  margin-top: 8px;
+  margin-bottom: 8px;
+  font-size: 30px;
+  line-height: 1.05;
+}
 
 .header-right{
   display:flex;
@@ -312,14 +319,14 @@ p{ margin: 0 0 10px 0; }
 .nav a{
   color:#fff;
   font-weight: 900;
-  padding: 9px 12px;
+  padding: 8px 12px;
   border-radius: 14px;
 
   background: rgba(255,255,255,.10);
   border: 2px solid rgba(255,255,255,.18);
   outline: 2px solid rgba(0,0,0,.25);
 
-  box-shadow: 0 6px 0 rgba(0,0,0,.18);
+  box-shadow: 0 5px 0 rgba(0,0,0,.18);
   transition: transform var(--t) ease, filter var(--t) ease, background var(--t) ease, border-color var(--t) ease;
 }
 .nav a:hover{
@@ -337,8 +344,8 @@ p{ margin: 0 0 10px 0; }
    Buttons (premium)
    ========================= */
 .seg-btn{
-  padding: 11px 14px;
-  border-radius: 16px;
+  padding: 10px 13px;
+  border-radius: 14px;
 
   background:
     linear-gradient(180deg, rgba(255,255,255,.24), rgba(255,255,255,0)),
@@ -354,8 +361,8 @@ p{ margin: 0 0 10px 0; }
   text-decoration:none;
 
   box-shadow:
-    0 7px 0 var(--y2),
-    0 12px 26px rgba(0,0,0,.20),
+    0 6px 0 var(--y2),
+    0 12px 22px rgba(0,0,0,.18),
     var(--btnGlow);
 
   display:inline-flex;
@@ -365,6 +372,10 @@ p{ margin: 0 0 10px 0; }
 
   transition: transform var(--t) ease, filter var(--t) ease, box-shadow var(--t) ease, opacity var(--t) ease;
   will-change: transform;
+
+  /* Shine support */
+  position: relative;
+  overflow: hidden;
 }
 .seg-btn:hover{
   transform: translateY(-1px);
@@ -391,6 +402,37 @@ p{ margin: 0 0 10px 0; }
   box-shadow: 0 7px 0 rgba(0,0,0,.18);
 }
 
+/* Button shine */
+.seg-btn::after{
+  content:"";
+  position:absolute;
+  top:-60%;
+  left:-40%;
+  width: 60%;
+  height: 220%;
+  transform: rotate(18deg) translateX(-120%);
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.28), rgba(255,255,255,.10), transparent);
+  opacity: 0;
+  pointer-events:none;
+}
+.seg-btn:hover::after,
+.seg-btn:focus-visible::after{
+  opacity: .85;
+  animation: btnShine 0.70s ease-out 1;
+}
+@keyframes btnShine{
+  from { transform: rotate(18deg) translateX(-140%); }
+  to   { transform: rotate(18deg) translateX(240%); }
+}
+.seg-btn.is-loading{
+  pointer-events: none;
+  opacity: .85;
+}
+.seg-btn.is-loading::after{
+  opacity: .55;
+  animation: btnShine 1.05s ease-in-out infinite;
+}
+
 /* =========================
    Toolbar / forms
    ========================= */
@@ -415,7 +457,6 @@ label{
   opacity:.95;
 }
 
-/* Inputs/selects */
 .input, .select{
   padding: 11px 12px;
   border-radius: 16px;
@@ -467,7 +508,7 @@ label{
   margin-bottom: 10px;
 }
 
-/* Card base (cut corners, depth) */
+/* Card base */
 .card{
   position: relative;
   padding: 14px;
@@ -484,9 +525,11 @@ label{
 
   overflow:hidden;
 
-  transition: transform var(--t) ease, filter var(--t) ease, border-color var(--t) ease;
+  transform-style: preserve-3d;
+  transition: transform .18s ease, box-shadow .18s ease, filter .18s ease, border-color var(--t) ease;
   will-change: transform;
 }
+
 @supports (clip-path: polygon(0 0)){
   .card{
     -webkit-clip-path: polygon(
@@ -516,7 +559,7 @@ label{
 }
 
 /* Card gloss */
-.card:before{
+.card::before{
   content:"";
   position:absolute;
   left:0; right:0; top:0;
@@ -527,7 +570,7 @@ label{
 }
 
 /* Card subtle pattern overlay */
-.card:after{
+.card::after{
   content:"";
   position:absolute;
   inset:-22px;
@@ -541,19 +584,31 @@ label{
   filter: blur(.2px);
 }
 
+/* Hover lift */
 .card:hover{
-  transform: translateY(-2px);
-  filter: brightness(1.02);
+  transform: translateY(-4px) scale(1.01);
+  box-shadow: 0 18px 0 rgba(0,0,0,.28), 0 40px 80px rgba(0,0,0,.45);
+  filter: brightness(1.04);
   border-color: rgba(255,204,0,.40);
 }
+
 .card.clickable{ cursor:pointer; }
 .card.clickable:hover{ border-color: rgba(255,204,0,.65); }
 
 .card h3{ margin: 8px 0 6px 0; }
 .card p:last-child{ margin-bottom:0; }
 
+/* Disable hover “lift” on touch devices */
+@media (hover:none){
+  .card:hover{
+    transform:none;
+    box-shadow: var(--shadowHard), var(--shadowSoft);
+    filter:none;
+  }
+}
+
 /* =========================
-   Pills + Rarity icons
+   Pills + Rarity
    ========================= */
 .pill{
   display:inline-flex;
@@ -575,7 +630,7 @@ label{
   box-shadow: 0 4px 0 rgba(0,0,0,.18);
 }
 
-/* Icon injection */
+/* Rarity icon */
 .pill.rarity-rare::before,
 .pill.rarity-super-rare::before,
 .pill.rarity-epic::before,
@@ -620,7 +675,7 @@ label{
   overflow: hidden;
 }
 
-.stat:before{
+.stat::before{
   content:"";
   position:absolute;
   top:10px; right:10px;
@@ -670,7 +725,7 @@ label{
   position:relative;
   transition: width var(--t2) ease;
 }
-.progress-bar:after{
+.progress-bar::after{
   content:"";
   position:absolute;
   inset:0;
@@ -685,13 +740,13 @@ label{
   display:inline-flex;
   align-items:center;
   gap:8px;
-  padding: 8px 10px;
+  padding: 8px 12px;
   border-radius: 999px;
 
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 900;
   text-transform: uppercase;
-  letter-spacing: .45px;
+  letter-spacing: .55px;
 
   background: rgba(255,255,255,.10);
   border: 2px solid rgba(255,255,255,.18);
@@ -765,7 +820,7 @@ label{
 }
 
 /* =========================
-   Toasts (premium)
+   Toasts
    ========================= */
 .toasts{
   position: fixed;
@@ -842,262 +897,19 @@ label{
 .toast.warn .ico{ background: rgba(255,220,80,0.14); border-color: rgba(255,220,80,0.60); }
 
 /* Footer */
-.footer{ margin-top: 30px; opacity: .92; }
+.footer{ margin-top: 36px; opacity: .92; }
 
-/* Responsive */
+/* =========================
+   Responsive
+   ========================= */
 @media (max-width: 980px){
   .cards{ grid-template-columns: 1fr; }
   .stats-grid{ grid-template-columns: 1fr; }
   body{ padding: 16px; }
-  .headerbar{ flex-direction:column; }
+  .headerbar{ flex-direction:column; padding-top: 26px; }
   .header-right{ align-items:flex-start; min-width:unset; }
+  .headerbar h1{ font-size: 28px; }
 }
 @media (max-width: 600px){
   .filter{ min-width: 100%; }
 }
-/* =========================
-   BONUS: Button Shine (Supercell-ish)
-   Ajoute à la FIN du fichier
-   ========================= */
-
-/* Shine overlay */
-.seg-btn{
-  position: relative;
-  overflow: hidden; /* important pour contenir le shine */
-}
-
-/* Bande lumineuse */
-.seg-btn::after{
-  content:"";
-  position:absolute;
-  top:-60%;
-  left:-40%;
-  width: 60%;
-  height: 220%;
-  transform: rotate(18deg) translateX(-120%);
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(255,255,255,.28),
-    rgba(255,255,255,.10),
-    transparent
-  );
-  opacity: .0;
-  pointer-events:none;
-}
-
-/* Animation au hover (propre, pas trop agressif) */
-.seg-btn:hover::after{
-  opacity: .85;
-  animation: btnShine 0.70s ease-out 1;
-}
-
-/* Au focus clavier aussi */
-.seg-btn:focus-visible::after{
-  opacity: .85;
-  animation: btnShine 0.70s ease-out 1;
-}
-
-/* Petit "sparkle" supplémentaire sur hover (très subtil) */
-.seg-btn:hover{
-  filter: brightness(1.03);
-}
-
-/* Keyframes */
-@keyframes btnShine{
-  from { transform: rotate(18deg) translateX(-140%); }
-  to   { transform: rotate(18deg) translateX(240%); }
-}
-
-/* Optionnel: bouton en état "loading"
-   -> ajoute class="seg-btn is-loading" dans ton HTML
-*/
-.seg-btn.is-loading{
-  pointer-events: none;
-  opacity: .85;
-}
-.seg-btn.is-loading::after{
-  opacity: .55;
-  animation: btnShine 1.05s ease-in-out infinite;
-}
-/* =========================
-   BONUS: Cards Premium Lift
-   ========================= */
-
-.card{
-  transform-style: preserve-3d;
-  transition:
-    transform .18s ease,
-    box-shadow .18s ease,
-    filter .18s ease;
-}
-
-/* Effet de "lift" */
-.card:hover{
-  transform: translateY(-4px) scale(1.01);
-  box-shadow:
-    0 18px 0 rgba(0,0,0,.28),
-    0 40px 80px rgba(0,0,0,.45);
-  filter: brightness(1.04);
-}
-
-/* Highlight dynamique (reflet qui suit le hover) */
-.card::after{
-  content:"";
-  position:absolute;
-  inset:0;
-  background:
-    radial-gradient(
-      220px 120px at 30% -20%,
-      rgba(255,255,255,.18),
-      transparent 60%
-    );
-  opacity:.0;
-  transition: opacity .18s ease;
-  pointer-events:none;
-}
-
-.card:hover::after{
-  opacity:.9;
-}
-
-/* Désactivation propre sur mobile */
-@media (hover:none){
-  .card:hover{
-    box-shadow: var(--shadowHard), var(--shadowSoft);
-  }
-}
-
-/* =========================
-   BONUS: Titles Supercell-level
-   ========================= */
-
-h1{
-  position: relative;
-  text-transform: uppercase;
-  letter-spacing: 1.2px;
-
-  text-shadow:
-    0 2px 0 rgba(0,0,0,.35),
-    0 6px 0 rgba(0,0,0,.22),
-    0 10px 20px rgba(0,0,0,.35);
-}
-
-/* Stroke simulé (safe cross-browser) */
-h1::before{
-  content: attr(data-title);
-  position:absolute;
-  inset:0;
-  color: transparent;
-  -webkit-text-stroke: 2px rgba(0,0,0,.55);
-  z-index:-1;
-}
-/* =========================
-   HOTFIX: Header band + spacing + hierarchy
-   Colle tout en BAS du style.css
-   ========================= */
-
-/* 1) Fix bandeau (ne doit plus passer sur le titre) */
-.headerbar{
-  padding-top: 26px; /* crée l'espace sous le band */
-}
-.headerbar:before{
-  top: -10px;            /* remonte un peu le band */
-  height: 52px;          /* plus fin = plus premium */
-  opacity: .95;
-  z-index: 0;            /* derrière le contenu */
-}
-.headerbar > *{
-  z-index: 1;            /* contenu au-dessus */
-}
-
-/* 2) Title: plus propre + mieux aligné */
-.headerbar h1{
-  margin-top: 6px;
-  margin-bottom: 8px;
-  font-size: 30px;
-  line-height: 1.05;
-}
-
-/* Si tu utilises data-title pour stroke : évite l’emoji dans data-title */
-.headerbar h1[data-title]::before{
-  -webkit-text-stroke: 3px rgba(0,0,0,.58);
-  opacity: 1;
-}
-
-/* 3) Nav: boutons un peu plus compacts + plus “menu” */
-.nav a{
-  padding: 8px 12px;
-  border-radius: 14px;
-  box-shadow: 0 5px 0 rgba(0,0,0,.18);
-}
-
-/* 4) Badge connecté: plus “chip” */
-.badge{
-  font-size: 11px;
-  letter-spacing: .55px;
-  padding: 8px 12px;
-}
-
-/* =========================
-   SECTIONS: cards de contenu mieux séparées
-   ========================= */
-
-/* Donne un vrai look de "section" */
-.nav-helper.card,
-#errorCard.card,
-#profileCard.card{
-  border-color: rgba(255,204,0,.55);
-}
-
-/* Ligne de séparation premium entre blocs */
-.nav-helper.card{
-  position: relative;
-}
-.nav-helper.card::before{
-  content:"";
-  position:absolute;
-  left:-10%;
-  right:-10%;
-  top:-14px;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, rgba(255,204,0,.55), transparent);
-  opacity:.9;
-}
-
-/* 5) ERREUR: rendre le message plus “UI système” */
-#errorCard h2{
-  display:flex;
-  align-items:center;
-  gap:10px;
-}
-#errorCard{
-  border-color: rgba(255,75,75,.55);
-}
-#errorCard .muted{
-  opacity:.92;
-}
-
-/* 6) Boutons: réduire un peu le gros aspect “brique” */
-.seg-btn{
-  border-radius: 14px;
-  padding: 10px 13px;
-  box-shadow: 0 6px 0 var(--y2), 0 12px 22px rgba(0,0,0,.18);
-}
-
-/* 7) Footer: pas collé au fond */
-.footer{
-  margin-top: 36px;
-}
-
-/* 8) Mobile: header moins massif */
-@media (max-width: 980px){
-  .headerbar{
-    padding-top: 22px;
-  }
-  .headerbar h1{
-    font-size: 28px;
-  }
-}
-h1::before{ content:""; }               /* neutralise par défaut */
-h1[data-title]::before{ content: attr(data-title); }

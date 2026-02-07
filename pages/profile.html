@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Profil public</title>
+  <title>Profil</title>
   <link rel="stylesheet" href="../style.css" />
 </head>
 
@@ -13,7 +13,7 @@
     <div class="headerbar">
       <div>
         <h1 data-title="PROFIL">👤 PROFIL</h1>
-        <p class="muted">Page profil partageable (stats + skins si activé).</p>
+        <p class="muted">Recherche un joueur par pseudo, ou ouvre un profil via ?u=UUID.</p>
 
         <nav class="nav">
           <a href="../index.html">Accueil</a>
@@ -36,18 +36,30 @@
   </header>
 
   <main class="container">
-    <section class="nav-helper card" id="hintCard" style="display:none;">
-      <h2 data-title="INFO">ℹ️ INFO</h2>
-      <p class="muted" id="hintMsg"></p>
+    <!-- Recherche pseudo -->
+    <section class="card">
+      <h2 data-title="RECHERCHE">🔎 RECHERCHE</h2>
+      <p class="muted">Tape un pseudo (public) et sélectionne un résultat.</p>
 
-      <div class="actions">
-        <a class="seg-btn" href="../index.html">🏠 Accueil</a>
-        <a class="seg-btn" href="./mybrawl.html">🔧 Gérer mon profil</a>
-        <button class="seg-btn" id="btnCopyMyLink" type="button" style="display:none;">📋 Copier mon lien</button>
-      </div>
+      <section class="toolbar" style="margin-bottom:10px;">
+        <div class="filter" style="min-width:260px; flex:1;">
+          <label for="searchName">Pseudo</label>
+          <input id="searchName" class="input" type="text" placeholder="ex: BabaXkiwi" />
+        </div>
+
+        <div style="display:flex; align-items:end; gap:10px; flex-wrap:wrap;">
+          <button class="seg-btn is-active" id="btnSearch" type="button">Rechercher</button>
+          <button class="seg-btn" id="btnClear" type="button">Effacer</button>
+        </div>
+      </section>
+
+      <p class="muted" id="searchMsg"></p>
+
+      <div class="cards" id="searchResults" style="grid-template-columns: repeat(2, minmax(240px, 1fr));"></div>
     </section>
 
-    <section class="card" id="errorCard" style="display:none;">
+    <!-- Erreur -->
+    <section class="card" id="errorCard" style="display:none; margin-top:14px;">
       <h2 data-title="ERREUR">❌ ERREUR</h2>
       <p class="muted" id="errorMsg"></p>
       <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:12px;">
@@ -56,7 +68,8 @@
       </div>
     </section>
 
-    <section class="card" id="profileCard" style="display:none;">
+    <!-- Profil -->
+    <section class="card" id="profileCard" style="display:none; margin-top:14px;">
       <h2 id="displayName">—</h2>
       <p class="muted" id="bio">—</p>
       <p class="muted" id="updatedLine"></p>
@@ -85,10 +98,11 @@
       </div>
     </section>
 
-    <section class="toolbar" id="toolbar" style="display:none;">
+    <!-- Filtres skins -->
+    <section class="toolbar" id="toolbar" style="display:none; margin-top:14px;">
       <div class="filter">
-        <label for="search">Recherche</label>
-        <input id="search" class="input" type="text" placeholder="ex: shelly, star..." />
+        <label for="searchSkins">Recherche skins</label>
+        <input id="searchSkins" class="input" type="text" placeholder="ex: shelly, star..." />
       </div>
 
       <div class="filter">
@@ -97,7 +111,8 @@
       </div>
     </section>
 
-    <section id="skinsSection" style="display:none;">
+    <!-- Liste skins -->
+    <section id="skinsSection" style="display:none; margin-top:8px;">
       <h2 data-title="SKINS">✅ SKINS</h2>
       <p class="muted" id="resultCount"></p>
       <div class="cards" id="cards"></div>
@@ -116,7 +131,6 @@
   <script src="../data/skins-data.js"></script>
 
   <script src="../js/owned-service.js"></script>
-
   <script src="../js/profile.js"></script>
   <script src="../js/site.js"></script>
 </body>
