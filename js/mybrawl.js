@@ -33,6 +33,8 @@
   const email = document.getElementById("email");
   const password = document.getElementById("password");
   const btnLogin = document.getElementById("btnLogin");
+  const btnResend = document.getElementById("btnResend");
+
   const btnSignup = document.getElementById("btnSignup");
 
   const btnLogout = document.getElementById("btnLogout");
@@ -158,6 +160,35 @@
   options: {
     emailRedirectTo: "https://brawlstar-site.vercel.app/pages/mybrawl.html"
   }
+
+  async function resendConfirmationEmail() {
+  const mail = (email.value || "").trim();
+  if (!mail) {
+    setAuthMessage("⚠️ Mets ton email puis clique sur Renvoyer l’email.");
+    return;
+  }
+
+  setAuthMessage("Envoi de l’email...");
+  try {
+    const { error } = await supa.auth.resend({
+      type: "signup",
+      email: mail,
+      options: {
+        emailRedirectTo: "https://brawlstar-site.vercel.app/pages/mybrawl.html"
+      }
+    });
+
+    if (error) {
+      setAuthMessage("❌ " + error.message);
+      return;
+    }
+
+    setAuthMessage("✅ Email renvoyé. Vérifie ta boîte mail (et spams).");
+  } catch (e) {
+    setAuthMessage("❌ " + (e.message || String(e)));
+  }
+}
+
 });
 
       setAuthBusy(false, "✅ Compte créé. Vérifie ton email si confirmation activée.");
@@ -414,6 +445,8 @@
       const cb = el.querySelector("input[type='checkbox']");
       cb.addEventListener("change", async (e) => {
         await setOwned(s.id, e.target.checked);
+        btnResend.addEventListener("click", resendConfirmationEmail);
+
       });
 
       cards.appendChild(el);
