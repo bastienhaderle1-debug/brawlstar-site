@@ -1,12 +1,10 @@
 /* =========================
-   style.css (Brawl-like v6 ULTRA)
-   ✅ 1) Titres (h1/h2) : stroke + emboss + hiérarchie
-   ✅ 2) Header : premium “Supercell-ish” (bande + gloss + profondeur)
-   ✅ 3) Micro-animations : hover/press/focus cohérents (sans kitsch)
-   ✅ 4) Hiérarchie texte : lisible + pro (cards, stats, helpers, erreurs)
-   Compatible avec tes classes HTML actuelles
+   style.css (Brawl-like v7 MASTER)
+   ✅ Cut-corners (cartoon bevel)
+   ✅ Icônes (rarity/stats) sans lib
+   ✅ Micro-animations ciblées + skeleton
+   ✅ Tokens propres + composants cohérents
    ========================= */
-
 
 /* ---------- Font (Option B) ---------- */
 @font-face{
@@ -17,14 +15,15 @@
   font-display: swap;
 }
 
-
 /* ---------- Tokens ---------- */
 :root{
-  /* Background */
+  /* BG */
   --bg:#0b041b;
   --bg2:#070214;
 
   /* Panels */
+  --panelTop: rgba(255,255,255,.10);
+  --panelMid: rgba(255,255,255,.06);
   --panelA:#2a165b;
   --panelB:#1e0f45;
 
@@ -45,11 +44,9 @@
   --info:#7aa2ff;
   --warn:#ffd65a;
 
-  /* Outlines / ink */
+  /* Ink/outlines */
   --ink: rgba(0,0,0,.72);
   --inkSoft: rgba(0,0,0,.42);
-
-  /* Strokes */
   --stroke: rgba(255,255,255,.16);
   --strokeStrong: rgba(255,255,255,.26);
 
@@ -67,8 +64,13 @@
   /* Motion */
   --t: .14s;
   --t2: .22s;
-}
 
+  /* Cut-corner size */
+  --cut: 18px;
+
+  /* Pattern overlay (very subtle) */
+  --patternOpacity: .10;
+}
 
 /* ---------- Reset ---------- */
 *{ box-sizing:border-box; }
@@ -78,14 +80,12 @@ body{
   margin: 0;
   color: var(--text);
 
-  /* Typo globale */
   font-family: "BrawlHead", "Trebuchet MS", "Arial Black", Arial, sans-serif;
   letter-spacing: .15px;
   line-height: 1.35;
 
   padding: 22px;
 
-  /* Fond “menu Brawl” + spots */
   background:
     radial-gradient(900px 600px at 12% -10%, rgba(255,79,216,.16), transparent 55%),
     radial-gradient(900px 600px at 92% 0%, rgba(59,214,255,.14), transparent 55%),
@@ -93,7 +93,7 @@ body{
     linear-gradient(180deg, var(--bg), var(--bg2));
 }
 
-/* grain + vignette pro */
+/* grain */
 body:before{
   content:"";
   position: fixed;
@@ -104,6 +104,8 @@ body:before{
   background-size: 14px 14px;
   mix-blend-mode: overlay;
 }
+
+/* vignette */
 body:after{
   content:"";
   position: fixed;
@@ -113,11 +115,28 @@ body:after{
   opacity:.60;
 }
 
+/* Ultra subtle pattern overlay (no external image) */
+@supports (mask-image: radial-gradient(black, transparent)){
+  .container::before{
+    content:"";
+    position:absolute;
+    inset:-18px;
+    pointer-events:none;
+    opacity: var(--patternOpacity);
+    background:
+      radial-gradient(10px 10px at 15% 20%, rgba(255,255,255,.25), transparent 60%),
+      radial-gradient(10px 10px at 35% 70%, rgba(255,255,255,.22), transparent 60%),
+      radial-gradient(10px 10px at 65% 35%, rgba(255,255,255,.18), transparent 60%),
+      radial-gradient(10px 10px at 80% 78%, rgba(255,255,255,.20), transparent 60%);
+    filter: blur(.2px);
+    z-index:0;
+  }
+}
+
 /* Reduced motion */
 @media (prefers-reduced-motion: reduce){
   *{ transition: none !important; animation: none !important; }
 }
-
 
 /* ---------- Layout ---------- */
 .container{ max-width: 1120px; margin: 0 auto; position:relative; z-index:1; }
@@ -131,52 +150,72 @@ a{
 }
 a:hover{ text-decoration: underline; }
 
-
-/* =========================
-   1) TITRES : stroke + emboss
-   ========================= */
+/* ---------- Titles (emboss + stroke) ---------- */
 h1,h2,h3{
   margin:0 0 10px 0;
   font-weight: 900;
   letter-spacing:.8px;
 }
-
 h1{
   font-size: 30px;
   text-transform: uppercase;
-
-  /* Stroke “logo” */
   -webkit-text-stroke: 4px rgba(0,0,0,.55);
   paint-order: stroke fill;
-
-  /* Emboss multi-layer */
   text-shadow:
     0 2px 0 rgba(0,0,0,.55),
     0 6px 0 rgba(0,0,0,.28),
     0 14px 24px rgba(0,0,0,.35);
 }
-
 h2{
   font-size: 18px;
   text-transform: uppercase;
-
   -webkit-text-stroke: 2px rgba(0,0,0,.45);
   text-shadow:
     0 2px 0 rgba(0,0,0,.40),
     0 8px 18px rgba(0,0,0,.28);
 }
-
 h3{
   font-size: 16px;
   letter-spacing:.25px;
   text-shadow: 0 2px 0 rgba(0,0,0,.30);
 }
-
 p{ margin: 0 0 10px 0; }
 
+/* =========================
+   CUT-CORNERS (unified)
+   ========================= */
+
+/* Utility: applies polygon cut corners + safe overflow */
+.cut{
+  -webkit-clip-path: polygon(
+    var(--cut) 0,
+    calc(100% - var(--cut)) 0,
+    100% var(--cut),
+    100% calc(100% - var(--cut)),
+    calc(100% - var(--cut)) 100%,
+    var(--cut) 100%,
+    0 calc(100% - var(--cut)),
+    0 var(--cut)
+  );
+  clip-path: polygon(
+    var(--cut) 0,
+    calc(100% - var(--cut)) 0,
+    100% var(--cut),
+    100% calc(100% - var(--cut)),
+    calc(100% - var(--cut)) 100%,
+    var(--cut) 100%,
+    0 calc(100% - var(--cut)),
+    0 var(--cut)
+  );
+}
+
+/* If browser doesn't support clip-path, fall back to radius */
+@supports not (clip-path: polygon(0 0)){
+  .cut{ border-radius: var(--r); }
+}
 
 /* =========================
-   2) HEADER PREMIUM
+   HEADER (premium)
    ========================= */
 .header{ margin-bottom: 18px; }
 
@@ -187,24 +226,49 @@ p{ margin: 0 0 10px 0; }
   gap:16px;
 
   padding: 18px;
-  border-radius: calc(var(--r) + 2px);
 
-  /* Base sombre + highlight */
   background:
     radial-gradient(260px 160px at 25% 0%, rgba(255,255,255,.10), transparent 60%),
     linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.03)),
     linear-gradient(180deg, rgba(50,26,120,.90), rgba(14,7,42,.95));
 
-  /* Double contour “cartoon premium” */
   border: 3px solid rgba(255,255,255,.16);
   outline: 3px solid rgba(0,0,0,.45);
 
   box-shadow: var(--shadowHard), var(--shadowSoft);
   position: relative;
   overflow:hidden;
+
+  /* cut corners */
+  border-radius: 0;
+  will-change: transform;
+}
+.headerbar{ /* apply cut corners via clip-path */
+  -webkit-clip-path: polygon(
+    var(--cut) 0,
+    calc(100% - var(--cut)) 0,
+    100% var(--cut),
+    100% calc(100% - var(--cut)),
+    calc(100% - var(--cut)) 100%,
+    var(--cut) 100%,
+    0 calc(100% - var(--cut)),
+    0 var(--cut)
+  );
+  clip-path: polygon(
+    var(--cut) 0,
+    calc(100% - var(--cut)) 0,
+    100% var(--cut),
+    100% calc(100% - var(--cut)),
+    calc(100% - var(--cut)) 100%,
+    var(--cut) 100%,
+    0 calc(100% - var(--cut)),
+    0 var(--cut)
+  );
+}
+@supports not (clip-path: polygon(0 0)){
+  .headerbar{ border-radius: calc(var(--r) + 2px); }
 }
 
-/* Bande Supercell */
 .headerbar:before{
   content:"";
   position:absolute;
@@ -217,8 +281,6 @@ p{ margin: 0 0 10px 0; }
   opacity:.92;
   filter: saturate(1.10);
 }
-
-/* Gloss contrôlé */
 .headerbar:after{
   content:"";
   position:absolute;
@@ -229,7 +291,6 @@ p{ margin: 0 0 10px 0; }
   opacity:.58;
   pointer-events:none;
 }
-
 .headerbar > *{ position:relative; z-index:1; }
 
 .header-right{
@@ -240,7 +301,6 @@ p{ margin: 0 0 10px 0; }
   min-width:220px;
 }
 
-
 /* Nav premium */
 .nav{
   display:flex;
@@ -248,7 +308,6 @@ p{ margin: 0 0 10px 0; }
   flex-wrap:wrap;
   margin-top:10px;
 }
-
 .nav a{
   color:#fff;
   font-weight: 900;
@@ -260,37 +319,18 @@ p{ margin: 0 0 10px 0; }
   outline: 2px solid rgba(0,0,0,.25);
 
   box-shadow: 0 6px 0 rgba(0,0,0,.18);
-  transition:
-    transform var(--t) ease,
-    filter var(--t) ease,
-    background var(--t) ease,
-    border-color var(--t) ease;
-}
 
-.nav a:hover{
-  transform: translateY(-1px);
-  filter: brightness(1.03);
-  background: rgba(255,255,255,.14);
+  transition: transform var(--t) ease, filter var(--t) ease, background var(--t) ease, border-color var(--t) ease;
 }
-
+.nav a:hover{ transform: translateY(-1px); filter: brightness(1.03); background: rgba(255,255,255,.14); }
 .nav a.is-active{
   background: rgba(255,204,0,.18);
   border-color: rgba(255,204,0,.60);
   outline: 2px solid rgba(0,0,0,.35);
 }
 
-
 /* =========================
-   3) MICRO-ANIMATIONS COHÉRENTES
-   ========================= */
-@keyframes popIn {
-  from { transform: translateY(4px); opacity: .0; }
-  to   { transform: translateY(0); opacity: 1; }
-}
-
-
-/* =========================
-   4) HIÉRARCHIE (cards / helpers / erreurs)
+   CARDS + GRID
    ========================= */
 .cards{
   display:grid;
@@ -305,10 +345,11 @@ p{ margin: 0 0 10px 0; }
   margin-bottom: 10px;
 }
 
+/* Card base */
 .card{
   position: relative;
-  border-radius: var(--r);
   padding: 14px;
+  border-radius: 0;
 
   background:
     radial-gradient(260px 160px at 25% 0%, rgba(255,255,255,.09), transparent 62%),
@@ -322,7 +363,34 @@ p{ margin: 0 0 10px 0; }
   overflow:hidden;
 
   transition: transform var(--t) ease, filter var(--t) ease, border-color var(--t) ease;
-  animation: popIn .35s ease both;
+  will-change: transform;
+}
+
+/* Cut corners on cards */
+.card{
+  -webkit-clip-path: polygon(
+    var(--cut) 0,
+    calc(100% - var(--cut)) 0,
+    100% var(--cut),
+    100% calc(100% - var(--cut)),
+    calc(100% - var(--cut)) 100%,
+    var(--cut) 100%,
+    0 calc(100% - var(--cut)),
+    0 var(--cut)
+  );
+  clip-path: polygon(
+    var(--cut) 0,
+    calc(100% - var(--cut)) 0,
+    100% var(--cut),
+    100% calc(100% - var(--cut)),
+    calc(100% - var(--cut)) 100%,
+    var(--cut) 100%,
+    0 calc(100% - var(--cut)),
+    0 var(--cut)
+  );
+}
+@supports not (clip-path: polygon(0 0)){
+  .card{ border-radius: var(--r); }
 }
 
 .card:before{
@@ -341,17 +409,18 @@ p{ margin: 0 0 10px 0; }
   border-color: rgba(255,204,0,.45);
 }
 
-.card h3{ margin: 8px 0 6px 0; }
-.card p:last-child{ margin-bottom:0; }
-
 .card.clickable{ cursor:pointer; }
 .card.clickable:hover{ border-color: rgba(255,204,0,.65); }
+
+.card h3{ margin: 8px 0 6px 0; }
+.card p:last-child{ margin-bottom:0; }
 
 /* Helper cards (PARTAGE / ASTUCE) */
 .nav-helper{
   margin: 24px 0;
   padding: 16px;
-  border-radius: var(--r);
+
+  border-radius: 0;
 
   background:
     radial-gradient(260px 160px at 15% 0%, rgba(255,255,255,.10), transparent 60%),
@@ -361,6 +430,34 @@ p{ margin: 0 0 10px 0; }
   outline: 3px solid rgba(0,0,0,.32);
 
   box-shadow: 0 12px 0 rgba(0,0,0,.26), 0 22px 44px rgba(0,0,0,.25);
+  overflow:hidden;
+}
+
+/* Cut corners helpers */
+.nav-helper{
+  -webkit-clip-path: polygon(
+    var(--cut) 0,
+    calc(100% - var(--cut)) 0,
+    100% var(--cut),
+    100% calc(100% - var(--cut)),
+    calc(100% - var(--cut)) 100%,
+    var(--cut) 100%,
+    0 calc(100% - var(--cut)),
+    0 var(--cut)
+  );
+  clip-path: polygon(
+    var(--cut) 0,
+    calc(100% - var(--cut)) 0,
+    100% var(--cut),
+    100% calc(100% - var(--cut)),
+    calc(100% - var(--cut)) 100%,
+    var(--cut) 100%,
+    0 calc(100% - var(--cut)),
+    0 var(--cut)
+  );
+}
+@supports not (clip-path: polygon(0 0)){
+  .nav-helper{ border-radius: var(--r); }
 }
 
 .nav-helper .actions{
@@ -370,8 +467,9 @@ p{ margin: 0 0 10px 0; }
   margin-top:10px;
 }
 
-
-/* Toolbar / forms */
+/* =========================
+   FORMS / TOOLBAR
+   ========================= */
 .toolbar{
   display:flex;
   gap:14px;
@@ -395,7 +493,7 @@ label{
   opacity:.95;
 }
 
-/* Inputs / selects */
+/* Inputs/selects */
 .input, .select{
   padding: 11px 12px;
   border-radius: 16px;
@@ -408,24 +506,14 @@ label{
 
   box-shadow: 0 7px 0 rgba(0,0,0,.23);
 
-  transition:
-    border-color var(--t) ease,
-    filter var(--t) ease,
-    background var(--t) ease,
-    transform var(--t) ease;
+  transition: border-color var(--t) ease, filter var(--t) ease, background var(--t) ease, transform var(--t) ease;
 }
-
-.input:hover, .select:hover{
-  filter: brightness(1.03);
-  background: rgba(10, 5, 25, .46);
-}
-
+.input:hover, .select:hover{ filter: brightness(1.03); background: rgba(10, 5, 25, .46); }
 .input:focus, .select:focus{
   border-color: var(--focus);
   outline: 2px solid rgba(0,0,0,.42);
   transform: translateY(-1px);
 }
-
 .input::placeholder{ color: rgba(255,255,255,0.62); }
 .select option{ color:#111; }
 
@@ -439,8 +527,9 @@ label{
   box-shadow: 0 7px 0 rgba(0,0,0,.23);
 }
 
-
-/* Buttons */
+/* =========================
+   BUTTONS (micro anim)
+   ========================= */
 .seg-btn{
   padding: 11px 14px;
   border-radius: 16px;
@@ -466,6 +555,7 @@ label{
   gap:8px;
 
   transition: transform var(--t) ease, filter var(--t) ease, box-shadow var(--t) ease, opacity var(--t) ease;
+  will-change: transform;
 }
 
 .seg-btn:hover{
@@ -493,8 +583,15 @@ label{
   box-shadow: 0 7px 0 rgba(0,0,0,.18);
 }
 
+/* nicer focus for keyboard */
+.seg-btn:focus-visible, .nav a:focus-visible, .input:focus-visible, .select:focus-visible{
+  outline: 3px solid rgba(59,214,255,.60);
+  outline-offset: 2px;
+}
 
-/* Pills */
+/* =========================
+   PILLS + ICONS
+   ========================= */
 .pill{
   display:inline-flex;
   align-items:center;
@@ -515,7 +612,21 @@ label{
   box-shadow: 0 4px 0 rgba(0,0,0,.18);
 }
 
-/* Rarity */
+/* Rarity icon "★" injected */
+.pill.rarity-rare::before,
+.pill.rarity-super-rare::before,
+.pill.rarity-epic::before,
+.pill.rarity-mythic::before,
+.pill.rarity-legendary::before,
+.pill.rarity-hypercharge::before{
+  content:"★";
+  font-size: 12px;
+  line-height: 1;
+  opacity:.95;
+  filter: drop-shadow(0 2px 0 rgba(0,0,0,.35));
+}
+
+/* Rarity colors */
 .pill.rarity-rare { background: rgba(0, 255, 120, 0.16); border-color: rgba(0, 255, 120, 0.55); }
 .pill.rarity-super-rare { background: rgba(0, 150, 255, 0.16); border-color: rgba(0, 150, 255, 0.60); }
 .pill.rarity-epic { background: rgba(190, 0, 255, 0.16); border-color: rgba(190, 0, 255, 0.60); }
@@ -523,8 +634,9 @@ label{
 .pill.rarity-legendary { background: rgba(255, 220, 80, 0.16); border-color: rgba(255, 220, 80, 0.70); }
 .pill.rarity-hypercharge { background: rgba(255, 0, 255, 0.16); border-color: rgba(255, 0, 255, 0.70); }
 
-
-/* Stats */
+/* =========================
+   STATS + ICONS
+   ========================= */
 .stats-grid{
   display:grid;
   grid-template-columns: repeat(3, minmax(160px, 1fr));
@@ -541,6 +653,22 @@ label{
   outline: 2px solid rgba(0,0,0,.25);
 
   box-shadow: 0 10px 0 rgba(0,0,0,.22);
+  position: relative;
+  overflow: hidden;
+}
+
+/* simple icon bubble on stats */
+.stat::before{
+  content:"";
+  position:absolute;
+  top:10px; right:10px;
+  width: 24px; height: 24px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.10);
+  border: 2px solid rgba(255,255,255,.14);
+  outline: 2px solid rgba(0,0,0,.18);
+  box-shadow: 0 3px 0 rgba(0,0,0,.18);
+  opacity:.9;
 }
 
 .stat-label{
@@ -558,7 +686,7 @@ label{
   paint-order: stroke fill;
 }
 
-/* Progress glossy */
+/* Progress glossy + animate width smoothly */
 .progress{
   height: 12px;
   border-radius: 999px;
@@ -571,13 +699,13 @@ label{
 
   box-shadow: 0 8px 0 rgba(0,0,0,.20);
 }
-
 .progress-bar{
   height:100%;
   border-radius:999px;
   background: linear-gradient(90deg, var(--p), var(--y), var(--b));
   width: 0%;
   position:relative;
+  transition: width var(--t2) ease;
 }
 .progress-bar:after{
   content:"";
@@ -587,8 +715,9 @@ label{
   opacity:.72;
 }
 
-
-/* Auth badge */
+/* =========================
+   BADGE (auth)
+   ========================= */
 .badge{
   display:inline-flex;
   align-items:center;
@@ -621,8 +750,9 @@ label{
 .badge.info{ border-color: rgba(120,160,255,0.55); }
 .badge.info .dot{ background: var(--info); }
 
-
-/* Toasts */
+/* =========================
+   TOASTS
+   ========================= */
 .toasts{
   position: fixed;
   right: 16px;
@@ -689,10 +819,32 @@ label{
 .toast.warn{ border-color: rgba(255,220,80,0.55); }
 .toast.warn .ico{ background: rgba(255,220,80,0.14); border-color: rgba(255,220,80,0.60); }
 
+/* =========================
+   SKELETON (optional)
+   Usage: add class "skeleton" to any block
+   ========================= */
+.skeleton{
+  position: relative;
+  overflow:hidden;
+  background: rgba(255,255,255,.07);
+  border: 2px solid rgba(255,255,255,.14);
+  outline: 2px solid rgba(0,0,0,.20);
+}
+.skeleton:after{
+  content:"";
+  position:absolute;
+  inset:-40% -60%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.14), transparent);
+  transform: rotate(8deg);
+  animation: shimmer 1.15s linear infinite;
+}
+@keyframes shimmer{
+  from{ transform: translateX(-40%) rotate(8deg); }
+  to{ transform: translateX(40%) rotate(8deg); }
+}
 
 /* Footer */
 .footer{ margin-top: 30px; opacity: .92; }
-
 
 /* Responsive */
 @media (max-width: 980px){
