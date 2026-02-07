@@ -15,7 +15,7 @@
   const Svc = window.OwnedService;
 
   const SKINS = Svc.getSkins();
-  const RARITY_ORDER = window.RARITY_ORDER ?? ["Rare","Super Rare","Epic","Mythique","Légendaire","Hypercharge"];
+  const RARITY_ORDER = window.RARITY_ORDER ?? ["Rare", "Super Rare", "Epic", "Mythique", "Légendaire", "Hypercharge"];
   const RARITY_CLASS = {
     "Rare": "rarity-rare",
     "Super Rare": "rarity-super-rare",
@@ -25,6 +25,9 @@
     "Hypercharge": "rarity-hypercharge",
   };
 
+  // ✅ URL de retour email (évite localhost)
+  const EMAIL_REDIRECT_TO = "https://brawlstar-site.vercel.app/pages/mybrawl.html";
+
   // Elements
   const authCard = document.getElementById("authCard");
   const app = document.getElementById("app");
@@ -33,9 +36,8 @@
   const email = document.getElementById("email");
   const password = document.getElementById("password");
   const btnLogin = document.getElementById("btnLogin");
-  const btnResend = document.getElementById("btnResend");
-
   const btnSignup = document.getElementById("btnSignup");
+  const btnResend = document.getElementById("btnResend");
 
   const btnLogout = document.getElementById("btnLogout");
   const btnReload = document.getElementById("btnReload");
@@ -73,24 +75,53 @@
   let authBusy = false;
 
   // Utils
-  const setAuthMessage = (m)=> authMsg.textContent = m || "";
-  const setStatus = (m)=> status.textContent = m || "";
-  const setProfileMsg = (m)=> profileMsg.textContent = m || "";
+  const setAuthMessage = (m) => (authMsg.textContent = m || "");
+  const setStatus = (m) => (status.textContent = m || "");
+  const setProfileMsg = (m) => (profileMsg.textContent = m || "");
 
-  function setAuthBusy(busy, msg) {
+  function toast(type, title, message) {
+    if (window.showToast) window.showToast(message, type, title, 3500);
+  }
+
+  function normalizeAuthError(err) {
+    const msg = String(err?.message || err || "");
+    const low = msg.toLowerCase();
+
+    if (low.includes("invalid login credentials")) {
+      return { title: "Connexion", message: "Email ou mot de passe incorrect.", code: "bad_credentials" };
+    }
+    if (low.includes("email not confirmed")) {
+      return {
+        title: "Connexion",
+        message: "Email non confirmé. Clique sur « Renvoyer l’email ».",
+        code: "email_not_confirmed",
+      };
+    }
+    if (low.includes("user already registered")) {
+      return { title: "Inscription", message: "Un compte existe déjà avec cet email. Essaie de te connecter.", code: "already_registered" };
+    }
+    if (low.includes("password should be at least")) {
+      return { title: "Inscription", message: "Mot de passe trop court (minimum requis).", code: "weak_password" };
+    }
+    if (low.includes("rate limit")) {
+      return { title: "Trop de tentatives", message: "Réessaie dans quelques minutes.", code: "rate_limit" };
+    }
+
+    return { title: "Erreur", message: msg || "Une erreur est survenue.", code: "unknown" };
+  }
+
+  function setAuthBusyState(busy, msg) {
     authBusy = !!busy;
+
     if (btnLogin) btnLogin.disabled = authBusy;
     if (btnSignup) btnSignup.disabled = authBusy;
-
-    // optionnel : feedback visuel si disabled
-    if (btnLogin) btnLogin.style.opacity = authBusy ? "0.6" : "1";
-    if (btnSignup) btnSignup.style.opacity = authBusy ? "0.6" : "1";
+    if (btnResend) btnResend.disabled = authBusy;
 
     if (msg !== undefined) setAuthMessage(msg);
   }
 
   function uniqueSorted(arr) {
-    return [...new Set(arr)].filter(Boolean).sort((a,b)=>String(a).localeCompare(String(b),"fr"));
+    return [...new Set(arr)].filter(Boolean).sort((a, b) => String(a).localeCompare(String(b), "fr"));
   }
 
   function buildBrawlerFilter() {
@@ -100,7 +131,7 @@
     all.textContent = "Tous";
     filterBrawler.appendChild(all);
 
-    uniqueSorted(SKINS.map(s=>s.brawler)).forEach(b => {
+    uniqueSorted(SKINS.map((s) => s.brawler)).forEach((b) => {
       const opt = document.createElement("option");
       opt.value = b;
       opt.textContent = b;
@@ -115,7 +146,7 @@
     all.textContent = "Toutes";
     filterRarity.appendChild(all);
 
-    RARITY_ORDER.forEach(r => {
+    RARITY_ORDER.forEach((r) => {
       const opt = document.createElement("option");
       opt.value = r;
       opt.textContent = r;
@@ -138,87 +169,111 @@
     setAuthMessage("");
     setStatus("");
     setProfileMsg("");
-    setAuthBusy(false);
+    setAuthBusyState(false, "");
   }
 
   // Auth
   async function signup() {
     if (authBusy) return;
-    const em = email.value.trim();
-    const pw = password.value;
+
+    const em = (email.value || "").trim();
+    const pw = password.value || "";
 
     if (!em || !pw) {
       setAuthMessage("❌ Renseigne email + mot de passe.");
+      toast("error", "Inscription", "Renseigne email et mot de passe.");
       return;
     }
 
-    setAuthBusy(true, "Création du compte...");
+    setAuthBusyState(true, "Création du compte...");
     try {
-     const { error } = await supa.auth.signUp({
-  email: email.value.trim(),
-  password: password.value,
-  options: {
-    emailRedirectTo: "https://brawlstar-site.vercel.app/pages/mybrawl.html"
+      const { error } = await supa.auth.signUp({
+        email: em,
+        password: pw,
+        options: { emailRedirectTo: EMAIL_REDIRECT_TO },
+      });
+
+      if (error) {
+        const n = normalizeAuthError(error);
+        setAuthBusyState(false, "❌ " + n.message);
+        toast("error", n.title, n.message);
+        return;
+      }
+
+      setAuthBusyState(false, "✅ Compte créé. Vérifie ton email (spams inclus).");
+      toast("success", "Inscription", "Compte créé. Vérifie ton email pour confirmer.");
+    } catch (e) {
+      const msg = e?.message || String(e);
+      setAuthBusyState(false, "❌ " + msg);
+      toast("error", "Erreur", msg);
+    }
   }
 
   async function resendConfirmationEmail() {
-  const mail = (email.value || "").trim();
-  if (!mail) {
-    setAuthMessage("⚠️ Mets ton email puis clique sur Renvoyer l’email.");
-    return;
-  }
+    if (authBusy) return;
 
-  setAuthMessage("Envoi de l’email...");
-  try {
-    const { error } = await supa.auth.resend({
-      type: "signup",
-      email: mail,
-      options: {
-        emailRedirectTo: "https://brawlstar-site.vercel.app/pages/mybrawl.html"
-      }
-    });
-
-    if (error) {
-      setAuthMessage("❌ " + error.message);
+    const em = (email.value || "").trim();
+    if (!em) {
+      setAuthMessage("⚠️ Mets ton email puis clique sur Renvoyer l’email.");
+      toast("info", "Email", "Entre ton email puis clique sur Renvoyer.");
       return;
     }
 
-    setAuthMessage("✅ Email renvoyé. Vérifie ta boîte mail (et spams).");
-  } catch (e) {
-    setAuthMessage("❌ " + (e.message || String(e)));
-  }
-}
+    setAuthBusyState(true, "Envoi de l’email...");
+    try {
+      const { error } = await supa.auth.resend({
+        type: "signup",
+        email: em,
+        options: { emailRedirectTo: EMAIL_REDIRECT_TO },
+      });
 
-});
+      if (error) {
+        const n = normalizeAuthError(error);
+        setAuthBusyState(false, "❌ " + n.message);
+        toast("error", "Email", n.message);
+        return;
+      }
 
-      setAuthBusy(false, "✅ Compte créé. Vérifie ton email si confirmation activée.");
+      setAuthBusyState(false, "✅ Email renvoyé. Vérifie ta boîte mail (et spams).");
+      toast("success", "Email", "Email renvoyé. Vérifie ta boîte mail (spams inclus).");
     } catch (e) {
-      setAuthBusy(false, "❌ " + (e?.message || String(e)));
+      const msg = e?.message || String(e);
+      setAuthBusyState(false, "❌ " + msg);
+      toast("error", "Erreur", msg);
     }
   }
 
   async function login() {
     if (authBusy) return;
-    const em = email.value.trim();
-    const pw = password.value;
+
+    const em = (email.value || "").trim();
+    const pw = password.value || "";
 
     if (!em || !pw) {
       setAuthMessage("❌ Renseigne email + mot de passe.");
+      toast("error", "Connexion", "Renseigne email et mot de passe.");
       return;
     }
 
-    setAuthBusy(true, "Connexion...");
+    setAuthBusyState(true, "Connexion...");
     try {
       const { data, error } = await supa.auth.signInWithPassword({ email: em, password: pw });
+
       if (error) {
-        setAuthBusy(false, "❌ " + error.message);
+        const n = normalizeAuthError(error);
+        setAuthBusyState(false, "❌ " + n.message);
+        toast("error", n.title, n.message);
         return;
       }
+
       showLoggedIn(data.user);
-      setAuthBusy(false, "");
+      toast("success", "Connexion", "Connecté.");
+      setAuthBusyState(false, "");
       await refreshAll();
     } catch (e) {
-      setAuthBusy(false, "❌ " + (e?.message || String(e)));
+      const msg = e?.message || String(e);
+      setAuthBusyState(false, "❌ " + msg);
+      toast("error", "Erreur", msg);
     }
   }
 
@@ -311,11 +366,9 @@
         updated_at: new Date().toISOString(),
       };
 
-      const { error } = await supa
-        .from("public_profiles")
-        .upsert(payload, { onConflict: "user_id" });
-
+      const { error } = await supa.from("public_profiles").upsert(payload, { onConflict: "user_id" });
       if (error) return setProfileMsg("❌ " + error.message);
+
       setProfileMsg("✅ Profil enregistré.");
     } catch (e) {
       if (Svc.isAbortError?.(e)) return;
@@ -330,11 +383,7 @@
     try {
       await savePublicProfile();
 
-      const { error: delErr } = await supa
-        .from("public_user_skins")
-        .delete()
-        .eq("user_id", currentUser.id);
-
+      const { error: delErr } = await supa.from("public_user_skins").delete().eq("user_id", currentUser.id);
       if (delErr) return setProfileMsg("❌ " + delErr.message);
 
       if (ownedSet.size === 0) {
@@ -342,12 +391,10 @@
         return;
       }
 
-      const rows = [...ownedSet].map(skin_id => ({ user_id: currentUser.id, skin_id }));
-      const { error: insErr } = await supa
-        .from("public_user_skins")
-        .upsert(rows, { onConflict: "user_id,skin_id" });
-
+      const rows = [...ownedSet].map((skin_id) => ({ user_id: currentUser.id, skin_id }));
+      const { error: insErr } = await supa.from("public_user_skins").upsert(rows, { onConflict: "user_id,skin_id" });
       if (insErr) return setProfileMsg("❌ " + insErr.message);
+
       setProfileMsg(`✅ Publié: ${ownedSet.size} skin(s).`);
     } catch (e) {
       if (Svc.isAbortError?.(e)) return;
@@ -386,7 +433,7 @@
     progressBar.style.width = stats.pct + "%";
 
     rarityBar.innerHTML = "";
-    RARITY_ORDER.forEach(r => {
+    RARITY_ORDER.forEach((r) => {
       const el = document.createElement("span");
       el.className = "statchip";
       el.innerHTML = `
@@ -403,23 +450,25 @@
     const r = filterRarity.value || "all";
     const only = !!onlyOwned.checked;
 
-    const list = SKINS.filter(s => {
+    const list = SKINS.filter((s) => {
       if (!s) return false;
       if (only && !ownedSet.has(s.id)) return false;
       if (b !== "all" && s.brawler !== b) return false;
       if (r !== "all" && s.rarity !== r) return false;
 
       if (!q) return true;
-      return String(s.name).toLowerCase().includes(q)
-        || String(s.brawler).toLowerCase().includes(q)
-        || String(s.category).toLowerCase().includes(q)
-        || String(s.rarity).toLowerCase().includes(q);
+      return (
+        String(s.name).toLowerCase().includes(q) ||
+        String(s.brawler).toLowerCase().includes(q) ||
+        String(s.category).toLowerCase().includes(q) ||
+        String(s.rarity).toLowerCase().includes(q)
+      );
     });
 
     resultCount.textContent = `${list.length} skin(s) affiché(s)`;
     cards.innerHTML = "";
 
-    list.forEach(s => {
+    list.forEach((s) => {
       const checked = ownedSet.has(s.id);
 
       const el = document.createElement("article");
@@ -445,8 +494,6 @@
       const cb = el.querySelector("input[type='checkbox']");
       cb.addEventListener("change", async (e) => {
         await setOwned(s.id, e.target.checked);
-        btnResend.addEventListener("click", resendConfirmationEmail);
-
       });
 
       cards.appendChild(el);
@@ -471,10 +518,12 @@
   }
 
   // Events
-  btnSignup.addEventListener("click", signup);
-  btnLogin.addEventListener("click", login);
-  btnLogout.addEventListener("click", logout);
-  btnReload.addEventListener("click", refreshAll);
+  if (btnSignup) btnSignup.addEventListener("click", signup);
+  if (btnLogin) btnLogin.addEventListener("click", login);
+  if (btnResend) btnResend.addEventListener("click", resendConfirmationEmail);
+
+  if (btnLogout) btnLogout.addEventListener("click", logout);
+  if (btnReload) btnReload.addEventListener("click", refreshAll);
 
   search.addEventListener("input", render);
   filterBrawler.addEventListener("change", render);
@@ -492,8 +541,7 @@
   updateStats();
   render();
 
-  // Important: au chargement, les boutons doivent être actifs
-  setAuthBusy(false, "");
+  setAuthBusyState(false, "");
 
   (async () => {
     const { data } = await supa.auth.getSession();
