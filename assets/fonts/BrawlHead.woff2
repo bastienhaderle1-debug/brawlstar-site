@@ -1,0 +1,8 @@
+@font-face{
+  font-family: "BrawlHead";
+  src: url("../assets/fonts/BrawlHead.woff2") format("woff2");
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+body{ font-family: "BrawlHead", "Trebuchet MS", Arial, sans-serif; }
