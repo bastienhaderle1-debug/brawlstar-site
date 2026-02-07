@@ -402,11 +402,12 @@
     }
   }
 
-  function publicProfileUrl() {
-    const url = new URL("./public.html", window.location.href);
-    url.searchParams.set("u", currentUser.id);
-    return url.toString();
-  }
+ function publicProfileUrl() {
+  const url = new URL("./profile.html", window.location.href);
+  url.searchParams.set("u", currentUser.id);
+  return url.toString();
+}
+
 
   async function copyPublicLink() {
     if (!currentUser) return;

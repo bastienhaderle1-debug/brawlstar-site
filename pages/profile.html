@@ -1,10 +1,10 @@
-<!--profile.html-->
+<!--pages/profile.html-->
 <!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Profil</title>
+  <title>Profil public</title>
   <link rel="stylesheet" href="../style.css" />
 </head>
 
@@ -12,15 +12,15 @@
   <header class="header container">
     <div class="headerbar">
       <div>
-       <h1 data-title="PROFIL PUBLIC">👤 PROFIL PUBLIC</h1>
-
-        <p class="muted">La gestion du profil (public/skins) se fait dans MyBrawl.</p>
+        <h1 data-title="PROFIL">👤 PROFIL</h1>
+        <p class="muted">Page profil partageable (stats + skins si activé).</p>
 
         <nav class="nav">
           <a href="../index.html">Accueil</a>
           <a href="./mybrawl.html">MyBrawl</a>
           <a href="./profile.html">Profil</a>
-          <a href="./public.html">Public</a>
+          <a href="./brawlers.html">Brawlers</a>
+          <a href="./skins.html">Skins</a>
         </nav>
       </div>
 
@@ -36,35 +36,88 @@
   </header>
 
   <main class="container">
-    <section class="nav-helper card">
-      <h2>👤 Profil</h2>
-      <p class="muted">
-        Ton profil public est géré dans MyBrawl. Retourne à l'accueil pour voir les skins.
-      </p>
+    <section class="nav-helper card" id="hintCard" style="display:none;">
+      <h2 data-title="INFO">ℹ️ INFO</h2>
+      <p class="muted" id="hintMsg"></p>
 
       <div class="actions">
         <a class="seg-btn" href="../index.html">🏠 Accueil</a>
-        <a class="seg-btn" href="./mybrawl.html">🔧 Mon compte</a>
-        <a class="seg-btn" href="./public.html">🌍 Voir public</a>
+        <a class="seg-btn" href="./mybrawl.html">🔧 Gérer mon profil</a>
+        <button class="seg-btn" id="btnCopyMyLink" type="button" style="display:none;">📋 Copier mon lien</button>
       </div>
     </section>
 
-    <section class="card">
-      <h2>Où modifier ton profil ?</h2>
-      <p class="muted">
-        Va sur <strong>MyBrawl</strong> pour te connecter, modifier ton pseudo/bio, et publier tes skins.
-      </p>
-      <p><a href="./mybrawl.html">➡ Ouvrir MyBrawl</a></p>
+    <section class="card" id="errorCard" style="display:none;">
+      <h2 data-title="ERREUR">❌ ERREUR</h2>
+      <p class="muted" id="errorMsg"></p>
+      <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:12px;">
+        <a class="seg-btn" href="../index.html">⬅ Retour accueil</a>
+        <a class="seg-btn" href="./mybrawl.html">👤 Aller sur MyBrawl</a>
+      </div>
+    </section>
+
+    <section class="card" id="profileCard" style="display:none;">
+      <h2 id="displayName">—</h2>
+      <p class="muted" id="bio">—</p>
+      <p class="muted" id="updatedLine"></p>
+      <p class="muted" id="shareLine"></p>
+
+      <div class="stats-grid">
+        <div class="stat">
+          <div class="stat-label">Skins possédés (public)</div>
+          <div class="stat-value" id="statOwned">0</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Total skins (base)</div>
+          <div class="stat-value" id="statTotal">0</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Progression</div>
+          <div class="stat-value" id="statPct">0%</div>
+        </div>
+      </div>
+
+      <div class="progress"><div class="progress-bar" id="progressBar" style="width:0%"></div></div>
+      <p class="muted" id="publicModeLine" style="margin-top:12px;"></p>
+
+      <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:12px;">
+        <button class="seg-btn" id="btnCopyLink" type="button">🔗 Copier le lien</button>
+      </div>
+    </section>
+
+    <section class="toolbar" id="toolbar" style="display:none;">
+      <div class="filter">
+        <label for="search">Recherche</label>
+        <input id="search" class="input" type="text" placeholder="ex: shelly, star..." />
+      </div>
+
+      <div class="filter">
+        <label for="filterRarity">Rareté</label>
+        <select id="filterRarity" class="select"></select>
+      </div>
+    </section>
+
+    <section id="skinsSection" style="display:none;">
+      <h2 data-title="SKINS">✅ SKINS</h2>
+      <p class="muted" id="resultCount"></p>
+      <div class="cards" id="cards"></div>
     </section>
   </main>
 
   <footer class="footer container">
-    <a href="../index.html">⬅ Retour</a>
+    <a href="../index.html">⬅ Retour à l’accueil</a>
   </footer>
+
+  <script src="../js/toast.js"></script>
+  <script src="../js/guard.js"></script>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="../data/supabase-client.js"></script>
-  <script src="../js/toast.js"></script>
+  <script src="../data/skins-data.js"></script>
+
+  <script src="../js/owned-service.js"></script>
+
+  <script src="../js/profile.js"></script>
   <script src="../js/site.js"></script>
 </body>
 </html>
