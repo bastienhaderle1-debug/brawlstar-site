@@ -55,19 +55,25 @@
     if (window.showToast) window.showToast(message, type, title, 3200);
   }
 
-  function fail(msg) {
+ function fail(msg) {
+  console.error(msg);
+  if (errorCard && errorMsg) {
     errorCard.style.display = "block";
     errorMsg.textContent = msg;
-
-    profileCard.style.display = "none";
-    toolbar.style.display = "none";
-    skinsSection.style.display = "none";
+  } else {
+    alert(msg);
   }
+  if (profileCard) profileCard.style.display = "none";
+  if (toolbar) toolbar.style.display = "none";
+  if (skinsSection) skinsSection.style.display = "none";
+}
 
-  function clearError() {
-    errorCard.style.display = "none";
-    errorMsg.textContent = "";
-  }
+
+ function clearError() {
+  if (errorCard) errorCard.style.display = "none";
+  if (errorMsg) errorMsg.textContent = "";
+}
+
 
   function setMeMsg(m) {
     if (meMsg) meMsg.textContent = m || "";

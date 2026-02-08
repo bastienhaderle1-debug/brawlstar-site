@@ -1,4 +1,9 @@
 // js/skins.js (PERF: 900 skins / 80 thèmes) + images
+// - Attente window.SKINS_READY
+// - Mode thème lazy (cards rendues à l'ouverture)
+// - Rendering par chunks (évite freeze)
+// - Debounce sur recherche/filters
+// - Cache HTML des cards
 (function () {
   const $ = (id) => document.getElementById(id);
 
@@ -6,8 +11,12 @@
     if (typeof window.showToast === "function") window.showToast(message, type, title, 2500);
   }
 
-  function safeStr(x) { return (x ?? "").toString(); }
-  function norm(x) { return safeStr(x).toLowerCase().trim(); }
+  function safeStr(x) {
+    return (x ?? "").toString();
+  }
+  function norm(x) {
+    return safeStr(x).toLowerCase().trim();
+  }
 
   function uniqueSorted(arr) {
     return [...new Set(arr)]
@@ -39,7 +48,7 @@
 
   // DOM
   const modeBrawlerBtn = $("modeBrawler");
-  const modeThemeBtn = $("modeCategory");
+  const modeThemeBtn = $("modeCategory"); // bouton "Par thème" dans skins.html
   const selectLabel = $("selectLabel");
   const select = $("select");
   const rarity = $("rarity");
@@ -47,10 +56,23 @@
   const host = $("cards");
   const resultCount = $("resultCount");
   const resultTitle = $("resultTitle");
-  const accountLine = $("accountLine"); // optionnel (si tu le rajoutes)
+  const accountLine = $("accountLine"); // optionnel (si tu ajoutes un <p id="accountLine">)
 
-  const required = { modeBrawlerBtn, modeThemeBtn, selectLabel, select, rarity, search, host, resultCount, resultTitle };
-  const missing = Object.entries(required).filter(([, v]) => !v).map(([k]) => k);
+  const required = {
+    modeBrawlerBtn,
+    modeThemeBtn,
+    selectLabel,
+    select,
+    rarity,
+    search,
+    host,
+    resultCount,
+    resultTitle,
+  };
+  const missing = Object.entries(required)
+    .filter(([, v]) => !v)
+    .map(([k]) => k);
+
   if (missing.length) {
     console.error("skins.js: éléments UI manquants:", missing);
     toast("error", "UI", "IDs manquants sur la page Skins (F12 console).");
@@ -66,11 +88,19 @@
   let ownedToken = 0;
 
   function canEditOwned() {
-    return !!currentUser && !!Svc && typeof Svc.loadOwnedSet === "function" && typeof Svc.setOwned === "function";
+    return (
+      !!currentUser &&
+      !!Svc &&
+      typeof Svc.loadOwnedSet === "function" &&
+      typeof Svc.setOwned === "function"
+    );
   }
 
   async function loadOwnedSafe() {
-    if (!canEditOwned()) { ownedSet = new Set(); return; }
+    if (!canEditOwned()) {
+      ownedSet = new Set();
+      return;
+    }
     const t = ++ownedToken;
     try {
       const s = await Svc.loadOwnedSet(currentUser.id);
@@ -91,6 +121,7 @@
       await Svc.setOwned(currentUser.id, skinId, isOwned);
       if (isOwned) ownedSet.add(skinId);
       else ownedSet.delete(skinId);
+
       toast("success", "Enregistré", isOwned ? "Skin ajouté." : "Skin retiré.");
       updateThemeOwnedBadges();
     } catch (e) {
@@ -98,7 +129,7 @@
     }
   }
 
-  // Rarity mapping
+  // Rarity mapping (classes CSS)
   const RARITY_CLASS = {
     Rare: "rarity-rare",
     "Super Rare": "rarity-super-rare",
@@ -117,14 +148,23 @@
 
   // ----- IMG helpers -----
   function imgOf(s) {
-    // Priorité: URL déjà calculée dans skins-data.js (Supabase storage public)
+    // Priorité: URL déjà calculée (skins-data.js: Supabase storage public)
     const direct = safeStr(s?.img).trim();
     if (direct) return direct;
 
-    // fallback: helper
+    // fallback: helper global
     if (typeof window.getSkinImageUrl === "function" && s?.id) return window.getSkinImageUrl(s.id);
 
     return "";
+  }
+
+  function safeImgUrl(url) {
+    const u = safeStr(url).trim();
+    if (!u) return "/assets/skins/placeholder.png"; // absolu = safe partout
+    if (u.startsWith("/")) return u; // ex: /assets/skins/xxx.webp
+    if (u.startsWith("http://") || u.startsWith("https://")) return u;
+    // évite les chemins relatifs foireux
+    return "/assets/skins/placeholder.png";
   }
 
   function escapeHtml(str) {
@@ -138,13 +178,15 @@
 
   // ---------- MAIN INIT (attend SKINS_READY) ----------
   (async () => {
+    // Attendre la data (Supabase)
     if (window.SKINS_READY && typeof window.SKINS_READY.then === "function") {
       await window.SKINS_READY;
     }
 
     const SKINS = Array.isArray(window.SKINS) ? window.SKINS : [];
     const RARITY_ORDER =
-      window.RARITY_ORDER ?? ["Rare", "Super Rare", "Epic", "Mythique", "Légendaire", "Hypercharge", "Argent", "Or"];
+      window.RARITY_ORDER ??
+      ["Rare", "Super Rare", "Epic", "Mythique", "Légendaire", "Hypercharge", "Argent", "Or"];
 
     if (!SKINS.length) {
       console.warn("SKINS vide: vérifie Supabase + data/skins-data.js");
@@ -154,22 +196,26 @@
     // ---------- PERF: pre-index ----------
     const indexed = SKINS.map((s) => ({
       s,
-      id: s?.id,
+      id: safeStr(s?.id).trim(),
       brawler: safeStr(s?.brawler).trim(),
       theme: themeOf(s),
       rarity: safeStr(s?.rarity).trim(),
       name: safeStr(s?.name).trim(),
       img: imgOf(s),
-      searchKey: (
-        norm(s?.name) + "|" +
-        norm(s?.brawler) + "|" +
-        norm(themeOf(s)) + "|" +
-        norm(s?.rarity)
-      )
+      searchKey:
+        norm(s?.name) +
+        "|" +
+        norm(s?.brawler) +
+        "|" +
+        norm(themeOf(s)) +
+        "|" +
+        norm(s?.rarity),
     }));
 
     const indexedById = new Map();
-    indexed.forEach((x) => { if (x.id) indexedById.set(x.id, x); });
+    indexed.forEach((x) => {
+      if (x.id) indexedById.set(x.id, x);
+    });
 
     // Cache HTML des cards
     const cardHtmlCache = new Map();
@@ -180,7 +226,7 @@
 
       const t = themeOf(s);
       const rarityClass = RARITY_CLASS[s?.rarity] ?? "";
-      const imgUrl = imgOf(s) || "../assets/skins/placeholder.png";
+      const imgUrl = safeImgUrl(imgOf(s));
 
       const html = `
         <article class="card skin-card" data-skin-id="${escapeHtml(id)}">
@@ -190,7 +236,7 @@
             class="skin-img"
             loading="lazy"
             decoding="async"
-            onerror="this.src='../assets/skins/placeholder.png'"
+            onerror="this.onerror=null;this.src='/assets/skins/placeholder.png'"
           />
 
           <div class="row">
@@ -228,13 +274,16 @@
       }
     }
     function saveCollapsedMap() {
-      try { localStorage.setItem(LS_KEY, JSON.stringify(collapsedMap)); } catch {}
+      try {
+        localStorage.setItem(LS_KEY, JSON.stringify(collapsedMap));
+      } catch {}
     }
 
     function buildOptions() {
-      const values = mode === "brawler"
-        ? uniqueSorted(indexed.map((x) => x.brawler))
-        : uniqueSorted(indexed.map((x) => x.theme));
+      const values =
+        mode === "brawler"
+          ? uniqueSorted(indexed.map((x) => x.brawler))
+          : uniqueSorted(indexed.map((x) => x.theme));
 
       select.innerHTML = "";
       const optAll = document.createElement("option");
@@ -324,7 +373,9 @@
 
       const sections = host.querySelectorAll(".theme-group");
       let allCollapsed = true;
-      sections.forEach((sec) => { if (sec.dataset.collapsed !== "1") allCollapsed = false; });
+      sections.forEach((sec) => {
+        if (sec.dataset.collapsed !== "1") allCollapsed = false;
+      });
 
       if (allCollapsed) {
         b2.classList.add("is-active");
@@ -381,7 +432,11 @@
 
       const listJson = sectionEl.getAttribute("data-list");
       let ids = [];
-      try { ids = listJson ? JSON.parse(listJson) : []; } catch { ids = []; }
+      try {
+        ids = listJson ? JSON.parse(listJson) : [];
+      } catch {
+        ids = [];
+      }
 
       const grid = sectionEl.querySelector(".theme-grid");
       if (!grid) return done && done();
@@ -390,34 +445,39 @@
       sectionEl.dataset.rendered = "0";
 
       const CHUNK = 30;
-      rafChunk(ids, CHUNK, (chunkIds) => {
-        const frag = document.createDocumentFragment();
+      rafChunk(
+        ids,
+        CHUNK,
+        (chunkIds) => {
+          const frag = document.createDocumentFragment();
 
-        chunkIds.forEach((id) => {
-          const x = indexedById.get(id);
-          if (!x) return;
+          chunkIds.forEach((id) => {
+            const x = indexedById.get(id);
+            if (!x) return;
 
-          const tmp = document.createElement("div");
-          tmp.innerHTML = cardHtmlFor(x.s).trim();
-          const card = tmp.firstElementChild;
+            const tmp = document.createElement("div");
+            tmp.innerHTML = cardHtmlFor(x.s).trim();
+            const card = tmp.firstElementChild;
 
-          const cb = card.querySelector("input[type='checkbox']");
-          const editable = canEditOwned();
-          cb.checked = ownedSet.has(id);
-          cb.disabled = !editable;
+            const cb = card.querySelector("input[type='checkbox']");
+            const editable = canEditOwned();
+            cb.checked = ownedSet.has(id);
+            cb.disabled = !editable;
 
-          const label = card.querySelector(".owned-toggle");
-          if (label) label.style.opacity = editable ? "1" : "0.65";
+            const label = card.querySelector(".owned-toggle");
+            if (label) label.style.opacity = editable ? "1" : "0.65";
 
-          cb.addEventListener("change", (e) => toggleOwnedSafe(id, e.target.checked));
-          frag.appendChild(card);
-        });
+            cb.addEventListener("change", (e) => toggleOwnedSafe(id, e.target.checked));
+            frag.appendChild(card);
+          });
 
-        grid.appendChild(frag);
-      }, () => {
-        sectionEl.dataset.rendered = "1";
-        if (done) done();
-      });
+          grid.appendChild(frag);
+        },
+        () => {
+          sectionEl.dataset.rendered = "1";
+          if (done) done();
+        }
+      );
     }
 
     function updateThemeOwnedBadges() {
@@ -425,10 +485,16 @@
       sections.forEach((sec) => {
         const listJson = sec.getAttribute("data-list");
         let ids = [];
-        try { ids = listJson ? JSON.parse(listJson) : []; } catch { ids = []; }
+        try {
+          ids = listJson ? JSON.parse(listJson) : [];
+        } catch {
+          ids = [];
+        }
 
         let owned = 0;
-        ids.forEach((id) => { if (ownedSet.has(id)) owned++; });
+        ids.forEach((id) => {
+          if (ownedSet.has(id)) owned++;
+        });
 
         const ownedEl = sec.querySelector("[data-owned-count]");
         if (ownedEl) ownedEl.textContent = String(owned);
@@ -507,7 +573,9 @@
         const collapsed = hasSaved ? !!collapsedMap[theme] : !!mobileDefaultCollapse;
 
         let owned = 0;
-        ids.forEach((id) => { if (ownedSet.has(id)) owned++; });
+        ids.forEach((id) => {
+          if (ownedSet.has(id)) owned++;
+        });
 
         const section = document.createElement("section");
         section.className = "theme-group";
