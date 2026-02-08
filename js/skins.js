@@ -1,9 +1,4 @@
 // js/skins.js (PERF: 900 skins / 80 thèmes) + images
-// - Attente window.SKINS_READY
-// - Mode thème lazy (cards à l'ouverture)
-// - Rendering par chunks (évite freeze)
-// - Debounce sur recherche/filters
-// - Cache HTML des cards
 (function () {
   const $ = (id) => document.getElementById(id);
 
@@ -52,7 +47,7 @@
   const host = $("cards");
   const resultCount = $("resultCount");
   const resultTitle = $("resultTitle");
-  const accountLine = $("accountLine"); // optionnel
+  const accountLine = $("accountLine"); // optionnel (si tu le rajoutes)
 
   const required = { modeBrawlerBtn, modeThemeBtn, selectLabel, select, rarity, search, host, resultCount, resultTitle };
   const missing = Object.entries(required).filter(([, v]) => !v).map(([k]) => k);
@@ -111,9 +106,8 @@
     Mythique: "rarity-mythic",
     "Légendaire": "rarity-legendary",
     Hypercharge: "rarity-hypercharge",
-    "Argent": "rarity-silver",
-    "Or": "rarity-gold",
-
+    Argent: "rarity-silver",
+    Or: "rarity-gold",
   };
 
   function themeOf(s) {
@@ -123,9 +117,13 @@
 
   // ----- IMG helpers -----
   function imgOf(s) {
+    // Priorité: URL déjà calculée dans skins-data.js (Supabase storage public)
     const direct = safeStr(s?.img).trim();
     if (direct) return direct;
+
+    // fallback: helper
     if (typeof window.getSkinImageUrl === "function" && s?.id) return window.getSkinImageUrl(s.id);
+
     return "";
   }
 
@@ -140,17 +138,17 @@
 
   // ---------- MAIN INIT (attend SKINS_READY) ----------
   (async () => {
-    // attendre les 900 skins
     if (window.SKINS_READY && typeof window.SKINS_READY.then === "function") {
       await window.SKINS_READY;
     }
 
     const SKINS = Array.isArray(window.SKINS) ? window.SKINS : [];
-    const RARITY_ORDER = window.RARITY_ORDER ?? ["Rare", "Super Rare", "Epic", "Mythique", "Légendaire", "Hypercharge"];
+    const RARITY_ORDER =
+      window.RARITY_ORDER ?? ["Rare", "Super Rare", "Epic", "Mythique", "Légendaire", "Hypercharge", "Argent", "Or"];
 
     if (!SKINS.length) {
-      console.warn("SKINS vide: vérifie /data/skins.json + data/skins-data.js");
-      toast("warn", "Skins", "SKINS est vide. Vérifie /data/skins.json.");
+      console.warn("SKINS vide: vérifie Supabase + data/skins-data.js");
+      toast("warn", "Skins", "SKINS est vide. Vérifie Supabase (table + policies) et l’ordre des scripts.");
     }
 
     // ---------- PERF: pre-index ----------
@@ -176,44 +174,43 @@
     // Cache HTML des cards
     const cardHtmlCache = new Map();
 
-function cardHtmlFor(s) {
-  const id = s?.id || "";
-  const t = themeOf(s);
-  const rarityClass = RARITY_CLASS[s?.rarity] ?? "";
+    function cardHtmlFor(s) {
+      const id = safeStr(s?.id).trim();
+      if (id && cardHtmlCache.has(id)) return cardHtmlCache.get(id);
 
-  const imgPath = id
-    ? `../asset/skins/${id}.png`
-    : `../asset/skins/placeholder.png`;
+      const t = themeOf(s);
+      const rarityClass = RARITY_CLASS[s?.rarity] ?? "";
+      const imgUrl = imgOf(s) || "../assets/skins/placeholder.png";
 
-  const html = `
-    <article class="card" data-skin-id="${id}">
-      <img
-        src="${imgPath}"
-        alt="${s?.name ?? ""}"
-        class="skin-img"
-        onerror="this.src='../asset/skins/placeholder.png'"
-      />
+      const html = `
+        <article class="card skin-card" data-skin-id="${escapeHtml(id)}">
+          <img
+            src="${escapeHtml(imgUrl)}"
+            alt="${escapeHtml(s?.name ?? "")}"
+            class="skin-img"
+            loading="lazy"
+            decoding="async"
+            onerror="this.src='../assets/skins/placeholder.png'"
+          />
 
-      <div class="row">
-        <span class="pill">${t}</span>
-        <span class="pill ${rarityClass}">${s?.rarity ?? "—"}</span>
-      </div>
+          <div class="row">
+            <span class="pill">${escapeHtml(t)}</span>
+            <span class="pill ${escapeHtml(rarityClass)}">${escapeHtml(s?.rarity ?? "—")}</span>
+          </div>
 
-      <h3>${s?.name ?? "—"}</h3>
-      <p class="muted">Brawler : <strong>${s?.brawler ?? "—"}</strong></p>
+          <h3>${escapeHtml(s?.name ?? "—")}</h3>
+          <p class="muted">Brawler : <strong>${escapeHtml(s?.brawler ?? "—")}</strong></p>
 
-      <label class="owned-toggle">
-        <input type="checkbox" />
-        <span>Je l’ai</span>
-      </label>
-    </article>
-  `;
+          <label class="owned-toggle" style="display:flex; gap:8px; align-items:center; user-select:none; margin-top:10px;">
+            <input type="checkbox" />
+            <span>Je l’ai</span>
+          </label>
+        </article>
+      `;
 
-  if (id) cardHtmlCache.set(id, html);
-  return html;
-}
-
-
+      if (id) cardHtmlCache.set(id, html);
+      return html;
+    }
 
     // ---------- UI State ----------
     let mode = "brawler";
@@ -408,6 +405,7 @@ function cardHtmlFor(s) {
           const editable = canEditOwned();
           cb.checked = ownedSet.has(id);
           cb.disabled = !editable;
+
           const label = card.querySelector(".owned-toggle");
           if (label) label.style.opacity = editable ? "1" : "0.65";
 
@@ -460,8 +458,10 @@ function cardHtmlFor(s) {
           const editable = canEditOwned();
           cb.checked = ownedSet.has(id);
           cb.disabled = !editable;
+
           const label = card.querySelector(".owned-toggle");
           if (label) label.style.opacity = editable ? "1" : "0.65";
+
           cb.addEventListener("change", (e) => toggleOwnedSafe(id, e.target.checked));
 
           frag.appendChild(card);

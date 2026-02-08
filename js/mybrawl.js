@@ -1,8 +1,7 @@
 // js/mybrawl.js
 (function () {
   const supa = window.AppGuard?.requireSupabase("mybrawl");
-  const _skinsDataOk = window.AppGuard?.requireSkins("mybrawl");
-  if (!supa || !_skinsDataOk) return;
+  if (!supa) return;
 
   if (!window.OwnedService) {
     window.AppGuard?.fail(
@@ -14,18 +13,18 @@
 
   const Svc = window.OwnedService;
 
-  const SKINS = Svc.getSkins();
-  const RARITY_ORDER = window.RARITY_ORDER ?? ["Rare", "Super Rare", "Epic", "Mythique", "Légendaire", "Hypercharge"];
-  const RARITY_CLASS = {
-    "Rare": "rarity-rare",
-    "Super Rare": "rarity-super-rare",
-    "Epic": "rarity-epic",
-    "Mythique": "rarity-mythic",
-    "Légendaire": "rarity-legendary",
-    "Hypercharge": "rarity-hypercharge",
-    "Argent": "rarity-silver",
-    "Or": "rarity-gold",
+  const RARITY_ORDER =
+    window.RARITY_ORDER ?? ["Rare", "Super Rare", "Epic", "Mythique", "Légendaire", "Hypercharge", "Argent", "Or"];
 
+  const RARITY_CLASS = {
+    Rare: "rarity-rare",
+    "Super Rare": "rarity-super-rare",
+    Epic: "rarity-epic",
+    Mythique: "rarity-mythic",
+    "Légendaire": "rarity-legendary",
+    Hypercharge: "rarity-hypercharge",
+    Argent: "rarity-silver",
+    Or: "rarity-gold",
   };
 
   // Elements
@@ -63,6 +62,9 @@
   let ownedSet = new Set();
   let refreshToken = 0;
   let authBusy = false;
+
+  // IMPORTANT: SKINS doit être lu APRÈS SKINS_READY
+  let SKINS = [];
 
   // Utils
   const setAuthMessage = (m) => (authMsg.textContent = m || "");
@@ -114,13 +116,15 @@
   }
 
   function buildBrawlerFilter() {
+    if (!filterBrawler) return;
+
     filterBrawler.innerHTML = "";
     const all = document.createElement("option");
     all.value = "all";
     all.textContent = "Tous";
     filterBrawler.appendChild(all);
 
-    uniqueSorted(SKINS.map((s) => s.brawler)).forEach((b) => {
+    uniqueSorted(SKINS.map((s) => s?.brawler).filter(Boolean)).forEach((b) => {
       const opt = document.createElement("option");
       opt.value = b;
       opt.textContent = b;
@@ -129,13 +133,17 @@
   }
 
   function buildRarityFilter() {
+    if (!filterRarity) return;
+
     filterRarity.innerHTML = "";
     const all = document.createElement("option");
     all.value = "all";
     all.textContent = "Toutes";
     filterRarity.appendChild(all);
 
+    const existing = new Set(SKINS.map((s) => s?.rarity).filter(Boolean));
     RARITY_ORDER.forEach((r) => {
+      if (!existing.has(r)) return;
       const opt = document.createElement("option");
       opt.value = r;
       opt.textContent = r;
@@ -145,16 +153,16 @@
 
   function showLoggedIn(user) {
     currentUser = user;
-    authCard.style.display = "none";
-    app.style.display = "block";
-    userLine.textContent = user.email ?? user.id;
+    if (authCard) authCard.style.display = "none";
+    if (app) app.style.display = "block";
+    if (userLine) userLine.textContent = user.email ?? user.id;
   }
 
   function showLoggedOut() {
     currentUser = null;
     ownedSet = new Set();
-    authCard.style.display = "block";
-    app.style.display = "none";
+    if (authCard) authCard.style.display = "block";
+    if (app) app.style.display = "none";
     setAuthMessage("");
     setStatus("");
     setAuthBusyState(false, "");
@@ -164,8 +172,8 @@
   async function signup() {
     if (authBusy) return;
 
-    const em = (email.value || "").trim();
-    const pw = password.value || "";
+    const em = (email?.value || "").trim();
+    const pw = password?.value || "";
 
     if (!em || !pw) {
       setAuthMessage("❌ Renseigne email + mot de passe.");
@@ -175,7 +183,6 @@
 
     setAuthBusyState(true, "Création du compte...");
     try {
-      // on garde un redirect stable sur MyBrawl (après confirmation)
       const { error } = await supa.auth.signUp({
         email: em,
         password: pw,
@@ -201,7 +208,7 @@
   async function resendConfirmationEmail() {
     if (authBusy) return;
 
-    const em = (email.value || "").trim();
+    const em = (email?.value || "").trim();
     if (!em) {
       setAuthMessage("⚠️ Mets ton email puis clique sur Renvoyer l’email.");
       toast("info", "Email", "Entre ton email puis clique sur Renvoyer.");
@@ -235,8 +242,8 @@
   async function login() {
     if (authBusy) return;
 
-    const em = (email.value || "").trim();
-    const pw = password.value || "";
+    const em = (email?.value || "").trim();
+    const pw = password?.value || "";
 
     if (!em || !pw) {
       setAuthMessage("❌ Renseigne email + mot de passe.");
@@ -425,15 +432,23 @@
   filterRarity.addEventListener("change", render);
   onlyOwned.addEventListener("change", render);
 
-  // Init
-  buildBrawlerFilter();
-  buildRarityFilter();
-  updateStats();
-  render();
-
-  setAuthBusyState(false, "");
-
+  // INIT (attendre SKINS_READY)
   (async () => {
+    try {
+      if (window.SKINS_READY && typeof window.SKINS_READY.then === "function") {
+        await window.SKINS_READY;
+      }
+    } catch {}
+
+    SKINS = Array.isArray(window.SKINS) ? window.SKINS : [];
+
+    buildBrawlerFilter();
+    buildRarityFilter();
+    updateStats();
+    render();
+
+    setAuthBusyState(false, "");
+
     const { data } = await supa.auth.getSession();
     const user = data.session?.user;
 

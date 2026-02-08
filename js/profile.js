@@ -85,23 +85,27 @@
   const supa = window.supabaseClient;
   const Svc = window.OwnedService;
 
-  const allSkins = Svc.getSkins();
-  const RARITY_ORDER = window.RARITY_ORDER ?? ["Rare","Super Rare","Epic","Mythique","Légendaire","Hypercharge"];
-  const RARITY_CLASS = {
-    "Rare": "rarity-rare",
-    "Super Rare": "rarity-super-rare",
-    "Epic": "rarity-epic",
-    "Mythique": "rarity-mythic",
-    "Légendaire": "rarity-legendary",
-    "Hypercharge": "rarity-hypercharge",
-    "Argent": "rarity-silver",
-    "Or": "rarity-gold",
+  const RARITY_ORDER =
+    window.RARITY_ORDER ?? ["Rare", "Super Rare", "Epic", "Mythique", "Légendaire", "Hypercharge", "Argent", "Or"];
 
+  const RARITY_CLASS = {
+    Rare: "rarity-rare",
+    "Super Rare": "rarity-super-rare",
+    Epic: "rarity-epic",
+    Mythique: "rarity-mythic",
+    "Légendaire": "rarity-legendary",
+    Hypercharge: "rarity-hypercharge",
+    Argent: "rarity-silver",
+    Or: "rarity-gold",
   };
 
   function fmtDate(iso) {
     if (!iso) return "";
-    try { return new Date(iso).toLocaleString("fr-FR"); } catch { return ""; }
+    try {
+      return new Date(iso).toLocaleString("fr-FR");
+    } catch {
+      return "";
+    }
   }
 
   function parseUserIdFromUrl() {
@@ -127,6 +131,9 @@
     return url.toString();
   }
 
+  // IMPORTANT: allSkins doit être lu APRÈS SKINS_READY
+  let allSkins = [];
+
   function buildRarityFilter() {
     filterRarity.innerHTML = "";
     const optAll = document.createElement("option");
@@ -134,8 +141,8 @@
     optAll.textContent = "Toutes";
     filterRarity.appendChild(optAll);
 
-    const existing = new Set(allSkins.map(s => s?.rarity).filter(Boolean));
-    RARITY_ORDER.forEach(r => {
+    const existing = new Set(allSkins.map((s) => s?.rarity).filter(Boolean));
+    RARITY_ORDER.forEach((r) => {
       if (!existing.has(r)) return;
       const opt = document.createElement("option");
       opt.value = r;
@@ -145,7 +152,7 @@
   }
 
   function getSkinById(id) {
-    return allSkins.find(s => s && s.id === id) || { id, name: id, brawler: "—", category: "—", rarity: "—" };
+    return allSkins.find((s) => s && s.id === id) || { id, name: id, brawler: "—", category: "—", rarity: "—" };
   }
 
   async function loadProfile(userId) {
@@ -160,13 +167,9 @@
   }
 
   async function loadPublicOwned(userId) {
-    const { data, error } = await supa
-      .from("public_user_skins")
-      .select("skin_id")
-      .eq("user_id", userId);
-
+    const { data, error } = await supa.from("public_user_skins").select("skin_id").eq("user_id", userId);
     if (error) throw error;
-    return (data || []).map(r => r.skin_id).filter(Boolean);
+    return (data || []).map((r) => r.skin_id).filter(Boolean);
   }
 
   // --- search by pseudo ---
@@ -196,7 +199,7 @@
 
     searchMsg.textContent = `${list.length} profil(s) trouvé(s). Clique pour ouvrir.`;
 
-    list.forEach(p => {
+    list.forEach((p) => {
       const el = document.createElement("article");
       el.className = "card clickable";
       el.innerHTML = `
@@ -228,7 +231,7 @@
 
     displayNameEl.textContent = profile.display_name || "Profil";
     bioEl.textContent = profile.bio || "—";
-    updatedLine.textContent = profile.updated_at ? ("Dernière mise à jour : " + fmtDate(profile.updated_at)) : "";
+    updatedLine.textContent = profile.updated_at ? "Dernière mise à jour : " + fmtDate(profile.updated_at) : "";
     shareLine.textContent = "Lien : " + shareUrlFor(userId);
 
     statTotal.textContent = String(allSkins.length);
@@ -266,13 +269,15 @@
 
     const list = publicOwnedIds
       .map(getSkinById)
-      .filter(s => {
+      .filter((s) => {
         if (r !== "all" && s.rarity !== r) return false;
         if (!q) return true;
-        return String(s.name).toLowerCase().includes(q)
-          || String(s.brawler).toLowerCase().includes(q)
-          || String(s.category).toLowerCase().includes(q)
-          || String(s.rarity).toLowerCase().includes(q);
+        return (
+          String(s.name).toLowerCase().includes(q) ||
+          String(s.brawler).toLowerCase().includes(q) ||
+          String(s.category).toLowerCase().includes(q) ||
+          String(s.rarity).toLowerCase().includes(q)
+        );
       })
       .sort((a, b) => {
         const ra = RARITY_ORDER.indexOf(a.rarity);
@@ -284,7 +289,7 @@
     resultCount.textContent = `${list.length} skin(s) affiché(s)`;
     cards.innerHTML = "";
 
-    list.forEach(s => {
+    list.forEach((s) => {
       const el = document.createElement("article");
       el.className = "card";
       el.innerHTML = `
@@ -308,7 +313,6 @@
       const profile = await loadProfile(userId);
       if (!profile) return fail("Profil introuvable.");
 
-      // profil doit être public pour être consulté (page publique)
       if (!profile.is_public) return fail("Ce profil n’est pas public.");
 
       const ownedIds = profile.show_owned ? await loadPublicOwned(userId) : [];
@@ -329,7 +333,7 @@
     try {
       await navigator.clipboard.writeText(window.location.href);
       btnCopyLink.textContent = "✅ Lien copié";
-      setTimeout(() => btnCopyLink.textContent = "🔗 Copier le lien", 1200);
+      setTimeout(() => (btnCopyLink.textContent = "🔗 Copier le lien"), 1200);
     } catch {
       alert("Copie impossible. Copie manuellement l’URL dans la barre d’adresse.");
     }
@@ -379,7 +383,10 @@
   let meToken = 0;
 
   async function loadOwnedMe() {
-    if (!me) { ownedSet = new Set(); return; }
+    if (!me) {
+      ownedSet = new Set();
+      return;
+    }
     try {
       ownedSet = await Svc.loadOwnedSet(me.id);
     } catch {
@@ -509,7 +516,9 @@
   }
 
   async function meLogout() {
-    try { await supa.auth.signOut(); } finally {}
+    try {
+      await supa.auth.signOut();
+    } finally {}
   }
 
   async function refreshMe() {
@@ -532,6 +541,15 @@
 
   // Init
   (async () => {
+    // 0) attendre SKINS_READY avant de construire filtres / stats
+    try {
+      if (window.SKINS_READY && typeof window.SKINS_READY.then === "function") {
+        await window.SKINS_READY;
+      }
+    } catch {}
+
+    allSkins = Array.isArray(window.SKINS) ? window.SKINS : Svc.getSkins();
+
     buildRarityFilter();
 
     // 1) setup "my profile" block based on auth
