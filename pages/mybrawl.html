@@ -1,4 +1,4 @@
-<!--mybrawl.html-->
+<!--pages/mybrawl.html-->
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -20,7 +20,7 @@
     <div class="headerbar">
       <div>
         <h1 data-title="MYBRAWL">👤 MyBrawl</h1>
-        <p class="muted">Connexion + cocher tes skins + publier un profil public.</p>
+        <p class="muted">Connexion + cocher tes skins (tes données sont sauvegardées).</p>
 
         <nav class="nav">
           <a href="../index.html">Accueil</a>
@@ -63,7 +63,6 @@
         <button class="seg-btn is-active" id="btnLogin" type="button">Se connecter</button>
         <button class="seg-btn" id="btnSignup" type="button">Créer un compte</button>
         <button class="seg-btn" id="btnResend" type="button">📩 Renvoyer l’email</button>
-
       </div>
 
       <p class="muted" id="authMsg" style="margin-top:10px;"></p>
@@ -71,16 +70,6 @@
 
     <!-- APP -->
     <section id="app" style="display:none;">
-      <section class="card" style="margin-bottom:12px;">
-        <h2>✅ Compte</h2>
-        <p class="muted">Utilise l’accueil pour naviguer. Ici tu gères ton Brawldex et ton profil public.</p>
-        <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:10px;">
-          <a class="seg-btn" href="../index.html">🏠 Accueil</a>
-          <a class="seg-btn" href="./public.html">🌍 Public</a>
-          <a class="seg-btn" href="./profile.html">👤 Profil</a>
-        </div>
-      </section>
-
       <!-- Toolbar (actions uniquement) -->
       <section class="toolbar">
         <div class="filter">
@@ -100,7 +89,7 @@
 
         <div class="stats-grid">
           <div class="stat">
-            <div class="stat-label">Possédés</div>
+            <div class="stat-label">Possédés (dans la liste)</div>
             <div class="stat-value" id="statOwned">0</div>
           </div>
           <div class="stat">
@@ -116,43 +105,6 @@
         <div class="progress"><div class="progress-bar" id="progressBar"></div></div>
         <div class="statbar" id="rarityBar"></div>
         <p class="muted" id="status" style="margin-top:10px;"></p>
-      </section>
-
-      <!-- Profil public -->
-      <section class="card">
-        <h2>🌍 Profil public</h2>
-        <p class="muted">Règle ton profil puis publie tes skins cochés.</p>
-
-        <div class="grid-2">
-          <div class="filter">
-            <label for="displayName">Pseudo (public)</label>
-            <input class="input" id="displayName" type="text" placeholder="ex: Bastien" />
-          </div>
-          <div class="filter">
-            <label for="bio">Bio (public)</label>
-            <input class="input" id="bio" type="text" placeholder="ex: Fan de Brawl Stars" />
-          </div>
-        </div>
-
-        <div style="display:flex; gap:18px; flex-wrap:wrap; margin-top:10px;">
-          <label style="display:flex; gap:8px; align-items:center; user-select:none;">
-            <input type="checkbox" id="isPublic" checked />
-            <span>Profil public</span>
-          </label>
-          <label style="display:flex; gap:8px; align-items:center; user-select:none;">
-            <input type="checkbox" id="showOwned" checked />
-            <span>Afficher mes skins</span>
-          </label>
-        </div>
-
-        <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:12px;">
-          <button class="seg-btn" id="btnSaveProfile" type="button">💾 Enregistrer profil</button>
-          <button class="seg-btn" id="btnPublishOwned" type="button">📤 Publier mes skins cochés</button>
-          <button class="seg-btn" id="btnOpenProfile" type="button">🔗 Ouvrir mon profil public</button>
-          <button class="seg-btn" id="btnCopyProfile" type="button">📋 Copier le lien</button>
-        </div>
-
-        <p class="muted" id="profileMsg" style="margin-top:10px;"></p>
       </section>
 
       <!-- Skins -->
@@ -194,17 +146,15 @@
     <a href="../index.html">⬅ Retour à l’accueil</a>
   </footer>
 
- <script src="../js/toast.js"></script>
-<script src="../js/guard.js"></script>
+  <script src="../js/toast.js"></script>
+  <script src="../js/guard.js"></script>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="../data/supabase-client.js"></script>
-<script src="../data/skins-data.js"></script>
-<script src="../js/owned-service.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../data/supabase-client.js"></script>
+  <script src="../data/skins-data.js"></script>
+  <script src="../js/owned-service.js"></script>
 
-<script src="../js/mybrawl.js"></script>
-<script src="../js/site.js"></script>
-
-
+  <script src="../js/mybrawl.js"></script>
+  <script src="../js/site.js"></script>
 </body>
 </html>

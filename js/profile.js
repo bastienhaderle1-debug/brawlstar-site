@@ -1,5 +1,24 @@
 // js/profile.js
 (function () {
+  // --- Elements (my profile) ---
+  const myProfileCard = document.getElementById("myProfileCard");
+  const needAuthCard = document.getElementById("needAuthCard");
+
+  const meLine = document.getElementById("meLine");
+  const btnMeReload = document.getElementById("btnMeReload");
+  const btnMeLogout = document.getElementById("btnMeLogout");
+
+  const meDisplayName = document.getElementById("meDisplayName");
+  const meBio = document.getElementById("meBio");
+  const meIsPublic = document.getElementById("meIsPublic");
+  const meShowOwned = document.getElementById("meShowOwned");
+
+  const btnMeSave = document.getElementById("btnMeSave");
+  const btnMePublish = document.getElementById("btnMePublish");
+  const btnMeOpen = document.getElementById("btnMeOpen");
+  const btnMeCopy = document.getElementById("btnMeCopy");
+  const meMsg = document.getElementById("meMsg");
+
   // --- Elements (search) ---
   const searchName = document.getElementById("searchName");
   const btnSearch = document.getElementById("btnSearch");
@@ -7,7 +26,7 @@
   const searchMsg = document.getElementById("searchMsg");
   const searchResults = document.getElementById("searchResults");
 
-  // --- Elements (profile) ---
+  // --- Elements (view profile) ---
   const errorCard = document.getElementById("errorCard");
   const errorMsg = document.getElementById("errorMsg");
 
@@ -50,6 +69,10 @@
     errorMsg.textContent = "";
   }
 
+  function setMeMsg(m) {
+    if (meMsg) meMsg.textContent = m || "";
+  }
+
   if (!window.supabaseClient) {
     fail("supabaseClient introuvable. Vérifie data/supabase-client.js et l’ordre des scripts.");
     return;
@@ -71,6 +94,9 @@
     "Mythique": "rarity-mythic",
     "Légendaire": "rarity-legendary",
     "Hypercharge": "rarity-hypercharge",
+    "Argent": "rarity-silver",
+    "Or": "rarity-gold",
+
   };
 
   function fmtDate(iso) {
@@ -90,6 +116,12 @@
   }
 
   function shareUrlFor(userId) {
+    const url = new URL(window.location.href);
+    url.searchParams.set("u", userId);
+    return url.toString();
+  }
+
+  function myPublicProfileUrl(userId) {
     const url = new URL(window.location.href);
     url.searchParams.set("u", userId);
     return url.toString();
@@ -137,9 +169,8 @@
     return (data || []).map(r => r.skin_id).filter(Boolean);
   }
 
-  // --- NEW: search by pseudo ---
+  // --- search by pseudo ---
   async function searchProfilesByName(query) {
-    // recherche "contains" insensible à la casse
     const q = (query || "").trim();
     if (!q) return [];
 
@@ -155,7 +186,6 @@
     return data || [];
   }
 
-  // --- UI render search results ---
   function renderSearchResults(list) {
     searchResults.innerHTML = "";
 
@@ -278,7 +308,7 @@
       const profile = await loadProfile(userId);
       if (!profile) return fail("Profil introuvable.");
 
-      // profil doit être public pour être consulté (ici page publique)
+      // profil doit être public pour être consulté (page publique)
       if (!profile.is_public) return fail("Ce profil n’est pas public.");
 
       const ownedIds = profile.show_owned ? await loadPublicOwned(userId) : [];
@@ -294,7 +324,7 @@
     }
   }
 
-  // Copy link
+  // Copy link (current viewed)
   btnCopyLink.addEventListener("click", async () => {
     try {
       await navigator.clipboard.writeText(window.location.href);
@@ -337,20 +367,213 @@
     searchResults.innerHTML = "";
   });
 
-  // Filters skins
+  // Filters skins (viewed)
   searchSkins.addEventListener("input", renderSkins);
   filterRarity.addEventListener("change", renderSkins);
+
+  // =====================
+  // MY PUBLIC PROFILE (connected)
+  // =====================
+  let me = null;
+  let ownedSet = new Set();
+  let meToken = 0;
+
+  async function loadOwnedMe() {
+    if (!me) { ownedSet = new Set(); return; }
+    try {
+      ownedSet = await Svc.loadOwnedSet(me.id);
+    } catch {
+      ownedSet = new Set();
+    }
+  }
+
+  async function loadMyProfile() {
+    if (!me) return;
+
+    setMeMsg("Chargement de ton profil...");
+    try {
+      const { data, error } = await supa
+        .from("public_profiles")
+        .select("display_name, bio, is_public, show_owned")
+        .eq("user_id", me.id)
+        .maybeSingle();
+
+      if (error) {
+        setMeMsg("❌ " + error.message);
+        return;
+      }
+
+      if (data) {
+        meDisplayName.value = data.display_name ?? "";
+        meBio.value = data.bio ?? "";
+        meIsPublic.checked = data.is_public ?? true;
+        meShowOwned.checked = data.show_owned ?? true;
+        setMeMsg("✅ Profil chargé.");
+      } else {
+        meDisplayName.value = (me.email || "").split("@")[0] || "Moi";
+        meBio.value = "";
+        meIsPublic.checked = true;
+        meShowOwned.checked = true;
+        setMeMsg("ℹ️ Pas de profil encore. Tu peux l’enregistrer.");
+      }
+    } catch (e) {
+      setMeMsg("❌ " + (e.message || String(e)));
+    }
+  }
+
+  async function saveMyProfile() {
+    if (!me) return;
+
+    setMeMsg("Enregistrement...");
+    try {
+      const payload = {
+        user_id: me.id,
+        display_name: (meDisplayName.value || "Profil").trim(),
+        bio: (meBio.value || "").trim(),
+        is_public: !!meIsPublic.checked,
+        show_owned: !!meShowOwned.checked,
+        updated_at: new Date().toISOString(),
+      };
+
+      const { error } = await supa.from("public_profiles").upsert(payload, { onConflict: "user_id" });
+      if (error) {
+        setMeMsg("❌ " + error.message);
+        toast("error", "Profil", error.message);
+        return;
+      }
+
+      setMeMsg("✅ Profil enregistré.");
+      toast("success", "Profil", "Profil enregistré.");
+    } catch (e) {
+      setMeMsg("❌ " + (e.message || String(e)));
+      toast("error", "Profil", e.message || String(e));
+    }
+  }
+
+  async function publishMyOwned() {
+    if (!me) return;
+
+    setMeMsg("Publication des skins cochés...");
+    try {
+      await saveMyProfile();
+      await loadOwnedMe();
+
+      const { error: delErr } = await supa.from("public_user_skins").delete().eq("user_id", me.id);
+      if (delErr) {
+        setMeMsg("❌ " + delErr.message);
+        toast("error", "Publication", delErr.message);
+        return;
+      }
+
+      if (ownedSet.size === 0) {
+        setMeMsg("✅ Aucun skin coché → liste publique vidée.");
+        toast("success", "Publication", "Liste publique vidée (aucun skin).");
+        return;
+      }
+
+      const rows = [...ownedSet].map((skin_id) => ({ user_id: me.id, skin_id }));
+      const { error: insErr } = await supa.from("public_user_skins").upsert(rows, { onConflict: "user_id,skin_id" });
+      if (insErr) {
+        setMeMsg("❌ " + insErr.message);
+        toast("error", "Publication", insErr.message);
+        return;
+      }
+
+      setMeMsg(`✅ Publié: ${ownedSet.size} id(s) cochés.`);
+      toast("success", "Publication", `Publié: ${ownedSet.size} élément(s).`);
+    } catch (e) {
+      setMeMsg("❌ " + (e.message || String(e)));
+      toast("error", "Publication", e.message || String(e));
+    }
+  }
+
+  function myUrl() {
+    if (!me) return "";
+    return myPublicProfileUrl(me.id);
+  }
+
+  async function copyMyLink() {
+    if (!me) return;
+    try {
+      await navigator.clipboard.writeText(myUrl());
+      setMeMsg("✅ Lien copié.");
+      toast("success", "Lien", "Lien copié.");
+    } catch {
+      setMeMsg("⚠️ Copie impossible. Copie manuellement l’URL.");
+    }
+  }
+
+  function openMyProfile() {
+    if (!me) return;
+    window.open(myUrl(), "_blank");
+  }
+
+  async function meLogout() {
+    try { await supa.auth.signOut(); } finally {}
+  }
+
+  async function refreshMe() {
+    const t = ++meToken;
+    if (!me) return;
+
+    await loadOwnedMe();
+    if (t !== meToken) return;
+    await loadMyProfile();
+    if (t !== meToken) return;
+  }
+
+  // Buttons my profile
+  if (btnMeSave) btnMeSave.addEventListener("click", saveMyProfile);
+  if (btnMePublish) btnMePublish.addEventListener("click", publishMyOwned);
+  if (btnMeCopy) btnMeCopy.addEventListener("click", copyMyLink);
+  if (btnMeOpen) btnMeOpen.addEventListener("click", openMyProfile);
+  if (btnMeLogout) btnMeLogout.addEventListener("click", meLogout);
+  if (btnMeReload) btnMeReload.addEventListener("click", refreshMe);
 
   // Init
   (async () => {
     buildRarityFilter();
 
-    // Si on arrive avec ?u=UUID : ouvrir direct
+    // 1) setup "my profile" block based on auth
+    try {
+      const { data } = await supa.auth.getSession();
+      me = data.session?.user ?? null;
+
+      if (me) {
+        myProfileCard.style.display = "block";
+        needAuthCard.style.display = "none";
+        meLine.textContent = me.email ?? me.id;
+        await refreshMe();
+      } else {
+        myProfileCard.style.display = "none";
+        needAuthCard.style.display = "block";
+        setMeMsg("");
+      }
+
+      supa.auth.onAuthStateChange(async (_event, session) => {
+        me = session?.user ?? null;
+
+        if (me) {
+          myProfileCard.style.display = "block";
+          needAuthCard.style.display = "none";
+          meLine.textContent = me.email ?? me.id;
+          await refreshMe();
+        } else {
+          myProfileCard.style.display = "none";
+          needAuthCard.style.display = "block";
+          setMeMsg("");
+        }
+      });
+    } catch {
+      myProfileCard.style.display = "none";
+      needAuthCard.style.display = "block";
+    }
+
+    // 2) if arrive with ?u=UUID open that profile
     const userId = parseUserIdFromUrl();
     if (userId) {
       await openProfile(userId);
     } else {
-      // Par défaut: juste recherche
       profileCard.style.display = "none";
       toolbar.style.display = "none";
       skinsSection.style.display = "none";

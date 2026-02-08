@@ -48,7 +48,6 @@
     }
   }
 
-  // Helpers utilitaires
   function getSkins() {
     return Array.isArray(window.SKINS) ? window.SKINS : [];
   }

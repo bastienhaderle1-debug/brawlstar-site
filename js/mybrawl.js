@@ -23,10 +23,10 @@
     "Mythique": "rarity-mythic",
     "Légendaire": "rarity-legendary",
     "Hypercharge": "rarity-hypercharge",
-  };
+    "Argent": "rarity-silver",
+    "Or": "rarity-gold",
 
-  // ✅ URL de retour email (évite localhost)
-  const EMAIL_REDIRECT_TO = "https://brawlstar-site.vercel.app/pages/mybrawl.html";
+  };
 
   // Elements
   const authCard = document.getElementById("authCard");
@@ -58,16 +58,6 @@
   const progressBar = document.getElementById("progressBar");
   const rarityBar = document.getElementById("rarityBar");
 
-  const displayName = document.getElementById("displayName");
-  const bio = document.getElementById("bio");
-  const isPublic = document.getElementById("isPublic");
-  const showOwned = document.getElementById("showOwned");
-  const btnSaveProfile = document.getElementById("btnSaveProfile");
-  const btnPublishOwned = document.getElementById("btnPublishOwned");
-  const btnOpenProfile = document.getElementById("btnOpenProfile");
-  const btnCopyProfile = document.getElementById("btnCopyProfile");
-  const profileMsg = document.getElementById("profileMsg");
-
   // State
   let currentUser = null;
   let ownedSet = new Set();
@@ -77,7 +67,6 @@
   // Utils
   const setAuthMessage = (m) => (authMsg.textContent = m || "");
   const setStatus = (m) => (status.textContent = m || "");
-  const setProfileMsg = (m) => (profileMsg.textContent = m || "");
 
   function toast(type, title, message) {
     if (window.showToast) window.showToast(message, type, title, 3500);
@@ -168,7 +157,6 @@
     app.style.display = "none";
     setAuthMessage("");
     setStatus("");
-    setProfileMsg("");
     setAuthBusyState(false, "");
   }
 
@@ -187,10 +175,11 @@
 
     setAuthBusyState(true, "Création du compte...");
     try {
+      // on garde un redirect stable sur MyBrawl (après confirmation)
       const { error } = await supa.auth.signUp({
         email: em,
         password: pw,
-        options: { emailRedirectTo: EMAIL_REDIRECT_TO },
+        options: { emailRedirectTo: "https://brawlstar-site.vercel.app/pages/mybrawl.html" },
       });
 
       if (error) {
@@ -224,7 +213,7 @@
       const { error } = await supa.auth.resend({
         type: "signup",
         email: em,
-        options: { emailRedirectTo: EMAIL_REDIRECT_TO },
+        options: { emailRedirectTo: "https://brawlstar-site.vercel.app/pages/mybrawl.html" },
       });
 
       if (error) {
@@ -292,7 +281,15 @@
 
     try {
       ownedSet = await Svc.loadOwnedSet(currentUser.id);
-      setStatus(`✅ ${ownedSet.size} skin(s) cochés enregistrés.`);
+
+      const stats = Svc.computeOwnedStats(ownedSet);
+      const unknown = stats.unknown ?? 0;
+
+      if (unknown > 0) {
+        setStatus(`✅ ${ownedSet.size} id(s) cochés enregistrés (${unknown} non présents dans la liste actuelle).`);
+      } else {
+        setStatus(`✅ ${ownedSet.size} skin(s) cochés enregistrés.`);
+      }
     } catch (e) {
       if (Svc.isAbortError?.(e)) return;
       setStatus("❌ Erreur chargement: " + (e.message || String(e)));
@@ -309,119 +306,19 @@
 
       updateStats();
       render();
-      setStatus(`✅ ${ownedSet.size} skin(s) cochés enregistrés.`);
+
+      const stats = Svc.computeOwnedStats(ownedSet);
+      const unknown = stats.unknown ?? 0;
+
+      if (unknown > 0) {
+        setStatus(`✅ ${ownedSet.size} id(s) cochés enregistrés (${unknown} non présents dans la liste actuelle).`);
+      } else {
+        setStatus(`✅ ${ownedSet.size} skin(s) cochés enregistrés.`);
+      }
     } catch (e) {
       if (Svc.isAbortError?.(e)) return;
       setStatus("❌ " + (e.message || String(e)));
     }
-  }
-
-  // Public profile
-  async function loadPublicProfile() {
-    if (!currentUser) return;
-
-    setProfileMsg("Chargement profil public...");
-    try {
-      const { data, error } = await supa
-        .from("public_profiles")
-        .select("display_name, bio, is_public, show_owned")
-        .eq("user_id", currentUser.id)
-        .maybeSingle();
-
-      if (error) {
-        if (Svc.isAbortError?.(error)) return;
-        return setProfileMsg("❌ " + error.message);
-      }
-
-      if (data) {
-        displayName.value = data.display_name ?? "";
-        bio.value = data.bio ?? "";
-        isPublic.checked = data.is_public ?? true;
-        showOwned.checked = data.show_owned ?? true;
-        setProfileMsg("✅ Profil chargé.");
-      } else {
-        displayName.value = (currentUser.email || "").split("@")[0] || "Moi";
-        bio.value = "";
-        isPublic.checked = true;
-        showOwned.checked = true;
-        setProfileMsg("ℹ️ Pas de profil encore. Tu peux l’enregistrer.");
-      }
-    } catch (e) {
-      if (Svc.isAbortError?.(e)) return;
-      setProfileMsg("❌ " + (e.message || String(e)));
-    }
-  }
-
-  async function savePublicProfile() {
-    if (!currentUser) return;
-
-    setProfileMsg("Enregistrement...");
-    try {
-      const payload = {
-        user_id: currentUser.id,
-        display_name: (displayName.value || "Profil").trim(),
-        bio: (bio.value || "").trim(),
-        is_public: !!isPublic.checked,
-        show_owned: !!showOwned.checked,
-        updated_at: new Date().toISOString(),
-      };
-
-      const { error } = await supa.from("public_profiles").upsert(payload, { onConflict: "user_id" });
-      if (error) return setProfileMsg("❌ " + error.message);
-
-      setProfileMsg("✅ Profil enregistré.");
-    } catch (e) {
-      if (Svc.isAbortError?.(e)) return;
-      setProfileMsg("❌ " + (e.message || String(e)));
-    }
-  }
-
-  async function publishOwnedToPublic() {
-    if (!currentUser) return;
-
-    setProfileMsg("Publication des skins cochés...");
-    try {
-      await savePublicProfile();
-
-      const { error: delErr } = await supa.from("public_user_skins").delete().eq("user_id", currentUser.id);
-      if (delErr) return setProfileMsg("❌ " + delErr.message);
-
-      if (ownedSet.size === 0) {
-        setProfileMsg("✅ Aucun skin coché → liste publique vidée.");
-        return;
-      }
-
-      const rows = [...ownedSet].map((skin_id) => ({ user_id: currentUser.id, skin_id }));
-      const { error: insErr } = await supa.from("public_user_skins").upsert(rows, { onConflict: "user_id,skin_id" });
-      if (insErr) return setProfileMsg("❌ " + insErr.message);
-
-      setProfileMsg(`✅ Publié: ${ownedSet.size} skin(s).`);
-    } catch (e) {
-      if (Svc.isAbortError?.(e)) return;
-      setProfileMsg("❌ " + (e.message || String(e)));
-    }
-  }
-
- function publicProfileUrl() {
-  const url = new URL("./profile.html", window.location.href);
-  url.searchParams.set("u", currentUser.id);
-  return url.toString();
-}
-
-
-  async function copyPublicLink() {
-    if (!currentUser) return;
-    try {
-      await navigator.clipboard.writeText(publicProfileUrl());
-      setProfileMsg("✅ Lien copié.");
-    } catch {
-      setProfileMsg("⚠️ Copie impossible. Copie manuellement l’URL.");
-    }
-  }
-
-  function openPublicProfile() {
-    if (!currentUser) return;
-    window.open(publicProfileUrl(), "_blank");
   }
 
   // Render / Stats
@@ -509,9 +406,6 @@
 
       updateStats();
       render();
-
-      await loadPublicProfile();
-      if (t !== refreshToken) return;
     } catch (e) {
       if (Svc.isAbortError?.(e)) return;
       console.error(e);
@@ -530,11 +424,6 @@
   filterBrawler.addEventListener("change", render);
   filterRarity.addEventListener("change", render);
   onlyOwned.addEventListener("change", render);
-
-  btnSaveProfile.addEventListener("click", savePublicProfile);
-  btnPublishOwned.addEventListener("click", publishOwnedToPublic);
-  btnOpenProfile.addEventListener("click", openPublicProfile);
-  btnCopyProfile.addEventListener("click", copyPublicLink);
 
   // Init
   buildBrawlerFilter();

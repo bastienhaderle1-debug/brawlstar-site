@@ -651,6 +651,8 @@ label{
 .pill.rarity-mythic { background: rgba(255, 90, 0, 0.16); border-color: rgba(255, 90, 0, 0.65); }
 .pill.rarity-legendary { background: rgba(255, 220, 80, 0.16); border-color: rgba(255, 220, 80, 0.70); }
 .pill.rarity-hypercharge { background: rgba(255, 0, 255, 0.16); border-color: rgba(255, 0, 255, 0.70); }
+.pill.rarity-silver{background: rgba(200,200,200,0.18);border-color: rgba(220,220,220,0.75);}
+.pill.rarity-gold{background: rgba(255,215,0,0.22);border-color: rgba(255,215,0,0.85);}
 
 /* =========================
    Stats
@@ -1165,3 +1167,79 @@ label{
     padding: 10px;
   }
 }
+/* =========================
+   Skin cards images
+   ========================= */
+.skin-card .skin-top{
+  display:flex;
+  gap:12px;
+  align-items:flex-start;
+  flex-wrap:wrap;
+}
+
+.skin-media{
+  width: 92px;
+  height: 92px;
+  border-radius: 18px;
+  overflow:hidden;
+
+  background: rgba(255,255,255,0.06);
+  border: 2px solid rgba(255,255,255,.16);
+  outline: 2px solid rgba(0,0,0,.22);
+  box-shadow: 0 6px 0 rgba(0,0,0,.18);
+
+  flex: 0 0 auto;
+}
+
+.skin-img{
+  width:100%;
+  height:100%;
+  object-fit: cover;
+  display:block;
+  transform: translateZ(0);
+}
+
+.skin-img--placeholder{
+  width:100%;
+  height:100%;
+  background:
+    radial-gradient(40px 40px at 30% 30%, rgba(255,255,255,.10), transparent 60%),
+    linear-gradient(180deg, rgba(255,255,255,.06), rgba(0,0,0,.08));
+}
+/* Skin image */
+.skin-thumb{
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: 14px;
+  overflow: hidden;
+  margin-bottom: 10px;
+
+  background: rgba(255,255,255,0.06);
+  border: 2px solid rgba(255,255,255,0.14);
+  outline: 2px solid rgba(0,0,0,.22);
+}
+
+.skin-thumb img{
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.skin-img{
+  width: 100%;
+  height: 140px;
+
+  object-fit: contain;
+  object-position: center;
+
+  margin-bottom: 10px;
+  padding: 10px;
+
+  background: rgba(0,0,0,.25);
+  border-radius: 14px;
+
+  box-shadow:
+    inset 0 0 0 2px rgba(255,255,255,.08),
+    inset 0 6px 14px rgba(0,0,0,.35);
+}
+

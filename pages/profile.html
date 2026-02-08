@@ -6,6 +6,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Profil</title>
   <link rel="stylesheet" href="../style.css" />
+  <style>
+    .grid-2{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    @media (max-width:980px){ .grid-2{ grid-template-columns:1fr; } }
+  </style>
 </head>
 
 <body>
@@ -13,9 +17,9 @@
     <div class="headerbar">
       <div>
         <h1 data-title="PROFIL">👤 PROFIL</h1>
-        <p class="muted">Recherche un joueur par pseudo, ou ouvre un profil via ?u=UUID.</p>
+        <p class="muted">Recherche un joueur par pseudo, ouvre un profil via ?u=UUID, ou gère ton propre profil public.</p>
 
-         <nav class="nav">
+        <nav class="nav">
           <a href="../index.html">Accueil</a>
           <a href="./mybrawl.html">MyBrawl</a>
           <a href="./profile.html">Profil</a>
@@ -36,10 +40,76 @@
   </header>
 
   <main class="container">
-    <!-- Recherche pseudo -->
-    <section class="card">
+    <!-- ======================
+         MON PROFIL (si connecté)
+         ====================== -->
+    <section class="card" id="myProfileCard" style="display:none;">
+      <h2 data-title="MON PROFIL">🌍 MON PROFIL PUBLIC</h2>
+      <p class="muted">Configure ton profil et publie ta liste de skins cochés (stockée par MyBrawl / Skins).</p>
+
+      <section class="toolbar" style="margin: 12px 0 8px 0;">
+        <div class="filter">
+          <label>Connecté en tant que</label>
+          <div class="muted" id="meLine">—</div>
+        </div>
+
+        <div style="display:flex; align-items:end; gap:10px; flex-wrap:wrap;">
+          <button class="seg-btn" id="btnMeReload" type="button">🔄 Recharger</button>
+          <button class="seg-btn" id="btnMeLogout" type="button">🚪 Déconnexion</button>
+        </div>
+      </section>
+
+      <div class="grid-2">
+        <div class="filter">
+          <label for="meDisplayName">Pseudo (public)</label>
+          <input class="input" id="meDisplayName" type="text" placeholder="ex: Bastien" />
+        </div>
+
+        <div class="filter">
+          <label for="meBio">Bio (public)</label>
+          <input class="input" id="meBio" type="text" placeholder="ex: Fan de Brawl Stars" />
+        </div>
+      </div>
+
+      <div style="display:flex; gap:18px; flex-wrap:wrap; margin-top:10px;">
+        <label style="display:flex; gap:8px; align-items:center; user-select:none;">
+          <input type="checkbox" id="meIsPublic" checked />
+          <span>Profil public</span>
+        </label>
+
+        <label style="display:flex; gap:8px; align-items:center; user-select:none;">
+          <input type="checkbox" id="meShowOwned" checked />
+          <span>Afficher mes skins</span>
+        </label>
+      </div>
+
+      <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:12px;">
+        <button class="seg-btn is-active" id="btnMeSave" type="button">💾 Enregistrer</button>
+        <button class="seg-btn" id="btnMePublish" type="button">📤 Publier mes skins cochés</button>
+        <button class="seg-btn" id="btnMeOpen" type="button">🔗 Ouvrir mon profil public</button>
+        <button class="seg-btn" id="btnMeCopy" type="button">📋 Copier le lien</button>
+      </div>
+
+      <p class="muted" id="meMsg" style="margin-top:10px;"></p>
+    </section>
+
+    <!-- ======================
+         MESSAGE si non connecté
+         ====================== -->
+    <section class="card" id="needAuthCard" style="display:none; margin-top:14px;">
+      <h2 data-title="CONNEXION">🔒 Connexion requise</h2>
+      <p class="muted">Pour éditer ton profil public, connecte-toi sur MyBrawl.</p>
+      <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:12px;">
+        <a class="seg-btn is-active" href="./mybrawl.html">👤 Aller sur MyBrawl</a>
+      </div>
+    </section>
+
+    <!-- ======================
+         RECHERCHE pseudo
+         ====================== -->
+    <section class="card" style="margin-top:14px;">
       <h2 data-title="RECHERCHE">🔎 RECHERCHE</h2>
-      <p class="muted">Tape un pseudo (public) et sélectionne un résultat.</p>
+      <p class="muted">Tape un pseudo (profil public uniquement) et sélectionne un résultat.</p>
 
       <section class="toolbar" style="margin-bottom:10px;">
         <div class="filter" style="min-width:260px; flex:1;">
@@ -54,7 +124,6 @@
       </section>
 
       <p class="muted" id="searchMsg"></p>
-
       <div class="cards" id="searchResults" style="grid-template-columns: repeat(2, minmax(240px, 1fr));"></div>
     </section>
 
@@ -68,7 +137,7 @@
       </div>
     </section>
 
-    <!-- Profil -->
+    <!-- Profil consulté -->
     <section class="card" id="profileCard" style="display:none; margin-top:14px;">
       <h2 id="displayName">—</h2>
       <p class="muted" id="bio">—</p>
@@ -98,7 +167,7 @@
       </div>
     </section>
 
-    <!-- Filtres skins -->
+    <!-- Filtres skins du profil consulté -->
     <section class="toolbar" id="toolbar" style="display:none; margin-top:14px;">
       <div class="filter">
         <label for="searchSkins">Recherche skins</label>
@@ -111,7 +180,7 @@
       </div>
     </section>
 
-    <!-- Liste skins -->
+    <!-- Liste skins du profil consulté -->
     <section id="skinsSection" style="display:none; margin-top:8px;">
       <h2 data-title="SKINS">✅ SKINS</h2>
       <p class="muted" id="resultCount"></p>
