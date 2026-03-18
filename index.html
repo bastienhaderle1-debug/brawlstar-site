@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Brawldex</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="header container">
+    <div class="headerbar">
+      <div>
+        <h1>Brawldex</h1>
+        <p class="muted">Le hub fan-made pour suivre tes skins, ton profil public, ton Brawldex et les profils de la communaute.</p>
+
+        <nav class="nav">
+          <a href="pages/mybrawl.html">MyBrawl</a>
+          <a href="pages/profile.html">Profil</a>
+          <a href="pages/brawlers.html">Brawlers</a>
+          <a href="pages/skins.html">Skins</a>
+        </nav>
+      </div>
+
+      <div class="header-right">
+        <div class="badge ko" id="globalAuthBadge">
+          <span class="dot"></span>
+          <span>Non connecte</span>
+        </div>
+
+        <a class="seg-btn" href="pages/mybrawl.html">Mon compte</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="container home-shell">
+    <section class="card hero-card">
+      <div class="hero-copy">
+        <p class="hero-kicker">Brawl Stars fan site</p>
+        <h2>Ton hub de collection, de profils publics et de progression</h2>
+        <p class="muted">
+          Gere ton Brawldex, coche tes skins, publie ton profil et suis tes prochains objectifs depuis une seule interface.
+        </p>
+        <div class="hero-actions">
+          <a class="seg-btn is-active" href="pages/mybrawl.html">Ouvrir MyBrawl</a>
+          <a class="seg-btn" href="pages/brawlers.html">Gerer mes brawlers</a>
+          <a class="seg-btn" href="pages/profile.html">Explorer les profils</a>
+        </div>
+      </div>
+
+      <aside class="hero-side">
+        <div class="hero-panel">
+          <span class="pill">Snapshot</span>
+          <h3 id="homeViewer">Chargement du dashboard local...</h3>
+          <p class="muted" id="homeSummary">Le site prepare ta progression locale et tes raccourcis principaux.</p>
+        </div>
+
+        <div class="hero-mini-stats">
+          <div class="stat">
+            <div class="stat-label">Brawlers</div>
+            <div class="stat-value" id="homeBrawlerPct">0%</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">Unlocks</div>
+            <div class="stat-value" id="homeUnlocks">0</div>
+          </div>
+        </div>
+      </aside>
+    </section>
+
+    <section class="home-grid">
+      <article class="card quick-card">
+        <span class="pill">MyBrawl</span>
+        <h3>Centre de commande</h3>
+        <p class="muted">Profil perso, objectifs, badges, timeline et publication de ton profil public.</p>
+        <a class="seg-btn" href="pages/mybrawl.html">Ouvrir MyBrawl</a>
+      </article>
+
+      <article class="card quick-card">
+        <span class="pill">Brawlers</span>
+        <h3>Gestionnaire complet</h3>
+        <p class="muted">Possession, builds, hypercharges, notes perso et export/import JSON.</p>
+        <a class="seg-btn" href="pages/brawlers.html">Voir les brawlers</a>
+      </article>
+
+      <article class="card quick-card">
+        <span class="pill">Profils</span>
+        <h3>Annuaire public</h3>
+        <p class="muted">Trie les profils recents, favoris et collections publiques depuis une vraie page annuaire.</p>
+        <a class="seg-btn" href="pages/profile.html">Ouvrir l'annuaire</a>
+      </article>
+    </section>
+
+    <section class="dashboard-grid">
+      <article class="card dashboard-card">
+        <h2>Badges et objectifs</h2>
+        <div class="tag-cloud" id="homeBadges"></div>
+        <div class="home-checks one-column" id="homeGoals"></div>
+      </article>
+
+      <article class="card dashboard-card">
+        <h2>Top brawlers locaux</h2>
+        <div class="list-stack" id="homeTopBrawlers"></div>
+      </article>
+    </section>
+
+    <section class="card home-note">
+      <div class="section-head">
+        <div>
+          <h2>Profils publics recents</h2>
+          <p class="muted">Trois raccourcis rapides vers les profils publics les plus recents.</p>
+        </div>
+        <div class="section-actions">
+          <a class="seg-btn" href="pages/profile.html">Voir tout l'annuaire</a>
+        </div>
+      </div>
+      <div class="collection-grid directory-grid" id="homeLatestProfiles"></div>
+    </section>
+  </main>
+
+  <footer class="footer container">
+    <p class="muted">Ce site n'est pas affilie a Supercell. Brawl Stars est une marque de Supercell.</p>
+  </footer>
+
+  <script src="js/toast.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="data/supabase-client.js"></script>
+  <script src="data/skins-data.js"></script>
+  <script src="data/brawldex-data.js"></script>
+  <script src="js/brawldex-service.js"></script>
+  <script src="js/home.js"></script>
+  <script src="js/site.js"></script>
+</body>
+</html>

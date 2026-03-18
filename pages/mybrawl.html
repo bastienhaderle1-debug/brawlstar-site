@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MyBrawl</title>
+  <link rel="stylesheet" href="../style.css" />
+</head>
+<body>
+  <header class="header container">
+    <div class="headerbar">
+      <div>
+        <h1>MyBrawl</h1>
+        <p class="muted">Ton dashboard perso pour piloter ta collection, ton profil public et tes objectifs.</p>
+
+        <nav class="nav">
+          <a href="../index.html">Accueil</a>
+          <a href="./mybrawl.html">MyBrawl</a>
+          <a href="./profile.html">Profil</a>
+          <a href="./brawlers.html">Brawlers</a>
+          <a href="./skins.html">Skins</a>
+        </nav>
+      </div>
+
+      <div class="header-right">
+        <div class="badge ko" id="globalAuthBadge">
+          <span class="dot"></span>
+          <span>Non connecte</span>
+        </div>
+
+        <a class="seg-btn" href="./brawlers.html">Mes brawlers</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="container page-stack">
+    <section class="card" id="authCard">
+      <h2>Connexion</h2>
+      <p class="muted">Connecte-toi pour lier tes skins Supabase a ton tableau de bord et publier ton profil.</p>
+
+      <div class="collection-fields auth-grid">
+        <div class="filter">
+          <label for="email">Email</label>
+          <input class="input" id="email" type="email" placeholder="toi@email.com" />
+        </div>
+
+        <div class="filter">
+          <label for="password">Mot de passe</label>
+          <input class="input" id="password" type="password" placeholder="mot de passe" />
+        </div>
+      </div>
+
+      <div class="hero-actions">
+        <button class="seg-btn is-active" id="btnLogin" type="button">Se connecter</button>
+        <button class="seg-btn" id="btnSignup" type="button">Creer un compte</button>
+        <button class="seg-btn" id="btnResend" type="button">Renvoyer l'email</button>
+      </div>
+
+      <p class="muted" id="authMsg"></p>
+    </section>
+
+    <section id="app" style="display:none;">
+      <section class="card">
+        <div class="section-head">
+          <div>
+            <h2>Centre de commande</h2>
+            <p class="muted" id="collectionSummary">Chargement de ton Brawldex...</p>
+          </div>
+          <div class="section-actions">
+            <button class="seg-btn" id="btnExport" type="button">Exporter JSON</button>
+            <label class="seg-btn" for="importFile">Importer JSON</label>
+            <input id="importFile" type="file" accept="application/json" hidden />
+            <button class="seg-btn" id="btnReset" type="button">Reset local</button>
+            <button class="seg-btn" id="btnReload" type="button">Recharger</button>
+            <button class="seg-btn" id="btnLogout" type="button">Deconnexion</button>
+          </div>
+        </div>
+
+        <div class="toolbar">
+          <div class="filter">
+            <label>Utilisateur</label>
+            <div class="muted" id="userLine">-</div>
+          </div>
+          <div class="filter">
+            <label>Navigation rapide</label>
+            <div class="section-actions">
+              <a class="seg-btn" href="./brawlers.html">Tous les brawlers</a>
+              <a class="seg-btn" href="./skins.html">Tous les skins</a>
+              <a class="seg-btn" href="./profile.html">Profils publics</a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="dashboard-grid">
+        <article class="card dashboard-card">
+          <h2>Profil joueur</h2>
+          <p class="muted">Ces infos restent locales et personnalisent ton Brawldex.</p>
+
+          <div class="collection-fields">
+            <div class="filter">
+              <label for="playerTag">Tag joueur</label>
+              <input id="playerTag" class="input" type="text" placeholder="#ABCD123" />
+            </div>
+            <div class="filter">
+              <label for="club">Club</label>
+              <input id="club" class="input" type="text" placeholder="Nom du club" />
+            </div>
+            <div class="filter">
+              <label for="favoriteMode">Mode prefere</label>
+              <input id="favoriteMode" class="input" type="text" placeholder="Brawl Ball, KO..." />
+            </div>
+            <div class="filter">
+              <label for="mainBrawler">Main brawler</label>
+              <select id="mainBrawler" class="select"></select>
+            </div>
+          </div>
+
+          <div class="filter">
+            <label for="goal">Objectif du moment</label>
+            <textarea id="goal" class="textarea" rows="3" placeholder="Mon prochain objectif de progression..."></textarea>
+          </div>
+
+          <div class="hero-actions">
+            <button class="seg-btn is-active" id="btnSavePersonal" type="button">Enregistrer mon profil</button>
+          </div>
+          <p class="muted" id="profileStatus"></p>
+        </article>
+
+        <article class="card dashboard-card">
+          <h2>Profil public</h2>
+          <p class="muted">Parametre ce que les autres voient et publie tes skins coches.</p>
+
+          <div class="collection-fields public-grid">
+            <div class="filter">
+              <label for="publicDisplayName">Pseudo public</label>
+              <input id="publicDisplayName" class="input" type="text" placeholder="ex: Bastien" />
+            </div>
+            <div class="filter">
+              <label for="publicBio">Bio publique</label>
+              <input id="publicBio" class="input" type="text" placeholder="ex: Fan de Brawl Stars" />
+            </div>
+          </div>
+
+          <div class="section-actions">
+            <label class="switch-line">
+              <input type="checkbox" id="publicIsPublic" checked />
+              <span>Profil public</span>
+            </label>
+            <label class="switch-line">
+              <input type="checkbox" id="publicShowOwned" checked />
+              <span>Afficher mes skins</span>
+            </label>
+          </div>
+
+          <div class="hero-actions">
+            <button class="seg-btn is-active" id="btnSavePublic" type="button">Enregistrer profil public</button>
+            <button class="seg-btn" id="btnPublishOwned" type="button">Publier mes skins</button>
+            <button class="seg-btn" id="btnOpenPublic" type="button">Ouvrir mon profil</button>
+            <button class="seg-btn" id="btnCopyPublic" type="button">Copier le lien</button>
+          </div>
+          <p class="muted" id="publicStatus"></p>
+        </article>
+      </section>
+
+      <section class="dashboard-grid">
+        <article class="card dashboard-card">
+          <h2>Brawldex perso</h2>
+          <div class="stats-grid compact-stats">
+            <div class="stat">
+              <div class="stat-label">Brawlers</div>
+              <div class="stat-value" id="brawlerOwned">0</div>
+              <div class="small" id="brawlerTotal">/ 0</div>
+            </div>
+            <div class="stat">
+              <div class="stat-label">Puissance moy.</div>
+              <div class="stat-value" id="avgPower">0.0</div>
+            </div>
+            <div class="stat">
+              <div class="stat-label">Trophees</div>
+              <div class="stat-value" id="trophyTotal">0</div>
+            </div>
+          </div>
+
+          <div class="stats-grid compact-stats">
+            <div class="stat">
+              <div class="stat-label">Unlocks</div>
+              <div class="stat-value" id="unlockTotal">0</div>
+            </div>
+            <div class="stat">
+              <div class="stat-label">Hypercharges</div>
+              <div class="stat-value" id="hyperchargeTotal">0</div>
+            </div>
+            <div class="stat">
+              <div class="stat-label">Skins</div>
+              <div class="stat-value" id="skinOwned">0</div>
+              <div class="small" id="skinTotal">/ 0</div>
+            </div>
+          </div>
+
+          <div class="progress"><div class="progress-bar" id="skinProgressBar"></div></div>
+          <p class="muted" id="status"></p>
+        </article>
+
+        <article class="card dashboard-card">
+          <h2>Badges et prochaines etapes</h2>
+          <div class="tag-cloud" id="badgeCloud"></div>
+          <div class="home-checks one-column" id="collectionHighlights"></div>
+        </article>
+      </section>
+
+      <section class="dashboard-grid">
+        <article class="card dashboard-card">
+          <div class="section-head">
+            <div>
+              <h2>Mes meilleurs brawlers</h2>
+              <p class="muted">Classement automatique de ton roster actuel.</p>
+            </div>
+            <div class="section-actions">
+              <a class="seg-btn" href="./brawlers.html">Gerer les brawlers</a>
+            </div>
+          </div>
+          <div class="list-stack" id="topBrawlers"></div>
+        </article>
+
+        <article class="card dashboard-card">
+          <h2>Activite recente</h2>
+          <div class="list-stack" id="activityFeed"></div>
+        </article>
+      </section>
+
+      <section class="card">
+        <div class="section-head">
+          <div>
+            <h2>Mes skins</h2>
+            <p class="muted">Catalogue perso rapide pour cocher, filtrer et publier tes skins.</p>
+          </div>
+          <div class="section-actions">
+            <a class="seg-btn" href="./skins.html">Catalogue complet</a>
+          </div>
+        </div>
+
+        <div class="collection-toolbar">
+          <div class="filter">
+            <label for="search">Recherche</label>
+            <input class="input" id="search" type="text" placeholder="ex: shelly star, pirate..." />
+          </div>
+
+          <div class="filter">
+            <label for="filterBrawler">Brawler</label>
+            <select id="filterBrawler" class="select"></select>
+          </div>
+
+          <div class="filter">
+            <label for="filterRarity">Rarete</label>
+            <select id="filterRarity" class="select"></select>
+          </div>
+
+          <div class="filter">
+            <label>Affichage</label>
+            <label class="switch-line">
+              <input type="checkbox" id="onlyOwned" />
+              <span>Uniquement mes skins</span>
+            </label>
+          </div>
+        </div>
+
+        <p class="muted" id="resultCount"></p>
+        <div class="cards" id="cards"></div>
+      </section>
+    </section>
+  </main>
+
+  <footer class="footer container">
+    <a href="../index.html">Retour a l'accueil</a>
+  </footer>
+
+  <script src="../js/toast.js"></script>
+  <script src="../js/guard.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../data/supabase-client.js"></script>
+  <script src="../data/skins-data.js"></script>
+  <script src="../data/brawldex-data.js"></script>
+  <script src="../js/owned-service.js"></script>
+  <script src="../js/brawldex-service.js"></script>
+  <script src="../js/mybrawl.js"></script>
+  <script src="../js/site.js"></script>
+</body>
+</html>

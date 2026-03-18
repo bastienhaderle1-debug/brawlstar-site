@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Brawlers</title>
+  <link rel="stylesheet" href="../style.css" />
+</head>
+<body>
+  <header class="header container">
+    <div class="headerbar">
+      <div>
+        <h1>Brawlers</h1>
+        <p class="muted">Le gestionnaire complet de ta collection: possession, build, progression et outils de sauvegarde.</p>
+
+        <nav class="nav">
+          <a href="../index.html">Accueil</a>
+          <a href="./mybrawl.html">MyBrawl</a>
+          <a href="./profile.html">Profil</a>
+          <a href="./brawlers.html">Brawlers</a>
+          <a href="./skins.html">Skins</a>
+        </nav>
+      </div>
+
+      <div class="header-right">
+        <div class="badge ko" id="globalAuthBadge">
+          <span class="dot"></span>
+          <span>Non connecte</span>
+        </div>
+
+        <a class="seg-btn" href="./mybrawl.html">Mon Brawldex</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="container page-stack">
+    <section class="card">
+      <div class="section-head">
+        <div>
+          <h2>Vue collection</h2>
+          <p class="muted" id="accountLine">Chargement de ta collection...</p>
+        </div>
+        <div class="section-actions">
+          <button class="seg-btn" id="btnExport" type="button">Exporter JSON</button>
+          <label class="seg-btn" for="importFile">Importer JSON</label>
+          <input id="importFile" type="file" accept="application/json" hidden />
+          <button class="seg-btn" id="btnReset" type="button">Reinitialiser</button>
+        </div>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat">
+          <div class="stat-label">Possedes</div>
+          <div class="stat-value" id="statOwnedBrawlers">0</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Total</div>
+          <div class="stat-value" id="statTotalBrawlers">0</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Puissance moy.</div>
+          <div class="stat-value" id="statAvgPower">0.0</div>
+        </div>
+      </div>
+
+      <div class="stats-grid collection-stats">
+        <div class="stat">
+          <div class="stat-label">Trophees</div>
+          <div class="stat-value" id="statTrophies">0</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Unlocks</div>
+          <div class="stat-value" id="statUnlocks">0</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Hypercharges</div>
+          <div class="stat-value" id="statHypercharges">0</div>
+        </div>
+      </div>
+
+      <div class="home-checks one-column" id="brawlerInsights"></div>
+    </section>
+
+    <section class="card">
+      <div class="collection-toolbar collection-toolbar-wide">
+        <div class="filter">
+          <label for="search">Recherche</label>
+          <input id="search" class="input" type="text" placeholder="ex: shelly, tank, controle..." />
+        </div>
+
+        <div class="filter">
+          <label for="ownedFilter">Collection</label>
+          <select id="ownedFilter" class="select">
+            <option value="all">Tous</option>
+            <option value="owned">Possedes</option>
+            <option value="missing">Manquants</option>
+            <option value="favorites">Favoris</option>
+          </select>
+        </div>
+
+        <div class="filter">
+          <label for="buildFilter">Progression</label>
+          <select id="buildFilter" class="select">
+            <option value="all">Tous</option>
+            <option value="incomplete">Builds incomplets</option>
+            <option value="maxed">Puissance 11</option>
+            <option value="hypercharge">Avec hypercharge</option>
+            <option value="ready">Presque completes</option>
+          </select>
+        </div>
+
+        <div class="filter">
+          <label for="sortBy">Tri</label>
+          <select id="sortBy" class="select">
+            <option value="name">Nom</option>
+            <option value="trophies">Trophees</option>
+            <option value="power">Puissance</option>
+            <option value="completion">Progression</option>
+          </select>
+        </div>
+
+        <div class="filter">
+          <label>Actions</label>
+          <div class="section-actions">
+            <button class="seg-btn" id="btnOnlyMissing" type="button">Voir les manquants</button>
+            <button class="seg-btn" id="btnClearFilters" type="button">Reset filtres</button>
+          </div>
+        </div>
+      </div>
+
+      <p class="muted" id="resultCount">0 brawler(s)</p>
+      <div class="collection-grid" id="cards"></div>
+    </section>
+  </main>
+
+  <div class="modal-backdrop" id="brawlerDetailModal" hidden>
+    <div class="modal-card detail-modal" role="dialog" aria-modal="true" aria-labelledby="detailName">
+      <div class="section-head">
+        <div>
+          <h2 id="detailName">Brawler</h2>
+          <p class="muted" id="detailMeta">-</p>
+        </div>
+        <div class="section-actions">
+          <button class="seg-btn" id="btnCloseBrawlerDetail" type="button">Fermer</button>
+        </div>
+      </div>
+
+      <div class="stats-grid compact-stats">
+        <div class="stat">
+          <div class="stat-label">Collection</div>
+          <div class="stat-value" id="detailOwned">-</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Puissance</div>
+          <div class="stat-value" id="detailPower">0</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Trophees</div>
+          <div class="stat-value" id="detailTrophies">0</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Mastery</div>
+          <div class="stat-value" id="detailMastery">0</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Skins lies</div>
+          <div class="stat-value" id="detailRelatedSkins">0</div>
+        </div>
+      </div>
+
+      <div class="progress"><div class="progress-bar" id="detailProgress" style="width:0%"></div></div>
+      <p class="muted" id="detailSummary"></p>
+
+      <div class="detail-grid">
+        <div class="choice-block">
+          <div class="choice-title">Prochaine etape</div>
+          <p class="muted" id="detailNext">-</p>
+        </div>
+
+        <div class="choice-block">
+          <div class="choice-title">Notes perso</div>
+          <p class="muted" id="detailNotes">Aucune note.</p>
+        </div>
+      </div>
+
+      <div class="detail-grid">
+        <div class="choice-block">
+          <div class="choice-title">Unlocks equipes</div>
+          <div class="tag-cloud" id="detailUnlocked"></div>
+        </div>
+
+        <div class="choice-block">
+          <div class="choice-title">Unlocks manquants</div>
+          <div class="tag-cloud" id="detailMissing"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="footer container">
+    <a href="../index.html">Retour a l'accueil</a>
+  </footer>
+
+  <script src="../js/toast.js"></script>
+  <script src="../js/guard.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../data/supabase-client.js"></script>
+  <script src="../data/skins-data.js"></script>
+  <script src="../data/brawldex-data.js"></script>
+  <script src="../js/brawldex-service.js"></script>
+  <script src="../js/brawlers.js"></script>
+  <script src="../js/site.js"></script>
+</body>
+</html>

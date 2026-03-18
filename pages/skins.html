@@ -1,0 +1,91 @@
+<!--pages/skins.html-->
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Skins</title>
+  <link rel="stylesheet" href="../style.css" />
+</head>
+
+<body>
+  <header class="header container">
+    <div class="headerbar">
+      <div>
+        <h1>🎨 Skins</h1>
+        <p class="muted">Classement des skins par brawler ou par thème. Si tu es connecté, tu peux cocher tes skins.</p>
+
+        <nav class="nav">
+          <a href="../index.html">Accueil</a>
+          <a href="./mybrawl.html">MyBrawl</a>
+          <a href="./profile.html">Profil</a>
+          <a href="./brawlers.html">Brawlers</a>
+          <a href="./skins.html">Skins</a>
+        </nav>
+      </div>
+
+      <div class="header-right">
+        <div class="badge ko" id="globalAuthBadge">
+          <span class="dot"></span>
+          <span>Non connecté</span>
+        </div>
+
+        <a class="seg-btn" href="./mybrawl.html">👤 Mon compte</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- ✅ Ligne statut connexion / mode lecture seule -->
+    <p class="muted" id="accountLine" style="margin: 6px 0 10px 0;"></p>
+
+    <section class="toolbar">
+      <div class="segmented" role="group" aria-label="Mode de tri">
+        <button class="seg-btn is-active" id="modeBrawler" type="button">Par brawler</button>
+        <button class="seg-btn" id="modeCategory" type="button">Par thème</button>
+      </div>
+
+      <div class="filter">
+        <label for="select" id="selectLabel">Choisir un brawler</label>
+        <select id="select" class="select"></select>
+      </div>
+
+      <div class="filter">
+        <label for="rarity">Rareté</label>
+        <select id="rarity" class="select"></select>
+      </div>
+
+      <div class="filter">
+        <label for="search">Recherche</label>
+        <input id="search" class="input" type="text" placeholder="ex: star, pirate, gold..." />
+      </div>
+    </section>
+
+    <section>
+      <h2 id="resultTitle">Résultats</h2>
+      <p class="muted" id="resultCount"></p>
+      <div class="cards" id="cards"></div>
+    </section>
+  </main>
+
+  <footer class="footer container">
+    <a href="../index.html">⬅ Retour à l’accueil</a>
+  </footer>
+
+  <!-- UI -->
+  <script src="../js/toast.js"></script>
+  <script src="../js/guard.js"></script>
+
+  <!-- Supabase + Data -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../data/supabase-client.js"></script>
+  <script src="../data/skins-data.js"></script>
+
+  <!-- Owned -->
+  <script src="../js/owned-service.js"></script>
+
+  <!-- Page -->
+  <script src="../js/skins.js"></script>
+  <script src="../js/site.js"></script>
+</body>
+</html>

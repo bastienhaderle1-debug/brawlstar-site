@@ -1,0 +1,20 @@
+{
+  "redirects": [
+    {
+      "source": "/brawlstar%20site",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/brawlstar%20site/:path*",
+      "destination": "/:path*",
+      "permanent": true
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/asset/:path*",
+      "destination": "/assets/:path*"
+    }
+  ]
+}

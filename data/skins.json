@@ -1,0 +1,21 @@
+{
+  "rarity_order": ["Rare", "Super Rare", "Epic", "Mythique", "Légendaire", "Hypercharge"],
+  "skins": [
+    {
+      "id": "shelly_star",
+      "name": "Star Shelly",
+      "brawler": "Shelly",
+      "category": "Anniversaire",
+      "rarity": "Rare",
+      "img": "/assets/skins/shelly_star.webp"
+    },
+    {
+      "id": "colt_outlaw",
+      "name": "Outlaw Colt",
+      "brawler": "Colt",
+      "category": "Bandits",
+      "rarity": "Epic",
+      "img": "/assets/skins/colt_outlaw.webp"
+    }
+  ]
+}
