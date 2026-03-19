@@ -3,21 +3,25 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>MyBrawl</title>
+  <title>Brawldex | Dashboard</title>
   <link rel="stylesheet" href="../style.css" />
+  <link rel="stylesheet" href="../brawldex.css" />
 </head>
 <body>
   <header class="header container">
     <div class="headerbar">
       <div>
-        <h1>MyBrawl</h1>
-        <p class="muted">Ton dashboard perso pour piloter ta collection, ton profil public et tes objectifs.</p>
+        <p class="brand-kicker">Personal workspace</p>
+        <h1>Brawldex</h1>
+        <p class="muted hero-summary">
+          Ton dashboard central pour te connecter, synchroniser ton vrai profil Brawl Stars, cocher tes skins et publier ton profil.
+        </p>
 
         <nav class="nav">
           <a href="../index.html">Accueil</a>
-          <a href="./mybrawl.html">MyBrawl</a>
-          <a href="./profile.html">Profil</a>
-          <a href="./brawlers.html">Brawlers</a>
+          <a href="./mybrawl.html">Dashboard</a>
+          <a href="./brawlers.html">Roster</a>
+          <a href="./profile.html">Profils</a>
           <a href="./skins.html">Skins</a>
         </nav>
       </div>
@@ -27,16 +31,19 @@
           <span class="dot"></span>
           <span>Non connecte</span>
         </div>
-
-        <a class="seg-btn" href="./brawlers.html">Mes brawlers</a>
+        <a class="seg-btn" href="./brawlers.html">Ouvrir le roster</a>
       </div>
     </div>
   </header>
 
   <main class="container page-stack">
     <section class="card" id="authCard">
-      <h2>Connexion</h2>
-      <p class="muted">Connecte-toi pour lier tes skins Supabase a ton tableau de bord et publier ton profil.</p>
+      <div class="section-head">
+        <div>
+          <h2>Connexion Supabase</h2>
+          <p class="muted">Ton compte Supabase sert a sauvegarder les skins coches et ton profil public.</p>
+        </div>
+      </div>
 
       <div class="collection-fields auth-grid">
         <div class="filter">
@@ -60,13 +67,28 @@
     </section>
 
     <section id="app" style="display:none;">
-      <section class="card">
-        <div class="section-head">
-          <div>
-            <h2>Centre de commande</h2>
-            <p class="muted" id="collectionSummary">Chargement de ton Brawldex...</p>
+      <section class="hero-grid-alt">
+        <article class="card dashboard-card">
+          <p class="brand-kicker">Control center</p>
+          <h2>Centre de commande Brawldex</h2>
+          <p class="muted" id="collectionSummary">Chargement de ton espace...</p>
+
+          <div class="status-grid">
+            <div class="status-card">
+              <span class="small">Utilisateur</span>
+              <strong id="userLine">-</strong>
+            </div>
+            <div class="status-card">
+              <span class="small">Source skins</span>
+              <strong id="dataSourceLabel">Local fallback</strong>
+            </div>
+            <div class="status-card">
+              <span class="small">Etat</span>
+              <strong id="status">-</strong>
+            </div>
           </div>
-          <div class="section-actions">
+
+          <div class="hero-actions">
             <button class="seg-btn" id="btnExport" type="button">Exporter JSON</button>
             <label class="seg-btn" for="importFile">Importer JSON</label>
             <input id="importFile" type="file" accept="application/json" hidden />
@@ -74,28 +96,31 @@
             <button class="seg-btn" id="btnReload" type="button">Recharger</button>
             <button class="seg-btn" id="btnLogout" type="button">Deconnexion</button>
           </div>
-        </div>
+        </article>
 
-        <div class="toolbar">
-          <div class="filter">
-            <label>Utilisateur</label>
-            <div class="muted" id="userLine">-</div>
-          </div>
-          <div class="filter">
-            <label>Navigation rapide</label>
+        <aside class="hero-side">
+          <div class="hero-panel">
+            <span class="pill">Navigation</span>
+            <h3>Actions rapides</h3>
             <div class="section-actions">
-              <a class="seg-btn" href="./brawlers.html">Tous les brawlers</a>
-              <a class="seg-btn" href="./skins.html">Tous les skins</a>
+              <a class="seg-btn" href="./brawlers.html">Roster</a>
+              <a class="seg-btn" href="./skins.html">Catalogue skins</a>
               <a class="seg-btn" href="./profile.html">Profils publics</a>
             </div>
           </div>
-        </div>
+
+          <div class="hero-panel">
+            <span class="pill">Google Sheet</span>
+            <h3 id="dataSourceMessage">Le connecteur est pret a recevoir ton lien.</h3>
+            <p class="muted">Dès que tu m'envoies le lien du Google Sheet, je branche la source reelle.</p>
+          </div>
+        </aside>
       </section>
 
-      <section class="dashboard-grid">
+      <section class="split-grid">
         <article class="card dashboard-card">
-          <h2>Profil joueur</h2>
-          <p class="muted">Ces infos restent locales et personnalisent ton Brawldex.</p>
+          <h2>Profil joueur local</h2>
+          <p class="muted">Ces infos restent dans ton espace Brawldex et servent de base a l'experience.</p>
 
           <div class="collection-fields">
             <div class="filter">
@@ -128,8 +153,77 @@
         </article>
 
         <article class="card dashboard-card">
+          <h2>Connexion Brawl Stars API</h2>
+          <p class="muted">Synchronise ton vrai compte pour afficher nom, trophees et statistiques officielles.</p>
+
+          <div class="api-card">
+            <div class="collection-fields public-grid">
+              <div class="filter">
+                <label for="apiPlayerTag">Tag a synchroniser</label>
+                <input id="apiPlayerTag" class="input" type="text" placeholder="#ABCD123" />
+              </div>
+              <div class="filter">
+                <label>Actions</label>
+                <div class="section-actions">
+                  <button class="seg-btn is-active" id="btnSyncPlayer" type="button">Synchroniser</button>
+                  <button class="seg-btn" id="btnClearPlayerSync" type="button">Vider la synchro</button>
+                </div>
+              </div>
+            </div>
+
+            <p class="muted" id="playerApiStatus">Le proxy API est pret. Ajoute le token cote Vercel pour activer la synchro.</p>
+
+            <div class="api-profile-card" id="playerApiCard">
+              <div class="list-head">
+                <div>
+                  <h3 id="playerApiName">Compte non synchronise</h3>
+                  <p class="muted" id="playerApiMeta">Synchronise un tag pour recuperer ton vrai profil Brawl Stars.</p>
+                </div>
+                <span class="pill" id="playerApiTag">#---</span>
+              </div>
+
+              <div class="api-metrics">
+                <div class="metric-tile">
+                  <span class="small">Trophees</span>
+                  <strong id="playerApiTrophies">0</strong>
+                </div>
+                <div class="metric-tile">
+                  <span class="small">Record</span>
+                  <strong id="playerApiHighest">0</strong>
+                </div>
+                <div class="metric-tile">
+                  <span class="small">Brawlers</span>
+                  <strong id="playerApiBrawlers">0</strong>
+                </div>
+                <div class="metric-tile">
+                  <span class="small">Niveau EXP</span>
+                  <strong id="playerApiExp">0</strong>
+                </div>
+              </div>
+
+              <div class="status-grid">
+                <div class="status-card">
+                  <span class="small">Club</span>
+                  <strong id="playerApiClub">-</strong>
+                </div>
+                <div class="status-card">
+                  <span class="small">Top brawler</span>
+                  <strong id="playerApiFavorite">-</strong>
+                </div>
+                <div class="status-card">
+                  <span class="small">Derniere synchro</span>
+                  <strong id="playerApiSyncedAt">-</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+        </article>
+      </section>
+
+      <section class="split-grid">
+        <article class="card dashboard-card">
           <h2>Profil public</h2>
-          <p class="muted">Parametre ce que les autres voient et publie tes skins coches.</p>
+          <p class="muted">Parametre ce que les autres voient et publie les skins coches de ton compte Supabase.</p>
 
           <div class="collection-fields public-grid">
             <div class="filter">
@@ -154,18 +248,16 @@
           </div>
 
           <div class="hero-actions">
-            <button class="seg-btn is-active" id="btnSavePublic" type="button">Enregistrer profil public</button>
+            <button class="seg-btn is-active" id="btnSavePublic" type="button">Enregistrer le profil</button>
             <button class="seg-btn" id="btnPublishOwned" type="button">Publier mes skins</button>
             <button class="seg-btn" id="btnOpenPublic" type="button">Ouvrir mon profil</button>
             <button class="seg-btn" id="btnCopyPublic" type="button">Copier le lien</button>
           </div>
           <p class="muted" id="publicStatus"></p>
         </article>
-      </section>
 
-      <section class="dashboard-grid">
         <article class="card dashboard-card">
-          <h2>Brawldex perso</h2>
+          <h2>Resume rapide</h2>
           <div class="stats-grid compact-stats">
             <div class="stat">
               <div class="stat-label">Brawlers</div>
@@ -177,7 +269,7 @@
               <div class="stat-value" id="avgPower">0.0</div>
             </div>
             <div class="stat">
-              <div class="stat-label">Trophees</div>
+              <div class="stat-label">Trophees locaux</div>
               <div class="stat-value" id="trophyTotal">0</div>
             </div>
           </div>
@@ -199,25 +291,20 @@
           </div>
 
           <div class="progress"><div class="progress-bar" id="skinProgressBar"></div></div>
-          <p class="muted" id="status"></p>
-        </article>
-
-        <article class="card dashboard-card">
-          <h2>Badges et prochaines etapes</h2>
           <div class="tag-cloud" id="badgeCloud"></div>
           <div class="home-checks one-column" id="collectionHighlights"></div>
         </article>
       </section>
 
-      <section class="dashboard-grid">
+      <section class="split-grid">
         <article class="card dashboard-card">
           <div class="section-head">
             <div>
               <h2>Mes meilleurs brawlers</h2>
-              <p class="muted">Classement automatique de ton roster actuel.</p>
+              <p class="muted">Classement automatique de ton roster local.</p>
             </div>
             <div class="section-actions">
-              <a class="seg-btn" href="./brawlers.html">Gerer les brawlers</a>
+              <a class="seg-btn" href="./brawlers.html">Ouvrir le roster</a>
             </div>
           </div>
           <div class="list-stack" id="topBrawlers"></div>
@@ -229,11 +316,11 @@
         </article>
       </section>
 
-      <section class="card">
+      <section class="card dashboard-card">
         <div class="section-head">
           <div>
-            <h2>Mes skins</h2>
-            <p class="muted">Catalogue perso rapide pour cocher, filtrer et publier tes skins.</p>
+            <h2>Skins personnels</h2>
+            <p class="muted">Les skins affiches ici viennent de la source catalogue Brawldex. La possession, elle, est sauvee dans Supabase.</p>
           </div>
           <div class="section-actions">
             <a class="seg-btn" href="./skins.html">Catalogue complet</a>
@@ -279,10 +366,12 @@
   <script src="../js/guard.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="../data/supabase-client.js"></script>
+  <script src="../data/skins-source-config.js"></script>
   <script src="../data/skins-data.js"></script>
   <script src="../data/brawldex-data.js"></script>
   <script src="../js/owned-service.js"></script>
   <script src="../js/brawldex-service.js"></script>
+  <script src="../js/brawl-stars-api.js"></script>
   <script src="../js/mybrawl.js"></script>
   <script src="../js/site.js"></script>
 </body>

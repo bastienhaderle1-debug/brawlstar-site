@@ -482,14 +482,14 @@
       viewerId = user?.id || "visitor";
       accountLine.textContent = user
         ? `Collection locale liee a ${user.email ?? user.id}.`
-        : "Mode local visiteur: connecte-toi sur MyBrawl pour lier ta collection a ton compte.";
+        : "Mode local visiteur: connecte-toi au dashboard pour lier ta collection a ton compte.";
 
       supa.auth.onAuthStateChange((_event, session) => {
         const nextUser = session?.user ?? null;
         viewerId = nextUser?.id || "visitor";
         accountLine.textContent = nextUser
           ? `Collection locale liee a ${nextUser.email ?? nextUser.id}.`
-          : "Mode local visiteur: connecte-toi sur MyBrawl pour lier ta collection a ton compte.";
+          : "Mode local visiteur: connecte-toi au dashboard pour lier ta collection a ton compte.";
         updateSummary();
         render();
       });

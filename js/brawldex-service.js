@@ -7,7 +7,19 @@
     club: "",
     favoriteMode: "",
     mainBrawler: "",
-    goal: ""
+    goal: "",
+    playerName: "",
+    apiClubName: "",
+    apiClubTag: "",
+    apiFavoriteBrawler: "",
+    apiSyncedAt: "",
+    trophies: 0,
+    highestTrophies: 0,
+    expLevel: 0,
+    victories3v3: 0,
+    soloVictories: 0,
+    duoVictories: 0,
+    brawlersCount: 0
   };
 
   function safeStr(value) {
@@ -78,7 +90,19 @@
       club: safeStr(profile?.club).trim(),
       favoriteMode: safeStr(profile?.favoriteMode).trim(),
       mainBrawler: safeStr(profile?.mainBrawler).trim(),
-      goal: safeStr(profile?.goal).trim()
+      goal: safeStr(profile?.goal).trim(),
+      playerName: safeStr(profile?.playerName).trim(),
+      apiClubName: safeStr(profile?.apiClubName).trim(),
+      apiClubTag: safeStr(profile?.apiClubTag).trim(),
+      apiFavoriteBrawler: safeStr(profile?.apiFavoriteBrawler).trim(),
+      apiSyncedAt: safeStr(profile?.apiSyncedAt).trim(),
+      trophies: normalizeNumber(profile?.trophies, 0, 999999, 0),
+      highestTrophies: normalizeNumber(profile?.highestTrophies, 0, 999999, 0),
+      expLevel: normalizeNumber(profile?.expLevel, 0, 9999, 0),
+      victories3v3: normalizeNumber(profile?.victories3v3, 0, 999999, 0),
+      soloVictories: normalizeNumber(profile?.soloVictories, 0, 999999, 0),
+      duoVictories: normalizeNumber(profile?.duoVictories, 0, 999999, 0),
+      brawlersCount: normalizeNumber(profile?.brawlersCount, 0, 9999, 0)
     };
   }
 
@@ -407,7 +431,7 @@
       recommendations.push(`Ajouter ${nextMissingBrawler.meta.name} a ta collection pour monter a ${stats.owned + 1}/${stats.total}.`);
     }
     if (!profile.mainBrawler) {
-      recommendations.push("Definir ton main brawler dans MyBrawl pour personnaliser davantage ton dashboard.");
+      recommendations.push("Definir ton main brawler dans le dashboard pour personnaliser davantage ton espace.");
     }
     if (stats.hypercharges === 0 && stats.owned > 0) {
       recommendations.push("Debloquer une premiere hypercharge pour lancer ta progression avancee.");

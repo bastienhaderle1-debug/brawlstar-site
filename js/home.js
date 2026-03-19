@@ -11,6 +11,11 @@
   const homeGoals = $("homeGoals");
   const homeTopBrawlers = $("homeTopBrawlers");
   const homeLatestProfiles = $("homeLatestProfiles");
+  const homeSourceStatus = $("homeSourceStatus");
+  const homeSourceStatusLabel = $("homeSourceStatusLabel");
+  const homeSourceMessage = $("homeSourceMessage");
+  const homeApiStatus = $("homeApiStatus");
+  const homeApiMessage = $("homeApiMessage");
   const supa = window.supabaseClient || null;
   let viewerId = "visitor";
 
@@ -18,17 +23,44 @@
     return viewerId || "visitor";
   }
 
+  function sourceStatus() {
+    return window.SKINS_SOURCE_STATUS || {
+      label: "Local fallback",
+      message: "Le Google Sheet n'est pas encore connecte."
+    };
+  }
+
   function renderSnapshot() {
     const stats = Brawldex.getStats(viewerKey());
     const insights = Brawldex.getInsights(viewerKey());
     const profile = Brawldex.getProfile(viewerKey());
+    const source = sourceStatus();
 
-    homeViewer.textContent = profile.mainBrawler
-      ? `Main actuel: ${profile.mainBrawler}`
-      : "Aucun main defini pour le moment";
-    homeSummary.textContent = `${stats.owned} brawler(s) possedes, ${stats.unlocks} unlocks et ${stats.hypercharges} hypercharges dans ton Brawldex local.`;
+    const playerLabel = profile.playerName
+      ? `${profile.playerName} ${profile.playerTag ? `(${profile.playerTag})` : ""}`.trim()
+      : profile.mainBrawler
+        ? `Main actuel: ${profile.mainBrawler}`
+        : "Aucun profil joueur synchronise";
+
+    homeViewer.textContent = playerLabel;
+    homeSummary.textContent = profile.trophies
+      ? `${profile.trophies} trophees officiels, ${stats.owned} brawler(s) locaux et ${stats.unlocks} unlocks dans ton Brawldex.`
+      : `${stats.owned} brawler(s) possedes, ${stats.unlocks} unlocks et ${stats.hypercharges} hypercharges dans ton Brawldex local.`;
     homeBrawlerPct.textContent = `${stats.pct}%`;
     homeUnlocks.textContent = String(stats.unlocks);
+
+    if (homeSourceStatus) homeSourceStatus.textContent = source.label || "Local fallback";
+    if (homeSourceStatusLabel) homeSourceStatusLabel.textContent = source.connected ? "Connecte" : "En attente";
+    if (homeSourceMessage) homeSourceMessage.textContent = source.message || "Source skins non renseignee.";
+
+    if (homeApiStatus) {
+      homeApiStatus.textContent = profile.apiSyncedAt ? "Compte synchronise" : "Proxy pret";
+    }
+    if (homeApiMessage) {
+      homeApiMessage.textContent = profile.apiSyncedAt
+        ? `Derniere synchro le ${new Date(profile.apiSyncedAt).toLocaleString("fr-FR")}.`
+        : "Configure BRAWL_STARS_API_TOKEN sur Vercel pour afficher ton vrai compte.";
+    }
 
     homeBadges.innerHTML = "";
     (insights.badges.length ? insights.badges : [{ label: "Nouveau roster", detail: "Commence a remplir ton Brawldex." }]).forEach((badge) => {
@@ -40,7 +72,10 @@
     });
 
     homeGoals.innerHTML = "";
-    (insights.recommendations.length ? insights.recommendations : ["Ajoute ton premier brawler pour lancer ta progression."]).forEach((line) => {
+    const lines = insights.recommendations.length
+      ? insights.recommendations
+      : ["Ajoute ton premier brawler pour lancer ta progression."];
+    lines.forEach((line) => {
       const el = document.createElement("p");
       el.className = "muted";
       el.textContent = line;
@@ -53,7 +88,7 @@
       homeTopBrawlers.innerHTML = `
         <div class="list-card">
           <h3>Ton top apparaitra ici</h3>
-          <p class="muted">Renseigne ta collection dans la page Brawlers pour voir ressortir tes meilleurs picks.</p>
+          <p class="muted">Renseigne ta collection dans la page Roster pour voir tes meilleurs picks.</p>
         </div>
       `;
       return;
@@ -99,7 +134,7 @@
         homeLatestProfiles.innerHTML = `
           <div class="card empty-card">
             <h3>Aucun profil public</h3>
-            <p class="muted">Publie ton profil depuis MyBrawl pour lancer l'annuaire.</p>
+            <p class="muted">Publie ton profil depuis le dashboard pour lancer l'annuaire.</p>
           </div>
         `;
         return;

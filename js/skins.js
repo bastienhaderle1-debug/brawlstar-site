@@ -114,7 +114,7 @@
 
   async function toggleOwnedSafe(skinId, isOwned) {
     if (!canEditOwned()) {
-      toast("info", "Lecture seule", "Connecte-toi sur MyBrawl pour cocher.");
+      toast("info", "Lecture seule", "Connecte-toi au dashboard pour cocher.");
       return;
     }
     try {
@@ -135,6 +135,7 @@
     "Super Rare": "rarity-super-rare",
     Epic: "rarity-epic",
     Mythique: "rarity-mythic",
+    Legendaire: "rarity-legendary",
     "Légendaire": "rarity-legendary",
     Hypercharge: "rarity-hypercharge",
     Argent: "rarity-silver",
@@ -203,7 +204,7 @@
     const SKINS = Array.isArray(window.SKINS) ? window.SKINS : [];
     const RARITY_ORDER =
       window.RARITY_ORDER ??
-      ["Rare", "Super Rare", "Epic", "Mythique", "Légendaire", "Hypercharge", "Argent", "Or"];
+      ["Rare", "Super Rare", "Epic", "Mythique", "Legendaire", "Hypercharge", "Argent", "Or"];
 
     if (!SKINS.length) {
       console.warn("SKINS vide: vérifie Supabase + data/skins-data.js");
@@ -702,7 +703,7 @@
     // Auth (never blocks UI)
     (async () => {
       if (!supa || !supa.auth) {
-        if (accountLine) accountLine.textContent = "Mode visiteur : connexion via MyBrawl pour cocher tes skins.";
+        if (accountLine) accountLine.textContent = "Mode visiteur : connecte-toi au dashboard pour cocher tes skins.";
         return;
       }
 
@@ -713,7 +714,7 @@
         if (accountLine) {
           accountLine.textContent = currentUser
             ? `Connecté : ${currentUser.email ?? currentUser.id} (tu peux cocher tes skins)`
-            : "Non connecté : affichage en lecture seule. Va sur MyBrawl pour te connecter.";
+            : "Non connecte : affichage en lecture seule. Va sur le dashboard pour te connecter.";
         }
 
         await loadOwnedSafe();
@@ -725,7 +726,7 @@
           if (accountLine) {
             accountLine.textContent = currentUser
               ? `Connecté : ${currentUser.email ?? currentUser.id} (tu peux cocher tes skins)`
-              : "Non connecté : affichage en lecture seule. Va sur MyBrawl pour te connecter.";
+              : "Non connecte : affichage en lecture seule. Va sur le dashboard pour te connecter.";
           }
 
           await loadOwnedSafe();
@@ -733,7 +734,7 @@
         });
       } catch (e) {
         console.warn("Auth init failed:", e);
-        if (accountLine) accountLine.textContent = "Mode visiteur : connexion via MyBrawl pour cocher tes skins.";
+        if (accountLine) accountLine.textContent = "Mode visiteur : connecte-toi au dashboard pour cocher tes skins.";
       }
     })();
   })();

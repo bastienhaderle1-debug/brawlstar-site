@@ -195,16 +195,16 @@
 
     if (!query.trim()) {
       host.innerHTML = `
-        <div class="search-empty">
-          <h3>Recherche rapide</h3>
-          <p class="muted">Cherche un brawler, un skin ou un profil public. Raccourci clavier: <strong>Ctrl+K</strong> ou <strong>/</strong>.</p>
-          <div class="section-actions">
-            <a class="seg-btn" href="${pageHref("mybrawl")}">Ouvrir MyBrawl</a>
-            <a class="seg-btn" href="${pageHref("brawlers")}">Voir les brawlers</a>
+          <div class="search-empty">
+            <h3>Recherche rapide</h3>
+            <p class="muted">Cherche un brawler, un skin ou un profil public. Raccourci clavier: <strong>Ctrl+K</strong> ou <strong>/</strong>.</p>
+            <div class="section-actions">
+            <a class="seg-btn" href="${pageHref("mybrawl")}">Ouvrir le dashboard</a>
+            <a class="seg-btn" href="${pageHref("brawlers")}">Voir le roster</a>
             <a class="seg-btn" href="${pageHref("profile")}">Explorer les profils</a>
+            </div>
           </div>
-        </div>
-      `;
+        `;
       return;
     }
 

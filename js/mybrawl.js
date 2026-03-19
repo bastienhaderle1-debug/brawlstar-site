@@ -12,6 +12,7 @@
 
   const OwnedService = window.OwnedService;
   const Brawldex = window.BrawldexService;
+  const PlayerApi = window.BrawlStarsApi || null;
   const RARITY_ORDER =
     window.RARITY_ORDER ?? ["Rare", "Super Rare", "Epic", "Mythique", "Legendaire", "Hypercharge", "Argent", "Or"];
   const RARITY_CLASS = {
@@ -45,6 +46,8 @@
   const status = document.getElementById("status");
   const profileStatus = document.getElementById("profileStatus");
   const publicStatus = document.getElementById("publicStatus");
+  const dataSourceLabel = document.getElementById("dataSourceLabel");
+  const dataSourceMessage = document.getElementById("dataSourceMessage");
 
   const playerTag = document.getElementById("playerTag");
   const club = document.getElementById("club");
@@ -61,6 +64,20 @@
   const btnPublishOwned = document.getElementById("btnPublishOwned");
   const btnOpenPublic = document.getElementById("btnOpenPublic");
   const btnCopyPublic = document.getElementById("btnCopyPublic");
+  const apiPlayerTag = document.getElementById("apiPlayerTag");
+  const btnSyncPlayer = document.getElementById("btnSyncPlayer");
+  const btnClearPlayerSync = document.getElementById("btnClearPlayerSync");
+  const playerApiStatus = document.getElementById("playerApiStatus");
+  const playerApiName = document.getElementById("playerApiName");
+  const playerApiMeta = document.getElementById("playerApiMeta");
+  const playerApiTag = document.getElementById("playerApiTag");
+  const playerApiTrophies = document.getElementById("playerApiTrophies");
+  const playerApiHighest = document.getElementById("playerApiHighest");
+  const playerApiBrawlers = document.getElementById("playerApiBrawlers");
+  const playerApiExp = document.getElementById("playerApiExp");
+  const playerApiClub = document.getElementById("playerApiClub");
+  const playerApiFavorite = document.getElementById("playerApiFavorite");
+  const playerApiSyncedAt = document.getElementById("playerApiSyncedAt");
 
   const brawlerOwned = document.getElementById("brawlerOwned");
   const brawlerTotal = document.getElementById("brawlerTotal");
@@ -110,6 +127,25 @@
 
   function setPublicStatus(message) {
     publicStatus.textContent = message || "";
+  }
+
+  function setPlayerApiStatus(message) {
+    if (playerApiStatus) playerApiStatus.textContent = message || "";
+  }
+
+  function getSourceStatus() {
+    return window.SKINS_SOURCE_STATUS || {
+      label: "Local fallback",
+      message: "Le connecteur Google Sheet est pret mais pas encore branche."
+    };
+  }
+
+  function renderSourceStatus() {
+    const source = getSourceStatus();
+    if (dataSourceLabel) dataSourceLabel.textContent = source.label || "Local fallback";
+    if (dataSourceMessage) {
+      dataSourceMessage.textContent = source.message || "Le connecteur Google Sheet est pret.";
+    }
   }
 
   function normalizeAuthError(err) {
@@ -193,11 +229,49 @@
     return url.toString();
   }
 
+  function clearSyncedPlayerProfile() {
+    Brawldex.updateProfile(viewerKey(), {
+      playerName: "",
+      apiClubName: "",
+      apiClubTag: "",
+      apiFavoriteBrawler: "",
+      apiSyncedAt: "",
+      trophies: 0,
+      highestTrophies: 0,
+      expLevel: 0,
+      victories3v3: 0,
+      soloVictories: 0,
+      duoVictories: 0,
+      brawlersCount: 0
+    });
+  }
+
+  function renderSyncedPlayer(profile) {
+    if (!playerApiName) return;
+
+    const hasSyncedProfile = !!profile.playerName;
+    playerApiName.textContent = hasSyncedProfile ? profile.playerName : "Compte non synchronise";
+    playerApiMeta.textContent = hasSyncedProfile
+      ? `${profile.trophies} trophees officiels • ${profile.victories3v3 || 0} victoires 3v3 • ${profile.soloVictories || 0} solo • ${profile.duoVictories || 0} duo`
+      : "Synchronise un tag pour recuperer ton vrai profil Brawl Stars.";
+    playerApiTag.textContent = profile.playerTag || "#---";
+    playerApiTrophies.textContent = String(profile.trophies || 0);
+    playerApiHighest.textContent = String(profile.highestTrophies || 0);
+    playerApiBrawlers.textContent = String(profile.brawlersCount || 0);
+    playerApiExp.textContent = String(profile.expLevel || 0);
+    playerApiClub.textContent = profile.apiClubName || profile.club || "-";
+    playerApiFavorite.textContent = profile.apiFavoriteBrawler || profile.mainBrawler || "-";
+    playerApiSyncedAt.textContent = profile.apiSyncedAt ? new Date(profile.apiSyncedAt).toLocaleString("fr-FR") : "-";
+
+    if (apiPlayerTag) apiPlayerTag.value = profile.playerTag || "";
+  }
+
   function showLoggedIn(user) {
     currentUser = user;
     authCard.style.display = "none";
     app.style.display = "block";
     userLine.textContent = user.email ?? user.id;
+    renderSourceStatus();
   }
 
   function showLoggedOut() {
@@ -209,6 +283,7 @@
     setStatus("");
     setProfileStatus("");
     setPublicStatus("");
+    setPlayerApiStatus("");
     setAuthBusyState(false, "");
   }
 
@@ -391,6 +466,8 @@
     favoriteMode.value = profile.favoriteMode || "";
     mainBrawler.value = profile.mainBrawler || "";
     goal.value = profile.goal || "";
+    if (apiPlayerTag) apiPlayerTag.value = profile.playerTag || "";
+    renderSyncedPlayer(profile);
   }
 
   function renderActivity() {
@@ -447,6 +524,7 @@
       `${stats.owned}/${stats.total} brawlers possedes et ${stats.incompleteOwned} encore a completer.`,
       `${stats.unlocks} unlocks equipes, dont ${stats.hypercharges} hypercharges et ${stats.maxed} brawlers maxes.`,
       `${skinStats.owned}/${skinStats.total} skins coches, soit ${skinStats.pct}% de progression skin.`,
+      profile.playerName ? `${profile.playerName} est synchronise avec ${profile.trophies} trophees officiels.` : "Aucune synchro Brawl Stars active pour le moment.",
       profile.goal || insights.recommendations[0] || "Ajoute un objectif pour donner une direction a ta progression."
     ];
 
@@ -498,7 +576,7 @@
     brawlerOwned.textContent = String(brawldexStats.owned);
     brawlerTotal.textContent = `/ ${brawldexStats.total}`;
     avgPower.textContent = String(brawldexStats.avgPower);
-    trophyTotal.textContent = String(brawldexStats.trophies);
+    trophyTotal.textContent = String(profile.trophies || brawldexStats.trophies);
     unlockTotal.textContent = String(brawldexStats.unlocks);
     hyperchargeTotal.textContent = String(brawldexStats.hypercharges);
     skinOwned.textContent = String(skinStats.owned);
@@ -506,11 +584,16 @@
     skinProgressBar.style.width = `${skinStats.pct}%`;
 
     const mainText = profile.mainBrawler ? `Main: ${profile.mainBrawler}.` : "Choisis ton main brawler.";
-    collectionSummary.textContent = `${mainText} ${brawldexStats.owned} brawler(s), ${brawldexStats.unlocks} unlocks et ${skinStats.owned} skin(s) coches.`;
+    const syncedText = profile.playerName
+      ? `Compte sync: ${profile.playerName} avec ${profile.trophies} trophees.`
+      : "Compte Brawl Stars non synchronise.";
+    collectionSummary.textContent = `${mainText} ${syncedText} ${brawldexStats.owned} brawler(s), ${brawldexStats.unlocks} unlocks et ${skinStats.owned} skin(s) coches.`;
 
     renderBadgesAndGoals(brawldexStats, skinStats);
     renderTopBrawlers();
     renderActivity();
+    renderSourceStatus();
+    renderSyncedPlayer(profile);
   }
 
   function savePersonalProfile() {
@@ -523,6 +606,60 @@
     });
     setProfileStatus("Profil perso enregistre localement.");
     toast("success", "Profil", "Profil perso enregistre.");
+    renderDashboard();
+  }
+
+  async function syncPlayerProfile() {
+    if (!PlayerApi) {
+      setPlayerApiStatus("Le client Brawl Stars API est introuvable.");
+      return;
+    }
+
+    const tag = PlayerApi.normalizeTag((apiPlayerTag?.value || playerTag.value || "").trim());
+    if (!tag) {
+      setPlayerApiStatus("Entre un tag joueur valide.");
+      toast("error", "API Brawl Stars", "Entre un tag joueur valide.");
+      return;
+    }
+
+    setPlayerApiStatus("Synchronisation du profil Brawl Stars...");
+
+    try {
+      const payload = await PlayerApi.fetchPlayerProfile(tag);
+      Brawldex.updateProfile(viewerKey(), {
+        playerTag: payload.tag || tag,
+        playerName: payload.name || "",
+        club: payload.club?.name || club.value || "",
+        apiClubName: payload.club?.name || "",
+        apiClubTag: payload.club?.tag || "",
+        apiFavoriteBrawler: payload.favoriteBrawler || "",
+        apiSyncedAt: payload.syncedAt || new Date().toISOString(),
+        trophies: payload.trophies || 0,
+        highestTrophies: payload.highestTrophies || 0,
+        expLevel: payload.expLevel || 0,
+        victories3v3: payload.victories3v3 || 0,
+        soloVictories: payload.soloVictories || 0,
+        duoVictories: payload.duoVictories || 0,
+        brawlersCount: payload.brawlersCount || 0
+      });
+
+      playerTag.value = payload.tag || tag;
+      if (payload.club?.name) club.value = payload.club.name;
+      setPlayerApiStatus(`Profil synchronise pour ${payload.name || tag}.`);
+      toast("success", "API Brawl Stars", "Profil officiel synchronise.");
+      renderPersonalProfile();
+      renderDashboard();
+    } catch (error) {
+      setPlayerApiStatus(error.message || String(error));
+      toast("error", "API Brawl Stars", error.message || String(error));
+    }
+  }
+
+  function clearPlayerSync() {
+    clearSyncedPlayerProfile();
+    setPlayerApiStatus("Synchronisation Brawl Stars effacee.");
+    toast("info", "API Brawl Stars", "Les donnees synchronisees ont ete supprimees.");
+    renderPersonalProfile();
     renderDashboard();
   }
 
@@ -549,7 +686,7 @@
   }
 
   async function savePublicProfile() {
-    if (!currentUser) return;
+    if (!currentUser) return false;
     setPublicStatus("Enregistrement du profil public...");
     try {
       const payload = {
@@ -564,9 +701,11 @@
       if (error) throw error;
       setPublicStatus("Profil public enregistre.");
       toast("success", "Profil public", "Profil public enregistre.");
+      return true;
     } catch (error) {
       setPublicStatus(error.message || String(error));
       toast("error", "Profil public", error.message || String(error));
+      return false;
     }
   }
 
@@ -574,7 +713,9 @@
     if (!currentUser) return;
     setPublicStatus("Publication de tes skins...");
     try {
-      await savePublicProfile();
+      const saved = await savePublicProfile();
+      if (!saved) return;
+      setPublicStatus("Publication de tes skins...");
       const { error: delErr } = await supa.from("public_user_skins").delete().eq("user_id", currentUser.id);
       if (delErr) throw delErr;
 
@@ -644,11 +785,18 @@
     btnPublishOwned.addEventListener("click", publishOwned);
     btnOpenPublic.addEventListener("click", openPublicProfile);
     btnCopyPublic.addEventListener("click", copyPublicLink);
+    if (btnSyncPlayer) btnSyncPlayer.addEventListener("click", syncPlayerProfile);
+    if (btnClearPlayerSync) btnClearPlayerSync.addEventListener("click", clearPlayerSync);
 
     search.addEventListener("input", renderSkins);
     filterBrawler.addEventListener("change", renderSkins);
     filterRarity.addEventListener("change", renderSkins);
     onlyOwned.addEventListener("change", renderSkins);
+    if (apiPlayerTag) {
+      apiPlayerTag.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") syncPlayerProfile();
+      });
+    }
 
     btnExport.addEventListener("click", () => {
       downloadJson(`brawldex-${viewerKey()}.json`, Brawldex.exportState(viewerKey()));
@@ -704,6 +852,7 @@
     SKINS = Array.isArray(window.SKINS) ? window.SKINS : [];
     buildSkinFilters();
     fillMainBrawlerOptions();
+    renderSourceStatus();
 
     const { data } = await supa.auth.getSession();
     const user = data.session?.user ?? null;

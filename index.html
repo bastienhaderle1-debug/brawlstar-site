@@ -3,20 +3,25 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Brawldex</title>
+  <title>Brawldex | Hub</title>
   <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="brawldex.css" />
 </head>
 <body>
   <header class="header container">
     <div class="headerbar">
       <div>
+        <p class="brand-kicker">Brawldex Platform</p>
         <h1>Brawldex</h1>
-        <p class="muted">Le hub fan-made pour suivre tes skins, ton profil public, ton Brawldex et les profils de la communaute.</p>
+        <p class="muted hero-summary">
+          Le hub pour suivre tes skins, ton roster, ton profil public et bientot ton vrai compte Brawl Stars dans une seule interface.
+        </p>
 
         <nav class="nav">
-          <a href="pages/mybrawl.html">MyBrawl</a>
-          <a href="pages/profile.html">Profil</a>
-          <a href="pages/brawlers.html">Brawlers</a>
+          <a href="index.html">Accueil</a>
+          <a href="pages/mybrawl.html">Dashboard</a>
+          <a href="pages/brawlers.html">Roster</a>
+          <a href="pages/profile.html">Profils</a>
           <a href="pages/skins.html">Skins</a>
         </nav>
       </div>
@@ -26,66 +31,96 @@
           <span class="dot"></span>
           <span>Non connecte</span>
         </div>
-
-        <a class="seg-btn" href="pages/mybrawl.html">Mon compte</a>
+        <a class="seg-btn is-active" href="pages/mybrawl.html">Ouvrir le dashboard</a>
       </div>
     </div>
   </header>
 
   <main class="container home-shell">
-    <section class="card hero-card">
-      <div class="hero-copy">
-        <p class="hero-kicker">Brawl Stars fan site</p>
-        <h2>Ton hub de collection, de profils publics et de progression</h2>
+    <section class="hero-grid-alt">
+      <article class="card no-lift">
+        <p class="brand-kicker">Nouveau cycle</p>
+        <h2>Une base prete pour la vraie data</h2>
         <p class="muted">
-          Gere ton Brawldex, coche tes skins, publie ton profil et suis tes prochains objectifs depuis une seule interface.
+          La refonte met Brawldex au centre : UI plus lisible, profils publics plus nets, source skins prete pour Google Sheets,
+          et connecteur serveur deja prepare pour l'API Brawl Stars.
         </p>
         <div class="hero-actions">
-          <a class="seg-btn is-active" href="pages/mybrawl.html">Ouvrir MyBrawl</a>
-          <a class="seg-btn" href="pages/brawlers.html">Gerer mes brawlers</a>
-          <a class="seg-btn" href="pages/profile.html">Explorer les profils</a>
+          <a class="seg-btn is-active" href="pages/mybrawl.html">Configurer mon espace</a>
+          <a class="seg-btn" href="pages/skins.html">Explorer les skins</a>
+          <a class="seg-btn" href="pages/profile.html">Voir l'annuaire</a>
         </div>
-      </div>
+      </article>
 
       <aside class="hero-side">
         <div class="hero-panel">
           <span class="pill">Snapshot</span>
-          <h3 id="homeViewer">Chargement du dashboard local...</h3>
-          <p class="muted" id="homeSummary">Le site prepare ta progression locale et tes raccourcis principaux.</p>
+          <h3 id="homeViewer">Chargement du profil local...</h3>
+          <p class="muted" id="homeSummary">Initialisation de ton espace Brawldex.</p>
         </div>
 
-        <div class="hero-mini-stats">
-          <div class="stat">
-            <div class="stat-label">Brawlers</div>
-            <div class="stat-value" id="homeBrawlerPct">0%</div>
+        <div class="status-grid">
+          <div class="status-card">
+            <span class="small">Roster</span>
+            <strong id="homeBrawlerPct">0%</strong>
           </div>
-          <div class="stat">
-            <div class="stat-label">Unlocks</div>
-            <div class="stat-value" id="homeUnlocks">0</div>
+          <div class="status-card">
+            <span class="small">Unlocks</span>
+            <strong id="homeUnlocks">0</strong>
+          </div>
+          <div class="status-card">
+            <span class="small">Source skins</span>
+            <strong id="homeSourceStatus">Local fallback</strong>
           </div>
         </div>
       </aside>
     </section>
 
+    <section class="signal-grid">
+      <article class="signal-card">
+        <span class="small">Google Sheets</span>
+        <strong id="homeSourceStatusLabel">En attente</strong>
+        <p class="muted" id="homeSourceMessage">
+          Le connecteur est pret. Il suffira de brancher ton lien Google Sheet pour alimenter le catalogue.
+        </p>
+      </article>
+
+      <article class="signal-card">
+        <span class="small">Brawl Stars API</span>
+        <strong id="homeApiStatus">Proxy pret</strong>
+        <p class="muted" id="homeApiMessage">
+          Un endpoint serveur est deja en place pour afficher ton vrai compte et ses trophees des que le token sera configure.
+        </p>
+      </article>
+
+      <article class="signal-card">
+        <span class="small">Supabase</span>
+        <strong>Persistance active</strong>
+        <p class="muted">
+          Les skins coches et ton profil public restent relies a ton compte Supabase.
+        </p>
+      </article>
+    </section>
+
     <section class="home-grid">
       <article class="card quick-card">
-        <span class="pill">MyBrawl</span>
-        <h3>Centre de commande</h3>
-        <p class="muted">Profil perso, objectifs, badges, timeline et publication de ton profil public.</p>
-        <a class="seg-btn" href="pages/mybrawl.html">Ouvrir MyBrawl</a>
+        <span class="pill">Dashboard</span>
+        <h3>Espace personnel</h3>
+        <p class="muted">Connexion, synchro API, profil public, statistiques et gestion rapide des skins.</p>
+        <a class="seg-btn" href="pages/mybrawl.html">Aller au dashboard</a>
       </article>
 
       <article class="card quick-card">
-        <span class="pill">Brawlers</span>
-        <h3>Gestionnaire complet</h3>
-        <p class="muted">Possession, builds, hypercharges, notes perso et export/import JSON.</p>
-        <a class="seg-btn" href="pages/brawlers.html">Voir les brawlers</a>
+        <span class="pill">Roster</span>
+        <h3>Builds et progression</h3>
+        <p class="muted">Puissance, trophees, mastery, gears et vue detaillee pour chaque brawler.</p>
+        <a class="seg-btn" href="pages/brawlers.html">Gerer le roster</a>
       </article>
 
       <article class="card quick-card">
         <span class="pill">Profils</span>
         <h3>Annuaire public</h3>
-        <p class="muted">Trie les profils recents, favoris et collections publiques depuis une vraie page annuaire.</p>
+        <p class="muted">Compare les collections publiques, suis tes favoris et partage ton profil en un clic.</p>
         <a class="seg-btn" href="pages/profile.html">Ouvrir l'annuaire</a>
       </article>
     </section>
@@ -107,10 +142,10 @@
       <div class="section-head">
         <div>
           <h2>Profils publics recents</h2>
-          <p class="muted">Trois raccourcis rapides vers les profils publics les plus recents.</p>
+          <p class="muted">Trois raccourcis rapides pour parcourir l'annuaire public.</p>
         </div>
         <div class="section-actions">
-          <a class="seg-btn" href="pages/profile.html">Voir tout l'annuaire</a>
+          <a class="seg-btn" href="pages/profile.html">Voir tout</a>
         </div>
       </div>
       <div class="collection-grid directory-grid" id="homeLatestProfiles"></div>
@@ -118,12 +153,13 @@
   </main>
 
   <footer class="footer container">
-    <p class="muted">Ce site n'est pas affilie a Supercell. Brawl Stars est une marque de Supercell.</p>
+    <p class="muted">Brawldex est un projet fan-made non affilie a Supercell.</p>
   </footer>
 
   <script src="js/toast.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="data/supabase-client.js"></script>
+  <script src="data/skins-source-config.js"></script>
   <script src="data/skins-data.js"></script>
   <script src="data/brawldex-data.js"></script>
   <script src="js/brawldex-service.js"></script>

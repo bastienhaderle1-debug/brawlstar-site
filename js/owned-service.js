@@ -62,7 +62,7 @@
     const owned = ownedSet.size;
     const pct = total > 0 ? Math.round((owned / total) * 100) : 0;
 
-    const rarityOrder = window.RARITY_ORDER ?? ["Rare","Super Rare","Epic","Mythique","Légendaire","Hypercharge"];
+    const rarityOrder = window.RARITY_ORDER ?? ["Rare","Super Rare","Epic","Mythique","Legendaire","Hypercharge"];
     const byRarity = {};
     rarityOrder.forEach(r => (byRarity[r] = 0));
 

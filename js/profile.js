@@ -409,16 +409,19 @@
     const profile = payload.profile;
     const ownedIds = payload.ownedIds || [];
     const pct = allSkins.length ? Math.round((ownedIds.length / allSkins.length) * 100) : 0;
+    const skinsVisible = profile.show_owned !== false;
+    const detailLine = skinsVisible ? `Top brawler skins: ${topBrawlerLabel(ownedIds)}` : "Liste des skins masquee pour ce profil.";
 
     target.innerHTML = `
       <div class="row">
         <span class="pill">${isCurrent ? "Profil ouvert" : "Base"}</span>
+        <span class="pill">${skinsVisible ? "Skins visibles" : "Skins masques"}</span>
         <span class="pill">${ownedIds.length} skins</span>
         <span class="pill">${pct}%</span>
       </div>
       <h3>${escapeHtml(profile.display_name || "Profil")}</h3>
       <p class="muted">${escapeHtml(profile.bio || "-")}</p>
-      <p class="small">Top brawler skins: ${escapeHtml(topBrawlerLabel(ownedIds))}</p>
+      <p class="small">${escapeHtml(detailLine)}</p>
     `;
   }
 
@@ -551,6 +554,7 @@
     viewedProfileUserId = userId;
     currentProfile = profile;
     publicOwnedIds = ownedIds;
+    const canCompare = !!profile.show_owned;
 
     profileCard.style.display = "block";
     displayNameEl.textContent = profile.display_name || "Profil";
@@ -564,6 +568,11 @@
     statPct.textContent = `${pct}%`;
     progressBar.style.width = `${pct}%`;
     btnFavoriteProfile.textContent = isFavorite(userId) ? "Retirer des favoris" : "Ajouter aux favoris";
+    btnSetCompareBase.disabled = !canCompare;
+    btnSetCompareBase.textContent = canCompare ? "Definir comme base" : "Base indisponible";
+    btnSetCompareBase.title = canCompare
+      ? "Utiliser ce profil comme base de comparaison."
+      : "Impossible de comparer un profil qui masque sa liste de skins.";
 
     if (!profile.is_public) publicModeLine.textContent = "Profil non public.";
     else if (!profile.show_owned) publicModeLine.textContent = "Profil public, mais liste des skins masquee.";
@@ -687,7 +696,7 @@
   }
 
   async function saveMyProfile() {
-    if (!me) return;
+    if (!me) return false;
     setMeMsg("Enregistrement...");
 
     try {
@@ -705,9 +714,11 @@
 
       setMeMsg("Profil enregistre.");
       toast("success", "Profil", "Profil enregistre.");
+      return true;
     } catch (error) {
       setMeMsg(error.message || String(error));
       toast("error", "Profil", error.message || String(error));
+      return false;
     }
   }
 
@@ -716,7 +727,9 @@
     setMeMsg("Publication des skins...");
 
     try {
-      await saveMyProfile();
+      const saved = await saveMyProfile();
+      if (!saved) return;
+      setMeMsg("Publication des skins...");
       const ownedSet = await loadOwnedMe();
       const { error: delErr } = await supa.from("public_user_skins").delete().eq("user_id", me.id);
       if (delErr) throw delErr;

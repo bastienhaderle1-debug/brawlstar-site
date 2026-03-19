@@ -3,21 +3,25 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Brawlers</title>
+  <title>Brawldex | Roster</title>
   <link rel="stylesheet" href="../style.css" />
+  <link rel="stylesheet" href="../brawldex.css" />
 </head>
 <body>
   <header class="header container">
     <div class="headerbar">
       <div>
-        <h1>Brawlers</h1>
-        <p class="muted">Le gestionnaire complet de ta collection: possession, build, progression et outils de sauvegarde.</p>
+        <p class="brand-kicker">Roster builder</p>
+        <h1>Brawldex</h1>
+        <p class="muted hero-summary">
+          Gere ton roster comme une vraie base de progression : possession, builds, mastery, hypercharges et fiche detaillee par brawler.
+        </p>
 
         <nav class="nav">
           <a href="../index.html">Accueil</a>
-          <a href="./mybrawl.html">MyBrawl</a>
-          <a href="./profile.html">Profil</a>
-          <a href="./brawlers.html">Brawlers</a>
+          <a href="./mybrawl.html">Dashboard</a>
+          <a href="./brawlers.html">Roster</a>
+          <a href="./profile.html">Profils</a>
           <a href="./skins.html">Skins</a>
         </nav>
       </div>
@@ -27,8 +31,7 @@
           <span class="dot"></span>
           <span>Non connecte</span>
         </div>
-
-        <a class="seg-btn" href="./mybrawl.html">Mon Brawldex</a>
+        <a class="seg-btn" href="./mybrawl.html">Retour dashboard</a>
       </div>
     </div>
   </header>
@@ -205,6 +208,7 @@
   <script src="../js/guard.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="../data/supabase-client.js"></script>
+  <script src="../data/skins-source-config.js"></script>
   <script src="../data/skins-data.js"></script>
   <script src="../data/brawldex-data.js"></script>
   <script src="../js/brawldex-service.js"></script>
