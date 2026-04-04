@@ -84,8 +84,21 @@
     return JSON.parse(JSON.stringify(DEFAULT_DATA));
   }
 
+  function repairEncoding(value) {
+    const text = (value ?? "").toString();
+    if (!/[ÃÂâ]/.test(text)) return text;
+
+    try {
+      const bytes = Uint8Array.from(Array.from(text, (char) => char.charCodeAt(0) & 0xff));
+      const repaired = new TextDecoder("utf-8").decode(bytes);
+      return repaired.includes("�") ? text : repaired;
+    } catch {
+      return text;
+    }
+  }
+
   function safeStr(value) {
-    return (value ?? "").toString().trim();
+    return repairEncoding(value).trim();
   }
 
   function slugify(value) {

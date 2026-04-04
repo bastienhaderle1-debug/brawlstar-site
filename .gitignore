@@ -7,7 +7,7 @@ Thumbs.db
 .env.*
 *.local
 
-# Node / build (préventif)
+# Node / build (preventif)
 node_modules/
 dist/
 build/

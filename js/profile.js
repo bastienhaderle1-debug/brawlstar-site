@@ -2,13 +2,15 @@
   const FAVORITES_KEY = "brawldex_public_favorites";
   const COMPARE_KEY = "brawldex_compare_base";
   const supa = window.supabaseClient;
+  const PublicProfiles = window.PublicProfileService;
 
-  if (!supa || !window.OwnedService) {
-    console.error("Supabase ou OwnedService introuvable.");
+  if (!supa || !window.OwnedService || !PublicProfiles) {
+    console.error("Supabase, OwnedService ou PublicProfileService introuvable.");
     return;
   }
 
   const $ = (id) => document.getElementById(id);
+  const globalAuthBadge = $("globalAuthBadge");
   const myProfileCard = $("myProfileCard");
   const needAuthCard = $("needAuthCard");
   const meLine = $("meLine");
@@ -23,6 +25,12 @@
   const btnMeOpen = $("btnMeOpen");
   const btnMeCopy = $("btnMeCopy");
   const meMsg = $("meMsg");
+  const meLiveState = $("meLiveState");
+  const meDraftState = $("meDraftState");
+  const meCollectionState = $("meCollectionState");
+  const meCollectionDetail = $("meCollectionDetail");
+  const meLinkState = $("meLinkState");
+  const meLinkDetail = $("meLinkDetail");
 
   const searchName = $("searchName");
   const sortProfiles = $("sortProfiles");
@@ -73,9 +81,20 @@
   let currentProfile = null;
   let publicOwnedIds = [];
   let compareBase = null;
+  let myProfileSnapshot = null;
+  let myOwnedIds = [];
+  let myPublishedIds = [];
 
   function toast(type, title, message) {
     if (window.showToast) window.showToast(message, type, title, 3000);
+  }
+
+  function renderAuthBadge(user) {
+    if (!globalAuthBadge) return;
+    globalAuthBadge.classList.remove("ok", "ko");
+    globalAuthBadge.classList.add(user ? "ok" : "ko");
+    const label = globalAuthBadge.querySelector("span:last-child");
+    if (label) label.textContent = user ? "Connecte" : "Non connecte";
   }
 
   function escapeHtml(value) {
@@ -167,6 +186,118 @@
     return url.toString();
   }
 
+  function safeStr(value) {
+    return (value ?? "").toString().trim();
+  }
+
+  function uniqueIds(list) {
+    return [...new Set((Array.isArray(list) ? list : []).map((item) => safeStr(item)).filter(Boolean))];
+  }
+
+  function sameIdSet(left, right) {
+    const a = uniqueIds(left);
+    const b = uniqueIds(right);
+    if (a.length !== b.length) return false;
+    const lookup = new Set(a);
+    return b.every((id) => lookup.has(id));
+  }
+
+  function fallbackMeDisplayName() {
+    return safeStr((me?.email || "").split("@")[0]) || "Profil";
+  }
+
+  function normalizeMeDraft(source) {
+    return {
+      display_name: safeStr(source?.display_name ?? meDisplayName?.value) || fallbackMeDisplayName(),
+      bio: safeStr(source?.bio ?? meBio?.value),
+      is_public: source?.is_public ?? !!meIsPublic?.checked,
+      show_owned: source?.show_owned ?? !!meShowOwned?.checked
+    };
+  }
+
+  function sameMeDraft(left, right) {
+    return !!left &&
+      !!right &&
+      safeStr(left.display_name) === safeStr(right.display_name) &&
+      safeStr(left.bio) === safeStr(right.bio) &&
+      !!left.is_public === !!right.is_public &&
+      !!left.show_owned === !!right.show_owned;
+  }
+
+  function syncMyProfileSnapshot(profile) {
+    myProfileSnapshot = profile ? { ...profile, ...normalizeMeDraft(profile) } : null;
+  }
+
+  function renderMyProfileState() {
+    const draft = normalizeMeDraft();
+    const live = myProfileSnapshot ? normalizeMeDraft(myProfileSnapshot) : null;
+    const localCount = myOwnedIds.length;
+    const publishedCount = myPublishedIds.length;
+    const hasLiveProfile = !!myProfileSnapshot;
+    const liveIsPublic = !!myProfileSnapshot?.is_public;
+    const liveShowOwned = !!myProfileSnapshot && myProfileSnapshot.show_owned !== false;
+    const draftDirty = !live || !sameMeDraft(draft, live);
+    const needsPublish = !sameIdSet(myOwnedIds, myPublishedIds);
+    const canShare = !!me && liveIsPublic;
+
+    if (meLiveState) {
+      if (!hasLiveProfile) meLiveState.textContent = "Brouillon";
+      else if (liveIsPublic) meLiveState.textContent = "Public";
+      else meLiveState.textContent = "Prive";
+    }
+
+    if (meDraftState) {
+      if (!hasLiveProfile) meDraftState.textContent = "Enregistre une premiere fois pour creer ton profil public.";
+      else if (draftDirty) meDraftState.textContent = "Des modifications locales attendent encore un enregistrement.";
+      else if (liveIsPublic) meDraftState.textContent = "Ton profil en ligne est aligne avec le formulaire.";
+      else meDraftState.textContent = "Ton profil est sauvegarde, mais il reste prive.";
+    }
+
+    if (meCollectionState) {
+      meCollectionState.textContent = `${publishedCount} / ${localCount}`;
+    }
+
+    if (meCollectionDetail) {
+      if (!localCount && !publishedCount) meCollectionDetail.textContent = "Aucun skin coche pour l'instant.";
+      else if (needsPublish && !localCount) meCollectionDetail.textContent = "Ta liste publique n'est pas vide. Republie pour la vider.";
+      else if (needsPublish) meCollectionDetail.textContent = `Local: ${localCount} skin(s) coches. Republie pour aligner la version en ligne.`;
+      else if (!publishedCount) meCollectionDetail.textContent = "Aucune collection publique pour l'instant.";
+      else if (!liveShowOwned) meCollectionDetail.textContent = `${publishedCount} skins sont publies, mais masques dans ton profil.`;
+      else meCollectionDetail.textContent = `${publishedCount} skins sont visibles et prets pour la comparaison.`;
+    }
+
+    if (meLinkState) {
+      if (!hasLiveProfile) meLinkState.textContent = "Inactif";
+      else if (!liveIsPublic) meLinkState.textContent = "Prive";
+      else if (!liveShowOwned) meLinkState.textContent = "Partage OK";
+      else meLinkState.textContent = "Comparaison OK";
+    }
+
+    if (meLinkDetail) {
+      if (!hasLiveProfile) meLinkDetail.textContent = "Le lien sera pret apres le premier enregistrement.";
+      else if (!liveIsPublic) meLinkDetail.textContent = "Passe le profil en public puis enregistre pour activer le lien.";
+      else if (!liveShowOwned) meLinkDetail.textContent = "Le profil est partageable, mais la liste de skins reste masquee.";
+      else if (!publishedCount) meLinkDetail.textContent = "Le profil est public, mais aucune collection n'est encore publiee.";
+      else meLinkDetail.textContent = "Lien actif et comparaison disponible depuis cette page.";
+    }
+
+    if (btnMeSave) btnMeSave.classList.toggle("is-active", draftDirty);
+    if (btnMePublish) {
+      btnMePublish.classList.toggle("is-active", needsPublish);
+      btnMePublish.title = draft.show_owned
+        ? "Mettre a jour la liste publique de skins."
+        : "Les skins seront publies, mais resteront masques tant que cette option est desactivee.";
+    }
+    if (btnMeOpen) {
+      btnMeOpen.disabled = !canShare;
+      btnMeOpen.title = canShare ? "Ouvrir ton profil public." : "Rends le profil public puis enregistre pour activer le lien.";
+    }
+    if (btnMeCopy) {
+      btnMeCopy.disabled = !canShare;
+      btnMeCopy.title = canShare ? myUrl() : "Aucun lien public actif pour le moment.";
+    }
+  }
+
   function buildRarityFilter() {
     filterRarity.innerHTML = "";
 
@@ -215,76 +346,30 @@
   }
 
   async function loadProfile(userId) {
-    const { data, error } = await supa
-      .from("public_profiles")
-      .select("user_id, display_name, bio, is_public, show_owned, updated_at")
-      .eq("user_id", userId)
-      .maybeSingle();
-
-    if (error) throw error;
-    return data;
+    return PublicProfiles.loadProfile(userId);
   }
 
   async function loadPublicOwned(userId) {
-    const { data, error } = await supa.from("public_user_skins").select("skin_id").eq("user_id", userId);
-    if (error) throw error;
-    return (data || []).map((row) => row.skin_id).filter(Boolean);
+    return PublicProfiles.loadOwned(userId);
   }
 
   async function loadComparableProfile(userId) {
-    const profile = await loadProfile(userId);
-    if (!profile) return null;
-    if (!profile.is_public || !profile.show_owned) return null;
-    const ownedIds = await loadPublicOwned(userId);
-    return { userId, profile, ownedIds };
+    return PublicProfiles.loadComparableProfile(userId);
   }
 
   async function searchProfilesByName(query) {
-    const q = (query || "").trim();
-    if (!q) return [];
-
-    const { data, error } = await supa
-      .from("public_profiles")
-      .select("user_id, display_name, bio, updated_at")
-      .eq("is_public", true)
-      .ilike("display_name", `%${q}%`)
-      .order("updated_at", { ascending: false })
-      .limit(24);
-
-    if (error) throw error;
-    return data || [];
+    return PublicProfiles.searchProfilesByName(query, 24);
   }
 
   async function loadLatestPublicProfiles() {
-    const { data, error } = await supa
-      .from("public_profiles")
-      .select("user_id, display_name, bio, updated_at")
-      .eq("is_public", true)
-      .order("updated_at", { ascending: false })
-      .limit(24);
-
-    if (error) throw error;
-    return data || [];
+    return PublicProfiles.loadLatestProfiles(24);
   }
 
   async function enrichProfiles(list) {
-    const ids = list.map((profile) => profile.user_id).filter(Boolean);
-    if (!ids.length) return [];
-
-    const { data, error } = await supa.from("public_user_skins").select("user_id, skin_id").in("user_id", ids);
-    if (error) throw error;
-
-    const counts = {};
-    (data || []).forEach((row) => {
-      counts[row.user_id] = (counts[row.user_id] || 0) + 1;
+    return PublicProfiles.enrichProfiles(list, {
+      totalSkins: allSkins.length,
+      isFavorite
     });
-
-    return list.map((profile) => ({
-      ...profile,
-      ownedCount: counts[profile.user_id] || 0,
-      pct: allSkins.length > 0 ? Math.round(((counts[profile.user_id] || 0) / allSkins.length) * 100) : 0,
-      favorite: isFavorite(profile.user_id)
-    }));
   }
 
   function sortDirectory(list) {
@@ -302,6 +387,8 @@
   }
 
   function buildDirectoryCard(profile, mode) {
+    const isCompareBase = compareBase?.userId === profile.user_id;
+    const compareAvailable = profile.skinsVisible !== false;
     const card = document.createElement("article");
     card.className = "card clickable";
     card.innerHTML = `
@@ -309,8 +396,8 @@
         <div>
           <div class="row">
             <span class="pill">Profil public</span>
-            <span class="pill">${profile.ownedCount} skins</span>
-            <span class="pill">${profile.pct}%</span>
+            <span class="pill">${compareAvailable ? `${profile.ownedCount} skins` : "Skins masques"}</span>
+            <span class="pill">${compareAvailable ? `${profile.pct}%` : "Comparaison off"}</span>
           </div>
           <h3>${escapeHtml(profile.display_name || "Profil")}</h3>
           <p class="muted">${escapeHtml(profile.bio || "-")}</p>
@@ -320,7 +407,9 @@
         <button class="choice-btn ${profile.favorite ? "is-selected" : ""}" type="button" data-favorite-btn>
           ${profile.favorite ? "Favori" : "Ajouter"}
         </button>
-        <button class="choice-btn" type="button" data-compare-btn>Comparer</button>
+        <button class="choice-btn ${isCompareBase ? "is-selected" : ""}" type="button" data-compare-btn ${compareAvailable ? "" : "disabled"}>
+          ${!compareAvailable ? "Indisponible" : isCompareBase ? "Base active" : "Comparer"}
+        </button>
       </div>
       <p class="small">Mis a jour: ${profile.updated_at ? fmtDate(profile.updated_at) : "-"}</p>
     `;
@@ -511,7 +600,19 @@
     renderCompareInsights(lines);
   }
 
-  async function setCompareBase(userId, silent) {
+  function refreshCompareUi() {
+    const mode = searchName.value.trim() ? "search" : "latest";
+    if (currentProfile && viewedProfileUserId) {
+      updateProfileUI(viewedProfileUserId, currentProfile, publicOwnedIds);
+    } else {
+      renderCompareSection();
+    }
+    renderDirectory(currentDirectory, mode);
+  }
+
+  async function setCompareBase(userId, options) {
+    const silent = typeof options === "boolean" ? options : !!options?.silent;
+    const clearInvalid = typeof options === "object" && !!options?.clearInvalid;
     try {
       const payload =
         userId === viewedProfileUserId && currentProfile?.show_owned
@@ -519,34 +620,49 @@
           : await loadComparableProfile(userId);
 
       if (!payload) {
-        toast("error", "Comparaison", "Ce profil doit etre public avec skins visibles.");
-        return;
+        if (compareBase?.userId === userId) {
+          compareBase = null;
+          writeCompareBaseId("");
+        }
+        if (clearInvalid) {
+          writeCompareBaseId("");
+          refreshCompareUi();
+          return false;
+        }
+        if (!silent) {
+          toast("error", "Comparaison", "Ce profil doit etre public avec skins visibles.");
+        }
+        return false;
       }
 
       compareBase = payload;
       writeCompareBaseId(userId);
-      renderCompareSection();
+      refreshCompareUi();
 
       if (!silent) {
         toast("success", "Comparaison", `Base definie: ${payload.profile.display_name || "Profil"}.`);
       }
+      return true;
     } catch (error) {
       console.error(error);
-      toast("error", "Comparaison", error.message || String(error));
+      if (!silent) {
+        toast("error", "Comparaison", error.message || String(error));
+      }
+      return false;
     }
   }
 
   function clearCompareBase() {
     compareBase = null;
     writeCompareBaseId("");
-    renderCompareSection();
+    refreshCompareUi();
     toast("info", "Comparaison", "Base de comparaison effacee.");
   }
 
   async function restoreCompareBase() {
     const savedId = readCompareBaseId();
     if (!savedId) return;
-    await setCompareBase(savedId, true);
+    await setCompareBase(savedId, { silent: true, clearInvalid: true });
   }
 
   function updateProfileUI(userId, profile, ownedIds) {
@@ -568,8 +684,13 @@
     statPct.textContent = `${pct}%`;
     progressBar.style.width = `${pct}%`;
     btnFavoriteProfile.textContent = isFavorite(userId) ? "Retirer des favoris" : "Ajouter aux favoris";
+    btnSetCompareBase.classList.toggle("is-active", compareBase?.userId === userId && canCompare);
     btnSetCompareBase.disabled = !canCompare;
-    btnSetCompareBase.textContent = canCompare ? "Definir comme base" : "Base indisponible";
+    btnSetCompareBase.textContent = !canCompare
+      ? "Base indisponible"
+      : compareBase?.userId === userId
+        ? "Base active"
+        : "Definir comme base";
     btnSetCompareBase.title = canCompare
       ? "Utiliser ce profil comme base de comparaison."
       : "Impossible de comparer un profil qui masque sa liste de skins.";
@@ -677,22 +798,26 @@
     setMeMsg("Chargement de ton profil...");
 
     try {
-      const { data, error } = await supa
-        .from("public_profiles")
-        .select("display_name, bio, is_public, show_owned")
-        .eq("user_id", me.id)
-        .maybeSingle();
-
-      if (error) throw error;
-
+      const [data, ownedSet, publishedIds] = await Promise.all([
+        loadProfile(me.id),
+        loadOwnedMe(),
+        PublicProfiles.loadOwned(me.id).catch(() => [])
+      ]);
       meDisplayName.value = data?.display_name ?? ((me.email || "").split("@")[0] || "");
       meBio.value = data?.bio ?? "";
       meIsPublic.checked = data?.is_public ?? true;
       meShowOwned.checked = data?.show_owned ?? true;
+      syncMyProfileSnapshot(data);
+      myOwnedIds = uniqueIds([...ownedSet]);
+      myPublishedIds = uniqueIds(publishedIds);
       setMeMsg("Profil charge.");
     } catch (error) {
+      syncMyProfileSnapshot(null);
+      myOwnedIds = [];
+      myPublishedIds = [];
       setMeMsg(error.message || String(error));
     }
+    renderMyProfileState();
   }
 
   async function saveMyProfile() {
@@ -700,20 +825,29 @@
     setMeMsg("Enregistrement...");
 
     try {
-      const payload = {
+      const payload = normalizeMeDraft();
+      await PublicProfiles.saveProfile(
+        me.id,
+        payload,
+        {
+          fallbackDisplayName: fallbackMeDisplayName()
+        }
+      );
+
+      syncMyProfileSnapshot({
         user_id: me.id,
-        display_name: (meDisplayName.value || "Profil").trim(),
-        bio: (meBio.value || "").trim(),
-        is_public: !!meIsPublic.checked,
-        show_owned: !!meShowOwned.checked,
-        updated_at: new Date().toISOString()
-      };
-
-      const { error } = await supa.from("public_profiles").upsert(payload, { onConflict: "user_id" });
-      if (error) throw error;
-
+        updated_at: new Date().toISOString(),
+        ...payload
+      });
+      renderMyProfileState();
       setMeMsg("Profil enregistre.");
       toast("success", "Profil", "Profil enregistre.");
+      try {
+        await refreshViewedOwnProfile();
+        await doSearch();
+      } catch (error) {
+        console.error(error);
+      }
       return true;
     } catch (error) {
       setMeMsg(error.message || String(error));
@@ -731,25 +865,58 @@
       if (!saved) return;
       setMeMsg("Publication des skins...");
       const ownedSet = await loadOwnedMe();
-      const { error: delErr } = await supa.from("public_user_skins").delete().eq("user_id", me.id);
-      if (delErr) throw delErr;
-
-      if (!ownedSet.size) {
+      myOwnedIds = uniqueIds([...ownedSet]);
+      const result = await PublicProfiles.publishOwned(me.id, [...ownedSet]);
+      if (!result.publishedCount) {
+        myPublishedIds = [];
+        renderMyProfileState();
         setMeMsg("Liste publique videe.");
         toast("success", "Publication", "Liste publique videe.");
+        try {
+          await refreshViewedOwnProfile();
+          await doSearch();
+        } catch (error) {
+          console.error(error);
+        }
         return;
       }
 
-      const rows = [...ownedSet].map((skin_id) => ({ user_id: me.id, skin_id }));
-      const { error: insErr } = await supa.from("public_user_skins").upsert(rows, { onConflict: "user_id,skin_id" });
-      if (insErr) throw insErr;
-
-      setMeMsg(`${ownedSet.size} skin(s) publies.`);
-      toast("success", "Publication", `${ownedSet.size} skin(s) publies.`);
+      myPublishedIds = uniqueIds([...ownedSet]);
+      renderMyProfileState();
+      setMeMsg(`${result.publishedCount} skin(s) publies.`);
+      toast("success", "Publication", `${result.publishedCount} skin(s) publies.`);
+      try {
+        await refreshViewedOwnProfile();
+        await doSearch();
+      } catch (error) {
+        console.error(error);
+      }
     } catch (error) {
       setMeMsg(error.message || String(error));
       toast("error", "Publication", error.message || String(error));
     }
+  }
+
+  async function refreshViewedOwnProfile() {
+    if (!me || viewedProfileUserId !== me.id) return;
+
+    const profile = await loadProfile(me.id);
+    if (!profile || !profile.is_public) {
+      currentProfile = null;
+      publicOwnedIds = [];
+      profileCard.style.display = "none";
+      toolbar.style.display = "none";
+      skinsSection.style.display = "none";
+      if (compareBase?.userId === me.id) {
+        compareBase = null;
+        writeCompareBaseId("");
+      }
+      renderCompareSection();
+      return;
+    }
+
+    const ownedIds = profile.show_owned ? await loadPublicOwned(me.id) : [];
+    updateProfileUI(me.id, profile, ownedIds);
   }
 
   function myUrl() {
@@ -758,6 +925,10 @@
 
   async function copyMyLink() {
     if (!me) return;
+    if (!myProfileSnapshot?.is_public) {
+      setMeMsg("Aucun lien actif tant que le profil reste prive.");
+      return;
+    }
     try {
       await navigator.clipboard.writeText(myUrl());
       setMeMsg("Lien copie.");
@@ -769,12 +940,17 @@
 
   function openMyProfile() {
     if (!me) return;
+    if (!myProfileSnapshot?.is_public) {
+      setMeMsg("Rends le profil public puis enregistre pour ouvrir le lien.");
+      return;
+    }
     window.open(myUrl(), "_blank");
   }
 
   async function refreshMe() {
     if (!me) return;
     await loadMyProfile();
+    renderMyProfileState();
   }
 
   btnMeSave.addEventListener("click", saveMyProfile);
@@ -782,9 +958,15 @@
   btnMeCopy.addEventListener("click", copyMyLink);
   btnMeOpen.addEventListener("click", openMyProfile);
   btnMeReload.addEventListener("click", refreshMe);
+  meDisplayName.addEventListener("input", renderMyProfileState);
+  meBio.addEventListener("input", renderMyProfileState);
+  meIsPublic.addEventListener("change", renderMyProfileState);
+  meShowOwned.addEventListener("change", renderMyProfileState);
   btnMeLogout.addEventListener("click", async () => {
     await supa.auth.signOut();
   });
+
+  renderMyProfileState();
 
   (async () => {
     try {
@@ -804,10 +986,16 @@
         myProfileCard.style.display = "block";
         needAuthCard.style.display = "none";
         meLine.textContent = me.email ?? me.id;
+        renderAuthBadge(me);
         await refreshMe();
       } else {
         myProfileCard.style.display = "none";
         needAuthCard.style.display = "block";
+        renderAuthBadge(null);
+        syncMyProfileSnapshot(null);
+        myOwnedIds = [];
+        myPublishedIds = [];
+        renderMyProfileState();
       }
 
       supa.auth.onAuthStateChange(async (_event, session) => {
@@ -816,16 +1004,23 @@
           myProfileCard.style.display = "block";
           needAuthCard.style.display = "none";
           meLine.textContent = me.email ?? me.id;
+          renderAuthBadge(me);
           await refreshMe();
         } else {
           myProfileCard.style.display = "none";
           needAuthCard.style.display = "block";
+          renderAuthBadge(null);
+          syncMyProfileSnapshot(null);
+          myOwnedIds = [];
+          myPublishedIds = [];
+          renderMyProfileState();
           setMeMsg("");
         }
       });
     } catch {
       myProfileCard.style.display = "none";
       needAuthCard.style.display = "block";
+      renderAuthBadge(null);
     }
 
     const userId = parseUserIdFromUrl();

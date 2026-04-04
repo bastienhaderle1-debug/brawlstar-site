@@ -1,6 +1,7 @@
 (function () {
   const Brawldex = window.BrawldexService;
   if (!Brawldex) return;
+  const PlayerApi = window.BrawlStarsApi || null;
 
   const $ = (id) => document.getElementById(id);
   const homeViewer = $("homeViewer");
@@ -17,10 +18,28 @@
   const homeApiStatus = $("homeApiStatus");
   const homeApiMessage = $("homeApiMessage");
   const supa = window.supabaseClient || null;
+  const PublicProfiles = window.PublicProfileService || null;
   let viewerId = "visitor";
+  const brawlApiEnabled = window.BRAWLDEX_CONFIG?.enableBrawlApi === true;
+  let apiHealth = {
+    configured: null,
+    status: brawlApiEnabled ? "checking" : "paused",
+    message: brawlApiEnabled
+      ? "Verification du proxy Brawl Stars..."
+      : "Le site fonctionne pour l'instant uniquement avec les comptes Supabase."
+  };
 
   function viewerKey() {
     return viewerId || "visitor";
+  }
+
+  function escapeHtml(value) {
+    return String(value || "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
   }
 
   function sourceStatus() {
@@ -28,6 +47,26 @@
       label: "Local fallback",
       message: "Le Google Sheet n'est pas encore connecte."
     };
+  }
+
+  async function refreshApiHealth(options) {
+    if (!brawlApiEnabled) {
+      apiHealth = {
+        configured: null,
+        status: "paused",
+        message: "Le site tourne en priorite avec Supabase. La synchro live reviendra plus tard."
+      };
+      renderSnapshot();
+      return;
+    }
+
+    if (!PlayerApi?.fetchProxyHealth) return;
+    apiHealth = await PlayerApi.fetchProxyHealth(options).catch(() => ({
+      configured: null,
+      status: "unavailable",
+      message: "Impossible de verifier l'etat du proxy Brawl Stars pour l'instant."
+    }));
+    renderSnapshot();
   }
 
   function renderSnapshot() {
@@ -54,12 +93,26 @@
     if (homeSourceMessage) homeSourceMessage.textContent = source.message || "Source skins non renseignee.";
 
     if (homeApiStatus) {
-      homeApiStatus.textContent = profile.apiSyncedAt ? "Compte synchronise" : "Proxy pret";
+      homeApiStatus.textContent = profile.apiSyncedAt
+        ? (brawlApiEnabled ? "Compte synchronise" : "Sync conservee")
+        : !brawlApiEnabled
+          ? "En pause"
+          : apiHealth.configured === true
+            ? "Proxy configure"
+            : apiHealth.configured === false
+              ? "Token manquant"
+              : apiHealth.status === "checking"
+                ? "Verification..."
+                : "Etat inconnu";
     }
     if (homeApiMessage) {
       homeApiMessage.textContent = profile.apiSyncedAt
-        ? `Derniere synchro le ${new Date(profile.apiSyncedAt).toLocaleString("fr-FR")}.`
-        : "Configure BRAWL_STARS_API_TOKEN sur Vercel pour afficher ton vrai compte.";
+        ? (
+            brawlApiEnabled
+              ? `Derniere synchro le ${new Date(profile.apiSyncedAt).toLocaleString("fr-FR")}.`
+              : `Derniere synchro conservee du ${new Date(profile.apiSyncedAt).toLocaleString("fr-FR")}.`
+          )
+        : apiHealth.message || "Etat du proxy Brawl Stars indisponible.";
     }
 
     homeBadges.innerHTML = "";
@@ -100,8 +153,8 @@
       card.innerHTML = `
         <div class="list-head">
           <div>
-            <h3>${meta.name}</h3>
-            <p class="muted">${meta.role} • ${meta.rarity}</p>
+            <h3>${escapeHtml(meta.name)}</h3>
+            <p class="muted">${escapeHtml(meta.role)} - ${escapeHtml(meta.rarity)}</p>
           </div>
           <span class="pill">${entry.trophies} troph.</span>
         </div>
@@ -111,7 +164,7 @@
   }
 
   async function renderLatestProfiles() {
-    if (!supa) return;
+    if (!supa || !PublicProfiles) return;
     homeLatestProfiles.innerHTML = `
       <div class="card empty-card">
         <h3>Chargement...</h3>
@@ -120,16 +173,9 @@
     `;
 
     try {
-      const { data, error } = await supa
-        .from("public_profiles")
-        .select("user_id, display_name, bio, updated_at")
-        .eq("is_public", true)
-        .order("updated_at", { ascending: false })
-        .limit(3);
-
-      if (error) throw error;
-
-      const profiles = data || [];
+      const profiles = await PublicProfiles.enrichProfiles(await PublicProfiles.loadLatestProfiles(3), {
+        totalSkins: Array.isArray(window.SKINS) ? window.SKINS.length : 0
+      });
       if (!profiles.length) {
         homeLatestProfiles.innerHTML = `
           <div class="card empty-card">
@@ -142,12 +188,18 @@
 
       homeLatestProfiles.innerHTML = "";
       profiles.forEach((profile) => {
+        const skinsLabel = profile.skinsVisible !== false ? `${profile.ownedCount} skins` : "Skins masques";
+        const pctLabel = profile.skinsVisible !== false ? `${profile.pct}%` : "Comparaison off";
         const card = document.createElement("article");
         card.className = "card quick-card";
         card.innerHTML = `
-          <span class="pill">Profil public</span>
-          <h3>${profile.display_name || "Profil"}</h3>
-          <p class="muted">${profile.bio || "-"}</p>
+          <div class="row">
+            <span class="pill">Profil public</span>
+            <span class="pill">${skinsLabel}</span>
+            <span class="pill">${pctLabel}</span>
+          </div>
+          <h3>${escapeHtml(profile.display_name || "Profil")}</h3>
+          <p class="muted">${escapeHtml(profile.bio || "-")}</p>
           <p class="small">${profile.updated_at ? new Date(profile.updated_at).toLocaleDateString("fr-FR") : ""}</p>
           <a class="seg-btn" href="pages/profile.html?u=${encodeURIComponent(profile.user_id)}">Ouvrir</a>
         `;
@@ -189,6 +241,7 @@
 
     await initViewer();
     renderSnapshot();
+    await refreshApiHealth();
     await renderLatestProfiles();
     window.addEventListener("brawldex:changed", renderSnapshot);
   })();

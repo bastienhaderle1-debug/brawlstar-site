@@ -1,0 +1,16 @@
+[Unit]
+Description=Brawldex Brawl Stars proxy
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/srv/brawldex
+EnvironmentFile=/etc/brawldex-proxy.env
+ExecStart=/usr/bin/node /srv/brawldex/api/server.cjs
+Restart=always
+RestartSec=5
+User=www-data
+Group=www-data
+
+[Install]
+WantedBy=multi-user.target

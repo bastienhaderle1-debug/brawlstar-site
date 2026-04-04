@@ -56,6 +56,15 @@
     return (value ?? "").toString();
   }
 
+  function escapeHtml(value) {
+    return safeStr(value)
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+  }
+
   function slugify(value) {
     return safeStr(value)
       .toLowerCase()
@@ -173,7 +182,7 @@
   function createChoiceButtons(label, field, options, selected) {
     const wrap = document.createElement("div");
     wrap.className = "choice-block";
-    wrap.innerHTML = `<div class="choice-title">${label}</div>`;
+    wrap.innerHTML = `<div class="choice-title">${escapeHtml(label)}</div>`;
 
     const group = document.createElement("div");
     group.className = "choice-grid";
@@ -308,11 +317,11 @@
       <div class="collection-head">
         <div>
           <div class="row">
-            <span class="pill">${meta.rarity}</span>
-            <span class="pill">${meta.role}</span>
-            <span class="pill">${meta.difficulty}</span>
+            <span class="pill">${escapeHtml(meta.rarity)}</span>
+            <span class="pill">${escapeHtml(meta.role)}</span>
+            <span class="pill">${escapeHtml(meta.difficulty)}</span>
           </div>
-          <h3>${meta.name}</h3>
+          <h3>${escapeHtml(meta.name)}</h3>
           <p class="muted" data-completion>0/0 unlocks</p>
         </div>
         <div class="collection-toggles">

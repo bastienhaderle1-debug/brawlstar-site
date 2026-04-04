@@ -10,18 +10,13 @@
 
   function fail(msg, where = "") {
     const full = where ? `[${where}] ${msg}` : msg;
-
-    // Toast si possible
     const usedToast = toast(full, "error", "Erreur");
 
-    // Fallback console
     console.error(full);
 
-    // Fallback inline si un élément #status existe
     const status = document.getElementById("status");
-    if (status) status.textContent = "❌ " + msg;
+    if (status) status.textContent = "[!] " + msg;
 
-    // Dernier fallback: petite bannière injectée (non bloquante)
     if (!usedToast) {
       let banner = document.getElementById("__fatal_banner");
       if (!banner) {
@@ -41,16 +36,15 @@
         banner.style.fontWeight = "900";
         document.body.appendChild(banner);
       }
-      banner.textContent = "❌ " + msg;
+      banner.textContent = "[!] " + msg;
     }
 
     return false;
   }
 
-  // Guard Supabase (ne bloque pas toute la page si possible)
   function requireSupabase(where = "") {
     if (!window.supabaseClient) {
-      fail("supabaseClient introuvable. Vérifie data/supabase-client.js et l’ordre des scripts.", where);
+      fail("supabaseClient introuvable. Verifie data/supabase-client.js et l'ordre des scripts.", where);
       return null;
     }
     return window.supabaseClient;
@@ -58,7 +52,7 @@
 
   function requireSkins(where = "") {
     if (!Array.isArray(window.SKINS)) {
-      fail("SKINS introuvable. Vérifie data/skins-data.js et l’ordre des scripts.", where);
+      fail("SKINS introuvable. Verifie data/skins-data.js et l'ordre des scripts.", where);
       return null;
     }
     return window.SKINS;

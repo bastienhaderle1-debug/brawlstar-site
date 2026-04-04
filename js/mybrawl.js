@@ -2,9 +2,9 @@
   const supa = window.AppGuard?.requireSupabase("mybrawl");
   if (!supa) return;
 
-  if (!window.OwnedService || !window.BrawldexService) {
+  if (!window.OwnedService || !window.BrawldexService || !window.PublicProfileService) {
     window.AppGuard?.fail(
-      "Services de collection introuvables. Verifie owned-service.js et brawldex-service.js.",
+      "Services introuvables. Verifie owned-service.js, brawldex-service.js et public-profile-service.js.",
       "mybrawl"
     );
     return;
@@ -12,7 +12,9 @@
 
   const OwnedService = window.OwnedService;
   const Brawldex = window.BrawldexService;
+  const PublicProfiles = window.PublicProfileService;
   const PlayerApi = window.BrawlStarsApi || null;
+  const brawlApiEnabled = window.BRAWLDEX_CONFIG?.enableBrawlApi === true;
   const RARITY_ORDER =
     window.RARITY_ORDER ?? ["Rare", "Super Rare", "Epic", "Mythique", "Legendaire", "Hypercharge", "Argent", "Or"];
   const RARITY_CLASS = {
@@ -40,6 +42,7 @@
   const btnExport = document.getElementById("btnExport");
   const btnReset = document.getElementById("btnReset");
   const importFile = document.getElementById("importFile");
+  const globalAuthBadge = document.getElementById("globalAuthBadge");
 
   const userLine = document.getElementById("userLine");
   const collectionSummary = document.getElementById("collectionSummary");
@@ -64,6 +67,12 @@
   const btnPublishOwned = document.getElementById("btnPublishOwned");
   const btnOpenPublic = document.getElementById("btnOpenPublic");
   const btnCopyPublic = document.getElementById("btnCopyPublic");
+  const publicLiveState = document.getElementById("publicLiveState");
+  const publicDraftState = document.getElementById("publicDraftState");
+  const publicCollectionState = document.getElementById("publicCollectionState");
+  const publicCollectionDetail = document.getElementById("publicCollectionDetail");
+  const publicLinkState = document.getElementById("publicLinkState");
+  const publicLinkDetail = document.getElementById("publicLinkDetail");
   const apiPlayerTag = document.getElementById("apiPlayerTag");
   const btnSyncPlayer = document.getElementById("btnSyncPlayer");
   const btnClearPlayerSync = document.getElementById("btnClearPlayerSync");
@@ -104,9 +113,27 @@
   let authBusy = false;
   let ownedSet = new Set();
   let SKINS = [];
+  let livePublicProfile = null;
+  let livePublicOwnedIds = [];
+  let playerApiHealth = {
+    configured: null,
+    status: brawlApiEnabled ? "checking" : "paused",
+    message: brawlApiEnabled
+      ? "Verification du proxy Brawl Stars..."
+      : "La synchro live est mise de cote pour l'instant. Le flow principal passe par Supabase."
+  };
 
   function viewerKey() {
     return currentUser?.id || "visitor";
+  }
+
+  function escapeHtml(value) {
+    return String(value || "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
   }
 
   function toast(type, title, message) {
@@ -133,11 +160,75 @@
     if (playerApiStatus) playerApiStatus.textContent = message || "";
   }
 
+  async function refreshPlayerApiHealth(options) {
+    if (!brawlApiEnabled) {
+      playerApiHealth = {
+        configured: null,
+        status: "paused",
+        message: "La synchro live est mise de cote pour l'instant. Le flow principal passe par Supabase."
+      };
+      updatePlayerApiControls();
+      const profile = Brawldex.getProfile(viewerKey());
+      if (!profile.playerName) {
+        setPlayerApiStatus(playerApiHealth.message);
+        renderSyncedPlayer(profile);
+      }
+      return;
+    }
+
+    if (!PlayerApi?.fetchProxyHealth) {
+      playerApiHealth = {
+        configured: null,
+        status: "unavailable",
+        message: "Le client Brawl Stars API est introuvable."
+      };
+      updatePlayerApiControls();
+      return;
+    }
+
+    playerApiHealth = await PlayerApi.fetchProxyHealth(options).catch(() => ({
+      configured: null,
+      status: "unavailable",
+      message: "Impossible de verifier l'etat du proxy Brawl Stars pour l'instant."
+    }));
+
+    updatePlayerApiControls();
+    const profile = Brawldex.getProfile(viewerKey());
+    if (!profile.playerName) {
+      setPlayerApiStatus(playerApiHealth.message);
+      renderSyncedPlayer(profile);
+    }
+  }
+
+  function updatePlayerApiControls() {
+    if (btnSyncPlayer) {
+      btnSyncPlayer.disabled = !brawlApiEnabled || playerApiHealth.configured === false;
+      btnSyncPlayer.title =
+        !brawlApiEnabled
+          ? "La synchro live est en pause pour l'instant. Le projet fonctionne uniquement avec Supabase."
+          : playerApiHealth.configured === false
+          ? "Configure BRAWL_STARS_API_TOKEN sur Vercel pour activer la synchro."
+          : "Synchroniser ce tag via le proxy serveur.";
+    }
+  }
+
+  function renderAuthBadge(user) {
+    if (!globalAuthBadge) return;
+    globalAuthBadge.classList.remove("ok", "ko");
+    globalAuthBadge.classList.add(user ? "ok" : "ko");
+    const label = globalAuthBadge.querySelector("span:last-child");
+    if (label) label.textContent = user ? "Connecte" : "Non connecte";
+  }
+
   function getSourceStatus() {
     return window.SKINS_SOURCE_STATUS || {
       label: "Local fallback",
       message: "Le connecteur Google Sheet est pret mais pas encore branche."
     };
+  }
+
+  function authRedirectUrl() {
+    return new URL("/pages/mybrawl.html", window.location.origin).toString();
   }
 
   function renderSourceStatus() {
@@ -229,6 +320,119 @@
     return url.toString();
   }
 
+  function safeStr(value) {
+    return (value ?? "").toString().trim();
+  }
+
+  function uniqueIds(list) {
+    return [...new Set((Array.isArray(list) ? list : []).map((item) => safeStr(item)).filter(Boolean))];
+  }
+
+  function sameIdSet(left, right) {
+    const a = uniqueIds(left);
+    const b = uniqueIds(right);
+    if (a.length !== b.length) return false;
+    const lookup = new Set(a);
+    return b.every((id) => lookup.has(id));
+  }
+
+  function fallbackPublicDisplayName() {
+    return safeStr((currentUser?.email || "").split("@")[0]) || "Profil";
+  }
+
+  function normalizePublicDraft(source) {
+    return {
+      display_name: safeStr(source?.display_name ?? publicDisplayName?.value) || fallbackPublicDisplayName(),
+      bio: safeStr(source?.bio ?? publicBio?.value),
+      is_public: source?.is_public ?? !!publicIsPublic?.checked,
+      show_owned: source?.show_owned ?? !!publicShowOwned?.checked
+    };
+  }
+
+  function samePublicDraft(left, right) {
+    return !!left &&
+      !!right &&
+      safeStr(left.display_name) === safeStr(right.display_name) &&
+      safeStr(left.bio) === safeStr(right.bio) &&
+      !!left.is_public === !!right.is_public &&
+      !!left.show_owned === !!right.show_owned;
+  }
+
+  function syncLivePublicProfile(profile) {
+    livePublicProfile = profile ? { ...profile, ...normalizePublicDraft(profile) } : null;
+  }
+
+  function renderPublicProfileState() {
+    const draft = normalizePublicDraft();
+    const live = livePublicProfile ? normalizePublicDraft(livePublicProfile) : null;
+    const localOwnedIds = [...ownedSet];
+    const localCount = localOwnedIds.length;
+    const publishedCount = livePublicOwnedIds.length;
+    const hasLiveProfile = !!livePublicProfile;
+    const liveIsPublic = !!livePublicProfile?.is_public;
+    const liveShowOwned = !!livePublicProfile && livePublicProfile.show_owned !== false;
+    const draftDirty = !live || !samePublicDraft(draft, live);
+    const needsPublish = !sameIdSet(localOwnedIds, livePublicOwnedIds);
+    const canShare = !!currentUser && liveIsPublic;
+
+    if (publicLiveState) {
+      if (!hasLiveProfile) publicLiveState.textContent = "Brouillon";
+      else if (liveIsPublic) publicLiveState.textContent = "Public";
+      else publicLiveState.textContent = "Prive";
+    }
+
+    if (publicDraftState) {
+      if (!hasLiveProfile) publicDraftState.textContent = "Enregistre une premiere fois pour creer ton profil public.";
+      else if (draftDirty) publicDraftState.textContent = "Des modifications locales attendent encore un enregistrement.";
+      else if (liveIsPublic) publicDraftState.textContent = "Ton profil en ligne est aligne avec le formulaire.";
+      else publicDraftState.textContent = "Ton profil est sauvegarde, mais il reste prive.";
+    }
+
+    if (publicCollectionState) {
+      publicCollectionState.textContent = `${publishedCount} / ${localCount}`;
+    }
+
+    if (publicCollectionDetail) {
+      if (!localCount && !publishedCount) publicCollectionDetail.textContent = "Aucun skin coche pour l'instant.";
+      else if (needsPublish && !localCount) publicCollectionDetail.textContent = "Ta liste publique n'est pas vide. Republie pour la vider.";
+      else if (needsPublish) publicCollectionDetail.textContent = `Local: ${localCount} skin(s) coches. Republie pour aligner la version en ligne.`;
+      else if (!publishedCount) publicCollectionDetail.textContent = "Aucune collection publique pour l'instant.";
+      else if (!liveShowOwned) publicCollectionDetail.textContent = `${publishedCount} skins sont publies, mais masques dans ton profil.`;
+      else publicCollectionDetail.textContent = `${publishedCount} skins sont visibles et prets pour la comparaison.`;
+    }
+
+    if (publicLinkState) {
+      if (!hasLiveProfile) publicLinkState.textContent = "Inactif";
+      else if (!liveIsPublic) publicLinkState.textContent = "Prive";
+      else if (!liveShowOwned) publicLinkState.textContent = "Partage OK";
+      else publicLinkState.textContent = "Comparaison OK";
+    }
+
+    if (publicLinkDetail) {
+      if (!hasLiveProfile) publicLinkDetail.textContent = "Le lien sera pret apres le premier enregistrement.";
+      else if (!liveIsPublic) publicLinkDetail.textContent = "Passe le profil en public puis enregistre pour activer le lien.";
+      else if (!liveShowOwned) publicLinkDetail.textContent = "Le profil est partageable, mais la liste de skins reste masquee.";
+      else if (!publishedCount) publicLinkDetail.textContent = "Le profil est public, mais aucune collection n'est encore publiee.";
+      else publicLinkDetail.textContent = "Lien actif et comparaison disponible depuis la page profils.";
+    }
+
+    if (btnSavePublic) btnSavePublic.classList.toggle("is-active", draftDirty);
+    if (btnPublishOwned) {
+      btnPublishOwned.classList.toggle("is-active", needsPublish);
+      btnPublishOwned.title = draft.show_owned
+        ? "Mettre a jour la liste publique de skins."
+        : "Les skins seront publies, mais resteront masques tant que cette option est desactivee.";
+    }
+    if (btnOpenPublic) {
+      btnOpenPublic.disabled = !canShare;
+      btnOpenPublic.title = canShare ? "Ouvrir ton profil public." : "Rends le profil public puis enregistre pour activer le lien.";
+    }
+    if (btnCopyPublic) {
+      btnCopyPublic.disabled = !canShare;
+      btnCopyPublic.title = canShare ? publicProfileUrl(currentUser.id) : "Aucun lien public actif pour le moment.";
+    }
+  }
+
   function clearSyncedPlayerProfile() {
     Brawldex.updateProfile(viewerKey(), {
       playerName: "",
@@ -250,10 +454,20 @@
     if (!playerApiName) return;
 
     const hasSyncedProfile = !!profile.playerName;
-    playerApiName.textContent = hasSyncedProfile ? profile.playerName : "Compte non synchronise";
+    playerApiName.textContent = hasSyncedProfile
+      ? profile.playerName
+      : !brawlApiEnabled
+        ? "Synchro en pause"
+      : playerApiHealth.configured === false
+        ? "Proxy non configure"
+        : "Compte non synchronise";
     playerApiMeta.textContent = hasSyncedProfile
-      ? `${profile.trophies} trophees officiels • ${profile.victories3v3 || 0} victoires 3v3 • ${profile.soloVictories || 0} solo • ${profile.duoVictories || 0} duo`
-      : "Synchronise un tag pour recuperer ton vrai profil Brawl Stars.";
+      ? `${profile.trophies} trophees officiels - ${profile.victories3v3 || 0} victoires 3v3 - ${profile.soloVictories || 0} solo - ${profile.duoVictories || 0} duo`
+      : !brawlApiEnabled
+        ? "Le site fonctionne pour l'instant uniquement avec Supabase. La synchro live reviendra plus tard."
+      : playerApiHealth.configured === true
+        ? "Synchronise un tag pour recuperer ton vrai profil Brawl Stars."
+        : playerApiHealth.message || "Verification du proxy Brawl Stars...";
     playerApiTag.textContent = profile.playerTag || "#---";
     playerApiTrophies.textContent = String(profile.trophies || 0);
     playerApiHighest.textContent = String(profile.highestTrophies || 0);
@@ -271,12 +485,16 @@
     authCard.style.display = "none";
     app.style.display = "block";
     userLine.textContent = user.email ?? user.id;
+    renderAuthBadge(user);
+    renderPublicProfileState();
     renderSourceStatus();
   }
 
   function showLoggedOut() {
     currentUser = null;
     ownedSet = new Set();
+    syncLivePublicProfile(null);
+    livePublicOwnedIds = [];
     authCard.style.display = "block";
     app.style.display = "none";
     setAuthMessage("");
@@ -285,6 +503,8 @@
     setPublicStatus("");
     setPlayerApiStatus("");
     setAuthBusyState(false, "");
+    renderAuthBadge(null);
+    renderPublicProfileState();
   }
 
   async function signup() {
@@ -303,7 +523,7 @@
       const { error } = await supa.auth.signUp({
         email: em,
         password: pw,
-        options: { emailRedirectTo: "https://brawlstar-site.vercel.app/pages/mybrawl.html" }
+        options: { emailRedirectTo: authRedirectUrl() }
       });
       if (error) {
         const normalized = normalizeAuthError(error);
@@ -334,7 +554,7 @@
       const { error } = await supa.auth.resend({
         type: "signup",
         email: em,
-        options: { emailRedirectTo: "https://brawlstar-site.vercel.app/pages/mybrawl.html" }
+        options: { emailRedirectTo: authRedirectUrl() }
       });
       if (error) {
         const normalized = normalizeAuthError(error);
@@ -400,6 +620,7 @@
     } catch (error) {
       setStatus(`Erreur de chargement: ${error.message || String(error)}`);
     }
+    renderPublicProfileState();
   }
 
   async function setOwned(skinId, isOwned) {
@@ -411,6 +632,7 @@
       else ownedSet.delete(skinId);
       renderSkins();
       renderDashboard();
+      renderPublicProfileState();
       setStatus(`${ownedSet.size} skin(s) coches enregistres.`);
     } catch (error) {
       setStatus(error.message || String(error));
@@ -440,11 +662,11 @@
       article.className = "card";
       article.innerHTML = `
         <div class="row">
-          <span class="pill">${skin.category ?? "-"}</span>
-          <span class="pill ${RARITY_CLASS[skin.rarity] ?? ""}">${skin.rarity ?? "-"}</span>
+          <span class="pill">${escapeHtml(skin.category ?? "-")}</span>
+          <span class="pill ${escapeHtml(RARITY_CLASS[skin.rarity] ?? "")}">${escapeHtml(skin.rarity ?? "-")}</span>
         </div>
-        <h3>${skin.name}</h3>
-        <p class="muted">Brawler : <strong>${skin.brawler ?? "-"}</strong></p>
+        <h3>${escapeHtml(skin.name)}</h3>
+        <p class="muted">Brawler : <strong>${escapeHtml(skin.brawler ?? "-")}</strong></p>
         <label class="switch-line">
           <input type="checkbox" ${ownedSet.has(skin.id) ? "checked" : ""} />
           <span>Je l'ai</span>
@@ -490,8 +712,8 @@
       node.innerHTML = `
         <div class="list-head">
           <div>
-            <h3>${item.title}</h3>
-            <p class="muted">${item.detail || "Mise a jour de ton Brawldex."}</p>
+            <h3>${escapeHtml(item.title)}</h3>
+            <p class="muted">${escapeHtml(item.detail || "Mise a jour de ton Brawldex.")}</p>
           </div>
           <span class="pill">${new Date(item.ts).toLocaleDateString("fr-FR")}</span>
         </div>
@@ -557,12 +779,12 @@
       node.innerHTML = `
         <div class="list-head">
           <div>
-            <h3>${meta.name}</h3>
-            <p class="muted">${meta.role} • ${meta.rarity}</p>
+            <h3>${escapeHtml(meta.name)}</h3>
+            <p class="muted">${escapeHtml(meta.role)} - ${escapeHtml(meta.rarity)}</p>
           </div>
           <span class="pill">${entry.trophies} troph.</span>
         </div>
-        <p class="muted">Puissance ${entry.powerLevel} • Mastery ${entry.mastery} • ${entry.hypercharge ? "Hypercharge" : "Sans hypercharge"}</p>
+        <p class="muted">Puissance ${entry.powerLevel} - Mastery ${entry.mastery} - ${entry.hypercharge ? "Hypercharge" : "Sans hypercharge"}</p>
       `;
       topBrawlers.appendChild(node);
     });
@@ -594,6 +816,7 @@
     renderActivity();
     renderSourceStatus();
     renderSyncedPlayer(profile);
+    renderPublicProfileState();
   }
 
   function savePersonalProfile() {
@@ -610,6 +833,12 @@
   }
 
   async function syncPlayerProfile() {
+    if (!brawlApiEnabled) {
+      setPlayerApiStatus("La synchro live est mise de cote pour l'instant. On avance uniquement avec Supabase.");
+      toast("info", "Synchro live", "La synchro Brawl Stars API est en pause pour le moment.");
+      return;
+    }
+
     if (!PlayerApi) {
       setPlayerApiStatus("Le client Brawl Stars API est introuvable.");
       return;
@@ -657,8 +886,14 @@
 
   function clearPlayerSync() {
     clearSyncedPlayerProfile();
-    setPlayerApiStatus("Synchronisation Brawl Stars effacee.");
-    toast("info", "API Brawl Stars", "Les donnees synchronisees ont ete supprimees.");
+    setPlayerApiStatus(
+      !brawlApiEnabled
+        ? "Ancienne synchro effacee. Ton espace fonctionne maintenant uniquement avec Supabase."
+        : playerApiHealth.configured === false
+          ? playerApiHealth.message
+          : "Synchronisation Brawl Stars effacee."
+    );
+    toast("info", "Synchro live", "Les donnees synchronisees ont ete supprimees.");
     renderPersonalProfile();
     renderDashboard();
   }
@@ -667,38 +902,43 @@
     if (!currentUser) return;
     setPublicStatus("Chargement du profil public...");
     try {
-      const { data, error } = await supa
-        .from("public_profiles")
-        .select("display_name, bio, is_public, show_owned")
-        .eq("user_id", currentUser.id)
-        .maybeSingle();
-
-      if (error) throw error;
-
+      const [data, publishedIds] = await Promise.all([
+        PublicProfiles.loadProfile(currentUser.id),
+        PublicProfiles.loadOwned(currentUser.id).catch(() => [])
+      ]);
       publicDisplayName.value = data?.display_name ?? ((currentUser.email || "").split("@")[0] || "");
       publicBio.value = data?.bio ?? "";
       publicIsPublic.checked = data?.is_public ?? true;
       publicShowOwned.checked = data?.show_owned ?? true;
+      syncLivePublicProfile(data);
+      livePublicOwnedIds = uniqueIds(publishedIds);
       setPublicStatus("Profil public charge.");
     } catch (error) {
+      syncLivePublicProfile(null);
+      livePublicOwnedIds = [];
       setPublicStatus(error.message || String(error));
     }
+    renderPublicProfileState();
   }
 
   async function savePublicProfile() {
     if (!currentUser) return false;
     setPublicStatus("Enregistrement du profil public...");
     try {
-      const payload = {
+      const payload = normalizePublicDraft();
+      await PublicProfiles.saveProfile(
+        currentUser.id,
+        payload,
+        {
+          fallbackDisplayName: fallbackPublicDisplayName()
+        }
+      );
+      syncLivePublicProfile({
         user_id: currentUser.id,
-        display_name: (publicDisplayName.value || "Profil").trim(),
-        bio: (publicBio.value || "").trim(),
-        is_public: !!publicIsPublic.checked,
-        show_owned: !!publicShowOwned.checked,
-        updated_at: new Date().toISOString()
-      };
-      const { error } = await supa.from("public_profiles").upsert(payload, { onConflict: "user_id" });
-      if (error) throw error;
+        updated_at: new Date().toISOString(),
+        ...payload
+      });
+      renderPublicProfileState();
       setPublicStatus("Profil public enregistre.");
       toast("success", "Profil public", "Profil public enregistre.");
       return true;
@@ -716,21 +956,19 @@
       const saved = await savePublicProfile();
       if (!saved) return;
       setPublicStatus("Publication de tes skins...");
-      const { error: delErr } = await supa.from("public_user_skins").delete().eq("user_id", currentUser.id);
-      if (delErr) throw delErr;
-
-      if (!ownedSet.size) {
+      const result = await PublicProfiles.publishOwned(currentUser.id, [...ownedSet]);
+      if (!result.publishedCount) {
+        livePublicOwnedIds = [];
+        renderPublicProfileState();
         setPublicStatus("Aucun skin coche: la liste publique a ete videe.");
         toast("success", "Publication", "Liste publique videe.");
         return;
       }
 
-      const rows = [...ownedSet].map((skin_id) => ({ user_id: currentUser.id, skin_id }));
-      const { error: insErr } = await supa.from("public_user_skins").upsert(rows, { onConflict: "user_id,skin_id" });
-      if (insErr) throw insErr;
-
-      setPublicStatus(`${ownedSet.size} skin(s) publies.`);
-      toast("success", "Publication", `${ownedSet.size} skin(s) publies.`);
+      livePublicOwnedIds = uniqueIds([...ownedSet]);
+      renderPublicProfileState();
+      setPublicStatus(`${result.publishedCount} skin(s) publies.`);
+      toast("success", "Publication", `${result.publishedCount} skin(s) publies.`);
     } catch (error) {
       setPublicStatus(error.message || String(error));
       toast("error", "Publication", error.message || String(error));
@@ -739,11 +977,19 @@
 
   function openPublicProfile() {
     if (!currentUser) return;
+    if (!livePublicProfile?.is_public) {
+      setPublicStatus("Rends le profil public puis enregistre pour ouvrir le lien.");
+      return;
+    }
     window.open(publicProfileUrl(currentUser.id), "_blank");
   }
 
   async function copyPublicLink() {
     if (!currentUser) return;
+    if (!livePublicProfile?.is_public) {
+      setPublicStatus("Aucun lien actif tant que le profil reste prive.");
+      return;
+    }
     try {
       await navigator.clipboard.writeText(publicProfileUrl(currentUser.id));
       setPublicStatus("Lien public copie.");
@@ -785,6 +1031,10 @@
     btnPublishOwned.addEventListener("click", publishOwned);
     btnOpenPublic.addEventListener("click", openPublicProfile);
     btnCopyPublic.addEventListener("click", copyPublicLink);
+    publicDisplayName.addEventListener("input", renderPublicProfileState);
+    publicBio.addEventListener("input", renderPublicProfileState);
+    publicIsPublic.addEventListener("change", renderPublicProfileState);
+    publicShowOwned.addEventListener("change", renderPublicProfileState);
     if (btnSyncPlayer) btnSyncPlayer.addEventListener("click", syncPlayerProfile);
     if (btnClearPlayerSync) btnClearPlayerSync.addEventListener("click", clearPlayerSync);
 
@@ -833,6 +1083,8 @@
       renderPersonalProfile();
       renderDashboard();
     });
+
+    renderPublicProfileState();
   }
 
   (async () => {
@@ -853,6 +1105,8 @@
     buildSkinFilters();
     fillMainBrawlerOptions();
     renderSourceStatus();
+    updatePlayerApiControls();
+    await refreshPlayerApiHealth();
 
     const { data } = await supa.auth.getSession();
     const user = data.session?.user ?? null;

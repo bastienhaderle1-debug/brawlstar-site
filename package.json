@@ -1,0 +1,13 @@
+{
+  "name": "brawldex",
+  "private": true,
+  "scripts": {
+    "serve:proxy": "node api/server.cjs",
+    "smoke:api": "node scripts/brawl-api-smoke.cjs",
+    "smoke:live": "node scripts/vercel-live-smoke.cjs",
+    "smoke:ui": "node scripts/ui-smoke.cjs"
+  },
+  "devDependencies": {
+    "playwright": "^1.59.1"
+  }
+}

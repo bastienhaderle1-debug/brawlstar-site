@@ -7,12 +7,11 @@
 
   const supa = window.supabaseClient;
 
-  function isAbortError(e) {
-    const msg = String(e?.message || e || "").toLowerCase();
-    return e?.name === "AbortError" || msg.includes("abort") || msg.includes("signal is aborted");
+  function isAbortError(error) {
+    const msg = String(error?.message || error || "").toLowerCase();
+    return error?.name === "AbortError" || msg.includes("abort") || msg.includes("signal is aborted");
   }
 
-  // Lit tous les skins possédés (stockés par skin_id)
   async function loadOwnedSet(userId) {
     if (!userId) return new Set();
 
@@ -23,12 +22,11 @@
 
     if (error) throw error;
 
-    return new Set((data || []).map(r => r.skin_id).filter(Boolean));
+    return new Set((data || []).map((row) => row.skin_id).filter(Boolean));
   }
 
-  // Set owned via upsert/delete (nécessite UNIQUE(user_id, skin_id) côté DB)
   async function setOwned(userId, skinId, owned) {
-    if (!userId) throw new Error("Non connecté");
+    if (!userId) throw new Error("Non connecte");
     if (!skinId) throw new Error("skinId manquant");
 
     if (owned) {
@@ -37,15 +35,15 @@
         .upsert([{ user_id: userId, skin_id: skinId }], { onConflict: "user_id,skin_id" });
       if (error) throw error;
       return true;
-    } else {
-      const { error } = await supa
-        .from("user_skins")
-        .delete()
-        .eq("user_id", userId)
-        .eq("skin_id", skinId);
-      if (error) throw error;
-      return false;
     }
+
+    const { error } = await supa
+      .from("user_skins")
+      .delete()
+      .eq("user_id", userId)
+      .eq("skin_id", skinId);
+    if (error) throw error;
+    return false;
   }
 
   function getSkins() {
@@ -53,7 +51,7 @@
   }
 
   function skinById(id) {
-    return getSkins().find(s => s && s.id === id) || null;
+    return getSkins().find((skin) => skin && skin.id === id) || null;
   }
 
   function computeOwnedStats(ownedSet) {
@@ -62,14 +60,16 @@
     const owned = ownedSet.size;
     const pct = total > 0 ? Math.round((owned / total) * 100) : 0;
 
-    const rarityOrder = window.RARITY_ORDER ?? ["Rare","Super Rare","Epic","Mythique","Legendaire","Hypercharge"];
+    const rarityOrder = window.RARITY_ORDER ?? ["Rare", "Super Rare", "Epic", "Mythique", "Legendaire", "Hypercharge"];
     const byRarity = {};
-    rarityOrder.forEach(r => (byRarity[r] = 0));
+    rarityOrder.forEach((rarity) => {
+      byRarity[rarity] = 0;
+    });
 
-    skins.forEach(s => {
-      if (!s?.id) return;
-      if (!ownedSet.has(s.id)) return;
-      if (s.rarity && byRarity[s.rarity] !== undefined) byRarity[s.rarity]++;
+    skins.forEach((skin) => {
+      if (!skin?.id) return;
+      if (!ownedSet.has(skin.id)) return;
+      if (skin.rarity && byRarity[skin.rarity] !== undefined) byRarity[skin.rarity] += 1;
     });
 
     return { total, owned, pct, byRarity };
@@ -81,6 +81,6 @@
     setOwned,
     getSkins,
     skinById,
-    computeOwnedStats,
+    computeOwnedStats
   };
 })();

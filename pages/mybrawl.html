@@ -14,7 +14,7 @@
         <p class="brand-kicker">Personal workspace</p>
         <h1>Brawldex</h1>
         <p class="muted hero-summary">
-          Ton dashboard central pour te connecter, synchroniser ton vrai profil Brawl Stars, cocher tes skins et publier ton profil.
+          Ton dashboard central pour te connecter, cocher tes skins et publier ton profil via ton compte Supabase.
         </p>
 
         <nav class="nav">
@@ -153,31 +153,31 @@
         </article>
 
         <article class="card dashboard-card">
-          <h2>Connexion Brawl Stars API</h2>
-          <p class="muted">Synchronise ton vrai compte pour afficher nom, trophees et statistiques officielles.</p>
+          <h2>Synchro live en pause</h2>
+          <p class="muted">Pour l'instant, on avance en mode Supabase only. Ton profil public et tes skins passent entierement par ton compte.</p>
 
           <div class="api-card">
             <div class="collection-fields public-grid">
               <div class="filter">
-                <label for="apiPlayerTag">Tag a synchroniser</label>
-                <input id="apiPlayerTag" class="input" type="text" placeholder="#ABCD123" />
+                <label for="apiPlayerTag">Tag Brawl Stars</label>
+                <input id="apiPlayerTag" class="input" type="text" placeholder="#P0LY8Q2" />
               </div>
               <div class="filter">
                 <label>Actions</label>
                 <div class="section-actions">
-                  <button class="seg-btn is-active" id="btnSyncPlayer" type="button">Synchroniser</button>
-                  <button class="seg-btn" id="btnClearPlayerSync" type="button">Vider la synchro</button>
+                  <button class="seg-btn" id="btnSyncPlayer" type="button">Activer plus tard</button>
+                  <button class="seg-btn" id="btnClearPlayerSync" type="button">Effacer l'ancienne synchro</button>
                 </div>
               </div>
             </div>
 
-            <p class="muted" id="playerApiStatus">Le proxy API est pret. Ajoute le token cote Vercel pour activer la synchro.</p>
+            <p class="muted" id="playerApiStatus">La synchro live est mise de cote pour l'instant.</p>
 
             <div class="api-profile-card" id="playerApiCard">
               <div class="list-head">
                 <div>
-                  <h3 id="playerApiName">Compte non synchronise</h3>
-                  <p class="muted" id="playerApiMeta">Synchronise un tag pour recuperer ton vrai profil Brawl Stars.</p>
+                  <h3 id="playerApiName">Mode Supabase</h3>
+                  <p class="muted" id="playerApiMeta">Le flow principal fonctionne sans connexion live a l'API Brawl Stars.</p>
                 </div>
                 <span class="pill" id="playerApiTag">#---</span>
               </div>
@@ -252,6 +252,23 @@
             <button class="seg-btn" id="btnPublishOwned" type="button">Publier mes skins</button>
             <button class="seg-btn" id="btnOpenPublic" type="button">Ouvrir mon profil</button>
             <button class="seg-btn" id="btnCopyPublic" type="button">Copier le lien</button>
+          </div>
+          <div class="status-grid public-status-grid">
+            <div class="status-card">
+              <span class="small">Profil en ligne</span>
+              <strong id="publicLiveState">Brouillon</strong>
+              <div class="small" id="publicDraftState">Enregistre ton profil pour creer ta fiche publique.</div>
+            </div>
+            <div class="status-card">
+              <span class="small">Collection publiee</span>
+              <strong id="publicCollectionState">0 / 0</strong>
+              <div class="small" id="publicCollectionDetail">Aucun skin public pour l'instant.</div>
+            </div>
+            <div class="status-card">
+              <span class="small">Lien public</span>
+              <strong id="publicLinkState">Inactif</strong>
+              <div class="small" id="publicLinkDetail">Rends ton profil public pour partager ton lien.</div>
+            </div>
           </div>
           <p class="muted" id="publicStatus"></p>
         </article>
@@ -365,7 +382,9 @@
   <script src="../js/toast.js"></script>
   <script src="../js/guard.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../data/runtime-config.js"></script>
   <script src="../data/supabase-client.js"></script>
+  <script src="../js/public-profile-service.js"></script>
   <script src="../data/skins-source-config.js"></script>
   <script src="../data/skins-data.js"></script>
   <script src="../data/brawldex-data.js"></script>

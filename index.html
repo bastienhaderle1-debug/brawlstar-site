@@ -14,7 +14,7 @@
         <p class="brand-kicker">Brawldex Platform</p>
         <h1>Brawldex</h1>
         <p class="muted hero-summary">
-          Le hub pour suivre tes skins, ton roster, ton profil public et bientot ton vrai compte Brawl Stars dans une seule interface.
+          Le hub pour suivre tes skins, ton roster et ton profil public dans une seule interface reliee a ton compte Supabase.
         </p>
 
         <nav class="nav">
@@ -42,8 +42,8 @@
         <p class="brand-kicker">Nouveau cycle</p>
         <h2>Une base prete pour la vraie data</h2>
         <p class="muted">
-          La refonte met Brawldex au centre : UI plus lisible, profils publics plus nets, source skins prete pour Google Sheets,
-          et connecteur serveur deja prepare pour l'API Brawl Stars.
+          La refonte met Brawldex au centre : UI plus lisible, profils publics plus nets, source skins prete pour Google Sheets
+          et un vrai flow Supabase deja solide pour sauvegarder ta collection.
         </p>
         <div class="hero-actions">
           <a class="seg-btn is-active" href="pages/mybrawl.html">Configurer mon espace</a>
@@ -86,10 +86,10 @@
       </article>
 
       <article class="signal-card">
-        <span class="small">Brawl Stars API</span>
-        <strong id="homeApiStatus">Proxy pret</strong>
+        <span class="small">Synchro live</span>
+        <strong id="homeApiStatus">En pause</strong>
         <p class="muted" id="homeApiMessage">
-          Un endpoint serveur est deja en place pour afficher ton vrai compte et ses trophees des que le token sera configure.
+          Le site fonctionne pour l'instant uniquement avec les comptes Supabase.
         </p>
       </article>
 
@@ -106,7 +106,7 @@
       <article class="card quick-card">
         <span class="pill">Dashboard</span>
         <h3>Espace personnel</h3>
-        <p class="muted">Connexion, synchro API, profil public, statistiques et gestion rapide des skins.</p>
+        <p class="muted">Connexion Supabase, profil public, statistiques locales et gestion rapide des skins.</p>
         <a class="seg-btn" href="pages/mybrawl.html">Aller au dashboard</a>
       </article>
 
@@ -158,11 +158,14 @@
 
   <script src="js/toast.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="data/runtime-config.js"></script>
   <script src="data/supabase-client.js"></script>
+  <script src="js/public-profile-service.js"></script>
   <script src="data/skins-source-config.js"></script>
   <script src="data/skins-data.js"></script>
   <script src="data/brawldex-data.js"></script>
   <script src="js/brawldex-service.js"></script>
+  <script src="js/brawl-stars-api.js"></script>
   <script src="js/home.js"></script>
   <script src="js/site.js"></script>
 </body>

@@ -619,6 +619,16 @@ label,
   color: var(--text-main);
 }
 
+.public-status-grid .status-card {
+  min-height: 128px;
+}
+
+.public-status-grid .status-card .small:last-child {
+  display: block;
+  margin-top: 8px;
+  line-height: 1.45;
+}
+
 .api-card {
   display: grid;
   gap: 12px;
