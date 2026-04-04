@@ -1,8 +1,6 @@
 (function () {
   const Brawldex = window.BrawldexService;
   if (!Brawldex) return;
-  const PlayerApi = window.BrawlStarsApi || null;
-
   const $ = (id) => document.getElementById(id);
   const homeViewer = $("homeViewer");
   const homeSummary = $("homeSummary");
@@ -26,7 +24,7 @@
     status: brawlApiEnabled ? "checking" : "paused",
     message: brawlApiEnabled
       ? "Verification du proxy Brawl Stars..."
-      : "Le site fonctionne pour l'instant uniquement avec les comptes Supabase."
+      : "Connexion, collection et partage sont les priorites du site."
   };
 
   function viewerKey() {
@@ -54,14 +52,14 @@
       apiHealth = {
         configured: null,
         status: "paused",
-        message: "Le site tourne en priorite avec Supabase. La synchro live reviendra plus tard."
+        message: "Connexion, collection et partage sont les priorites du site."
       };
       renderSnapshot();
       return;
     }
 
-    if (!PlayerApi?.fetchProxyHealth) return;
-    apiHealth = await PlayerApi.fetchProxyHealth(options).catch(() => ({
+    if (!window.BrawlStarsApi?.fetchProxyHealth) return;
+    apiHealth = await window.BrawlStarsApi.fetchProxyHealth(options).catch(() => ({
       configured: null,
       status: "unavailable",
       message: "Impossible de verifier l'etat du proxy Brawl Stars pour l'instant."
@@ -79,7 +77,7 @@
       ? `${profile.playerName} ${profile.playerTag ? `(${profile.playerTag})` : ""}`.trim()
       : profile.mainBrawler
         ? `Main actuel: ${profile.mainBrawler}`
-        : "Aucun profil joueur synchronise";
+        : "Aucun profil joueur renseigne";
 
     homeViewer.textContent = playerLabel;
     homeSummary.textContent = profile.trophies
@@ -93,10 +91,14 @@
     if (homeSourceMessage) homeSourceMessage.textContent = source.message || "Source skins non renseignee.";
 
     if (homeApiStatus) {
-      homeApiStatus.textContent = profile.apiSyncedAt
-        ? (brawlApiEnabled ? "Compte synchronise" : "Sync conservee")
-        : !brawlApiEnabled
-          ? "En pause"
+      homeApiStatus.textContent = !brawlApiEnabled
+        ? viewerId === "visitor"
+          ? "Pret a commencer"
+          : stats.owned || profile.mainBrawler
+            ? "Tableau de bord actif"
+            : "Compte pret"
+        : profile.apiSyncedAt
+          ? "Compte synchronise"
           : apiHealth.configured === true
             ? "Proxy configure"
             : apiHealth.configured === false
@@ -106,13 +108,15 @@
                 : "Etat inconnu";
     }
     if (homeApiMessage) {
-      homeApiMessage.textContent = profile.apiSyncedAt
-        ? (
-            brawlApiEnabled
-              ? `Derniere synchro le ${new Date(profile.apiSyncedAt).toLocaleString("fr-FR")}.`
-              : `Derniere synchro conservee du ${new Date(profile.apiSyncedAt).toLocaleString("fr-FR")}.`
-          )
-        : apiHealth.message || "Etat du proxy Brawl Stars indisponible.";
+      homeApiMessage.textContent = !brawlApiEnabled
+        ? viewerId === "visitor"
+          ? "Connecte-toi pour sauvegarder ta collection et publier ton profil public."
+          : stats.owned || profile.mainBrawler
+            ? "Ton espace avance bien. Prochaine etape ideale : finaliser puis partager ton profil public."
+            : "Ton compte est pret. Passe par le dashboard pour cocher tes premiers skins."
+        : profile.apiSyncedAt
+          ? `Derniere synchro le ${new Date(profile.apiSyncedAt).toLocaleString("fr-FR")}.`
+          : apiHealth.message || "Etat du proxy Brawl Stars indisponible.";
     }
 
     homeBadges.innerHTML = "";

@@ -37,7 +37,7 @@
   </header>
 
   <main class="container page-stack">
-    <section class="card" id="authCard">
+    <section class="card auth-card" id="authCard">
       <div class="section-head">
         <div>
           <h2>Connexion Supabase</h2>
@@ -68,7 +68,7 @@
 
     <section id="app" style="display:none;">
       <section class="hero-grid-alt">
-        <article class="card dashboard-card">
+        <article class="card dashboard-card dashboard-hero-card">
           <p class="brand-kicker">Control center</p>
           <h2>Centre de commande Brawldex</h2>
           <p class="muted" id="collectionSummary">Chargement de ton espace...</p>
@@ -99,7 +99,7 @@
         </article>
 
         <aside class="hero-side">
-          <div class="hero-panel">
+          <div class="hero-panel hero-panel--soft">
             <span class="pill">Navigation</span>
             <h3>Actions rapides</h3>
             <div class="section-actions">
@@ -152,70 +152,48 @@
           <p class="muted" id="profileStatus"></p>
         </article>
 
-        <article class="card dashboard-card">
-          <h2>Synchro live en pause</h2>
-          <p class="muted">Pour l'instant, on avance en mode Supabase only. Ton profil public et tes skins passent entierement par ton compte.</p>
+        <article class="card dashboard-card workflow-card">
+          <p class="brand-kicker">Parcours recommande</p>
+          <h2>Ta prochaine meilleure action</h2>
+          <p class="muted" id="dashboardFocusMessage">Connecte-toi pour commencer a construire ton espace.</p>
 
-          <div class="api-card">
-            <div class="collection-fields public-grid">
-              <div class="filter">
-                <label for="apiPlayerTag">Tag Brawl Stars</label>
-                <input id="apiPlayerTag" class="input" type="text" placeholder="#P0LY8Q2" />
+          <div class="workflow-steps">
+            <article class="workflow-step">
+              <span class="workflow-index">1</span>
+              <div>
+                <span class="small">Compte Supabase</span>
+                <h3>Session et sauvegarde</h3>
               </div>
-              <div class="filter">
-                <label>Actions</label>
-                <div class="section-actions">
-                  <button class="seg-btn" id="btnSyncPlayer" type="button">Activer plus tard</button>
-                  <button class="seg-btn" id="btnClearPlayerSync" type="button">Effacer l'ancienne synchro</button>
-                </div>
-              </div>
-            </div>
+              <strong class="step-status" id="dashboardStepAuth">A connecter</strong>
+            </article>
 
-            <p class="muted" id="playerApiStatus">La synchro live est mise de cote pour l'instant.</p>
-
-            <div class="api-profile-card" id="playerApiCard">
-              <div class="list-head">
-                <div>
-                  <h3 id="playerApiName">Mode Supabase</h3>
-                  <p class="muted" id="playerApiMeta">Le flow principal fonctionne sans connexion live a l'API Brawl Stars.</p>
-                </div>
-                <span class="pill" id="playerApiTag">#---</span>
+            <article class="workflow-step">
+              <span class="workflow-index">2</span>
+              <div>
+                <span class="small">Collection</span>
+                <h3>Skins et progression</h3>
               </div>
+              <strong class="step-status" id="dashboardStepCollection">A remplir</strong>
+            </article>
 
-              <div class="api-metrics">
-                <div class="metric-tile">
-                  <span class="small">Trophees</span>
-                  <strong id="playerApiTrophies">0</strong>
-                </div>
-                <div class="metric-tile">
-                  <span class="small">Record</span>
-                  <strong id="playerApiHighest">0</strong>
-                </div>
-                <div class="metric-tile">
-                  <span class="small">Brawlers</span>
-                  <strong id="playerApiBrawlers">0</strong>
-                </div>
-                <div class="metric-tile">
-                  <span class="small">Niveau EXP</span>
-                  <strong id="playerApiExp">0</strong>
-                </div>
+            <article class="workflow-step">
+              <span class="workflow-index">3</span>
+              <div>
+                <span class="small">Profil public</span>
+                <h3>Publication et partage</h3>
               </div>
+              <strong class="step-status" id="dashboardStepPublic">Brouillon</strong>
+            </article>
+          </div>
 
-              <div class="status-grid">
-                <div class="status-card">
-                  <span class="small">Club</span>
-                  <strong id="playerApiClub">-</strong>
-                </div>
-                <div class="status-card">
-                  <span class="small">Top brawler</span>
-                  <strong id="playerApiFavorite">-</strong>
-                </div>
-                <div class="status-card">
-                  <span class="small">Derniere synchro</span>
-                  <strong id="playerApiSyncedAt">-</strong>
-                </div>
-              </div>
-            </div>
+          <div class="surface-note surface-note--soft">
+            <strong>Cap actuel</strong>
+            <p class="muted">On concentre le produit sur connexion, collection, publication et comparaison. La synchro live reviendra plus tard sans bloquer ton flow principal.</p>
+          </div>
+
+          <div class="section-actions">
+            <a class="seg-btn" href="./skins.html">Ouvrir le catalogue</a>
+            <a class="seg-btn" href="./profile.html">Voir les profils</a>
           </div>
         </article>
       </section>

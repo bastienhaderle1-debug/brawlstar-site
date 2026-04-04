@@ -73,6 +73,10 @@
   const publicCollectionDetail = document.getElementById("publicCollectionDetail");
   const publicLinkState = document.getElementById("publicLinkState");
   const publicLinkDetail = document.getElementById("publicLinkDetail");
+  const dashboardFocusMessage = document.getElementById("dashboardFocusMessage");
+  const dashboardStepAuth = document.getElementById("dashboardStepAuth");
+  const dashboardStepCollection = document.getElementById("dashboardStepCollection");
+  const dashboardStepPublic = document.getElementById("dashboardStepPublic");
   const apiPlayerTag = document.getElementById("apiPlayerTag");
   const btnSyncPlayer = document.getElementById("btnSyncPlayer");
   const btnClearPlayerSync = document.getElementById("btnClearPlayerSync");
@@ -362,6 +366,58 @@
     livePublicProfile = profile ? { ...profile, ...normalizePublicDraft(profile) } : null;
   }
 
+  function paintStep(node, text, state) {
+    if (!node) return;
+    node.textContent = text;
+    node.dataset.state = state || "idle";
+  }
+
+  function renderWorkflowFocus() {
+    const profile = Brawldex.getProfile(viewerKey());
+    const skinStats = OwnedService.computeOwnedStats(ownedSet);
+    const localOwnedIds = [...ownedSet];
+    const needsPublish = !sameIdSet(localOwnedIds, livePublicOwnedIds);
+    const hasLiveProfile = !!livePublicProfile;
+    const isPublic = !!livePublicProfile?.is_public;
+    const canCompare = isPublic && (livePublicProfile?.show_owned !== false);
+
+    let focusMessage = "Connecte-toi pour commencer a construire ton espace.";
+    if (currentUser) {
+      if (!skinStats.owned) {
+        focusMessage = "Commence par cocher tes premiers skins pour donner de la matiere a ton profil.";
+      } else if (!hasLiveProfile) {
+        focusMessage = "Ton compte est pret : enregistre maintenant ta fiche publique pour la creer.";
+      } else if (!isPublic) {
+        focusMessage = "Ton profil existe deja. Passe-le en public pour activer ton lien partageable.";
+      } else if (needsPublish) {
+        focusMessage = "Il te reste a republier ta collection pour aligner la version en ligne avec tes skins coches.";
+      } else if (!canCompare) {
+        focusMessage = "Ton profil est partageable. Si tu veux la comparaison, rends aussi ta collection visible.";
+      } else {
+        focusMessage = "Tout est en place : ton profil est propre, partageable et pret pour la comparaison.";
+      }
+    }
+
+    if (dashboardFocusMessage) dashboardFocusMessage.textContent = focusMessage;
+
+    paintStep(dashboardStepAuth, currentUser ? "Actif" : "A connecter", currentUser ? "done" : "next");
+
+    if (!currentUser) {
+      paintStep(dashboardStepCollection, "En attente", "idle");
+      paintStep(dashboardStepPublic, "En attente", "idle");
+      return;
+    }
+
+    if (!skinStats.owned) paintStep(dashboardStepCollection, "A remplir", "next");
+    else if (needsPublish) paintStep(dashboardStepCollection, "A publier", "next");
+    else paintStep(dashboardStepCollection, "A jour", "done");
+
+    if (!hasLiveProfile) paintStep(dashboardStepPublic, "Brouillon", "next");
+    else if (!isPublic) paintStep(dashboardStepPublic, "Prive", "next");
+    else if (!canCompare) paintStep(dashboardStepPublic, "Partage OK", "done");
+    else paintStep(dashboardStepPublic, "Comparaison OK", "done");
+  }
+
   function renderPublicProfileState() {
     const draft = normalizePublicDraft();
     const live = livePublicProfile ? normalizePublicDraft(livePublicProfile) : null;
@@ -431,6 +487,8 @@
       btnCopyPublic.disabled = !canShare;
       btnCopyPublic.title = canShare ? publicProfileUrl(currentUser.id) : "Aucun lien public actif pour le moment.";
     }
+
+    renderWorkflowFocus();
   }
 
   function clearSyncedPlayerProfile() {
@@ -746,7 +804,7 @@
       `${stats.owned}/${stats.total} brawlers possedes et ${stats.incompleteOwned} encore a completer.`,
       `${stats.unlocks} unlocks equipes, dont ${stats.hypercharges} hypercharges et ${stats.maxed} brawlers maxes.`,
       `${skinStats.owned}/${skinStats.total} skins coches, soit ${skinStats.pct}% de progression skin.`,
-      profile.playerName ? `${profile.playerName} est synchronise avec ${profile.trophies} trophees officiels.` : "Aucune synchro Brawl Stars active pour le moment.",
+      profile.mainBrawler ? `Main actuel : ${profile.mainBrawler}.` : "Ajoute un main brawler pour personnaliser encore ton profil.",
       profile.goal || insights.recommendations[0] || "Ajoute un objectif pour donner une direction a ta progression."
     ];
 
@@ -808,13 +866,16 @@
     const mainText = profile.mainBrawler ? `Main: ${profile.mainBrawler}.` : "Choisis ton main brawler.";
     const syncedText = profile.playerName
       ? `Compte sync: ${profile.playerName} avec ${profile.trophies} trophees.`
-      : "Compte Brawl Stars non synchronise.";
+      : livePublicProfile?.is_public
+        ? "Profil public pret pour le partage."
+        : "Profil local pret a etre complete et publie.";
     collectionSummary.textContent = `${mainText} ${syncedText} ${brawldexStats.owned} brawler(s), ${brawldexStats.unlocks} unlocks et ${skinStats.owned} skin(s) coches.`;
 
     renderBadgesAndGoals(brawldexStats, skinStats);
     renderTopBrawlers();
     renderActivity();
     renderSourceStatus();
+    renderWorkflowFocus();
     renderSyncedPlayer(profile);
     renderPublicProfileState();
   }
