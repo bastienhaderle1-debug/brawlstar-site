@@ -11,8 +11,45 @@
     return (value ?? "").toString().trim();
   }
 
+  function normalizeNumber(value, min = 0, max = 999999999, fallback = 0) {
+    const parsed = Number(value);
+    if (!Number.isFinite(parsed)) return fallback;
+    return Math.max(min, Math.min(max, Math.round(parsed)));
+  }
+
   function uniqueIds(list) {
     return [...new Set((Array.isArray(list) ? list : []).map((item) => safeStr(item)).filter(Boolean))];
+  }
+
+  function normalizeProgressSnapshot(snapshot) {
+    const data = snapshot && typeof snapshot === "object" ? snapshot : {};
+    return {
+      global_pct: normalizeNumber(data.global_pct, 0, 100, 0),
+      brawler_pct: normalizeNumber(data.brawler_pct, 0, 100, 0),
+      skins_pct: normalizeNumber(data.skins_pct, 0, 100, 0),
+      owned_brawlers: normalizeNumber(data.owned_brawlers, 0, 999999999, 0),
+      total_brawlers: normalizeNumber(data.total_brawlers, 0, 999999999, 0),
+      owned_skins: normalizeNumber(data.owned_skins, 0, 999999999, 0),
+      total_skins: normalizeNumber(data.total_skins, 0, 999999999, 0),
+      missing_coins: normalizeNumber(data.missing_coins, 0, 999999999, 0),
+      missing_power_points: normalizeNumber(data.missing_power_points, 0, 999999999, 0),
+      hypercharges: normalizeNumber(data.hypercharges, 0, 999999999, 0)
+    };
+  }
+
+  function normalizeProfileRecord(profile) {
+    if (!profile) return null;
+    return {
+      ...profile,
+      display_name: safeStr(profile.display_name),
+      bio: safeStr(profile.bio),
+      club_name: safeStr(profile.club_name),
+      friend_code: safeStr(profile.friend_code),
+      trophies: normalizeNumber(profile.trophies, 0, 999999999, 0),
+      is_public: profile.is_public !== false,
+      show_owned: profile.show_owned !== false,
+      progress_snapshot: normalizeProgressSnapshot(profile.progress_snapshot)
+    };
   }
 
   function profilePayload(userId, fields, fallbackDisplayName) {
@@ -21,8 +58,12 @@
       user_id: userId,
       display_name: safeStr(fields?.display_name) || defaultName,
       bio: safeStr(fields?.bio),
-      is_public: !!fields?.is_public,
-      show_owned: !!fields?.show_owned,
+      club_name: safeStr(fields?.club_name),
+      friend_code: safeStr(fields?.friend_code),
+      trophies: normalizeNumber(fields?.trophies, 0, 999999999, 0),
+      is_public: true,
+      show_owned: true,
+      progress_snapshot: normalizeProgressSnapshot(fields?.progress_snapshot),
       updated_at: new Date().toISOString()
     };
   }
@@ -32,12 +73,12 @@
     const supa = getClient();
     const { data, error } = await supa
       .from("public_profiles")
-      .select("user_id, display_name, bio, is_public, show_owned, updated_at")
+      .select("user_id, display_name, bio, club_name, friend_code, trophies, is_public, show_owned, progress_snapshot, updated_at")
       .eq("user_id", userId)
       .maybeSingle();
 
     if (error) throw error;
-    return data;
+    return normalizeProfileRecord(data);
   }
 
   async function saveProfile(userId, fields, options) {
@@ -98,27 +139,27 @@
 
     const { data, error } = await supa
       .from("public_profiles")
-      .select("user_id, display_name, bio, show_owned, updated_at")
+      .select("user_id, display_name, bio, club_name, friend_code, trophies, is_public, show_owned, progress_snapshot, updated_at")
       .eq("is_public", true)
       .ilike("display_name", `%${q}%`)
       .order("updated_at", { ascending: false })
       .limit(limit);
 
     if (error) throw error;
-    return data || [];
+    return (data || []).map(normalizeProfileRecord);
   }
 
   async function loadLatestProfiles(limit = 24) {
     const supa = getClient();
     const { data, error } = await supa
       .from("public_profiles")
-      .select("user_id, display_name, bio, show_owned, updated_at")
+      .select("user_id, display_name, bio, club_name, friend_code, trophies, is_public, show_owned, progress_snapshot, updated_at")
       .eq("is_public", true)
       .order("updated_at", { ascending: false })
       .limit(limit);
 
     if (error) throw error;
-    return data || [];
+    return (data || []).map(normalizeProfileRecord);
   }
 
   async function enrichProfiles(list, options) {
@@ -144,17 +185,23 @@
       const userId = safeStr(profile.user_id);
       const skinsVisible = profile.show_owned !== false;
       const ownedCount = skinsVisible ? counts[userId] || 0 : 0;
+      const snapshot = normalizeProgressSnapshot(profile.progress_snapshot);
       return {
         ...profile,
         skinsVisible,
         ownedCount,
         pct: totalSkins > 0 ? Math.round((ownedCount / totalSkins) * 100) : 0,
+        globalPct: snapshot.global_pct,
+        brawlerPct: snapshot.brawler_pct,
+        skinsPct: snapshot.skins_pct,
+        progressSnapshot: snapshot,
         favorite: !!favoriteLookup(userId)
       };
     });
   }
 
   window.PublicProfileService = {
+    normalizeProgressSnapshot,
     loadProfile,
     saveProfile,
     loadOwned,

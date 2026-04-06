@@ -4,6 +4,7 @@ const path = require("path");
 const { chromium } = require("playwright");
 const brawlPlayerHandler = require("../api/brawl-player.js");
 const brawlHealthHandler = require("../api/brawl-health.js");
+const skinsCatalogHandler = require("../api/skins-catalog.js");
 
 const ROOT = path.resolve(__dirname, "..");
 const HOST = process.env.BRAWLDEX_HOST || "127.0.0.1";
@@ -11,6 +12,10 @@ const PORT = Number(process.env.BRAWLDEX_PORT || 4173);
 const BASE_URL = `http://${HOST}:${PORT}`;
 const EMAIL = process.env.BRAWLDEX_EMAIL || "";
 const PASSWORD = process.env.BRAWLDEX_PASSWORD || "";
+
+if (!process.env.BRAWLDEX_SKINS_SOURCE_MODE) {
+  process.env.BRAWLDEX_SKINS_SOURCE_MODE = "local-json";
+}
 
 const MIME = {
   ".css": "text/css; charset=utf-8",
@@ -34,10 +39,17 @@ function createServer() {
   return http.createServer((req, res) => {
     try {
       const requestUrl = new URL(req.url, BASE_URL);
-      if (requestUrl.pathname === "/api/brawl-player" || requestUrl.pathname === "/api/brawl-health") {
+      if (
+        requestUrl.pathname === "/api/brawl-player" ||
+        requestUrl.pathname === "/api/brawl-health" ||
+        requestUrl.pathname === "/api/skins-catalog"
+      ) {
         req.query = Object.fromEntries(requestUrl.searchParams.entries());
         if (requestUrl.pathname === "/api/brawl-health") {
           return brawlHealthHandler(req, res);
+        }
+        if (requestUrl.pathname === "/api/skins-catalog") {
+          return skinsCatalogHandler(req, res);
         }
         return brawlPlayerHandler(req, res);
       }
@@ -112,17 +124,13 @@ async function main() {
     await page.fill("#password", PASSWORD);
     await page.click("#btnLogin");
     await page.waitForSelector("#app", { state: "visible", timeout: 30000 });
-    await page.waitForSelector("#cards article input[type='checkbox']", { timeout: 30000 });
+    await page.waitForSelector("#publicDisplayName", { timeout: 30000 });
 
     baseline = await page.evaluate(async () => {
       const { data } = await window.supabaseClient.auth.getUser();
       const user = data?.user;
       const liveProfile = await window.PublicProfileService.loadProfile(user.id).catch(() => null);
       const publishedIds = await window.PublicProfileService.loadOwned(user.id).catch(() => []);
-      const firstCard = document.querySelector("#cards article");
-      const firstName = firstCard?.querySelector("h3")?.textContent?.trim() || "";
-      const firstChecked = !!firstCard?.querySelector("input[type='checkbox']")?.checked;
-      const firstSkinId = (window.SKINS || []).find((skin) => (skin?.name || "").trim() === firstName)?.id || "";
       const fallbackDisplayName = ((user.email || "").split("@")[0] || "Profil").trim() || "Profil";
 
       return {
@@ -131,24 +139,39 @@ async function main() {
         hadProfile: !!liveProfile,
         profile: liveProfile || {
           display_name: document.getElementById("publicDisplayName").value,
+          club_name: document.getElementById("publicClub").value,
+          friend_code: document.getElementById("publicFriendCode").value,
+          trophies: Number(document.getElementById("publicTrophies").value || 0),
           bio: document.getElementById("publicBio").value,
-          is_public: document.getElementById("publicIsPublic").checked,
-          show_owned: document.getElementById("publicShowOwned").checked
+          is_public: true,
+          show_owned: true,
+          progress_snapshot: await (async () => {
+            const skinStats = window.OwnedService.computeOwnedStats(await window.OwnedService.loadOwnedSet(user.id).catch(() => new Set()));
+            const stats = window.BrawldexService.getStats(user.id);
+            const global = window.BrawldexService.getGlobalProgress(user.id, skinStats);
+            return {
+              global_pct: global.globalPct,
+              brawler_pct: stats.completionPct,
+              skins_pct: skinStats.pct,
+              owned_brawlers: stats.owned,
+              total_brawlers: stats.total,
+              owned_skins: skinStats.owned,
+              total_skins: skinStats.total,
+              missing_coins: stats.missingCoins,
+              missing_power_points: stats.missingPowerPoints,
+              hypercharges: stats.hypercharges
+            };
+          })()
         },
-        publishedIds,
-        firstSkinId,
-        firstChecked
+        publishedIds
       };
     });
 
     assert(baseline?.userId, "Unable to resolve the current Supabase user.");
-    assert(baseline?.firstSkinId, "Unable to resolve a visible skin for the UI smoke test.");
-
-    const firstCheckbox = page.locator("#cards article input[type='checkbox']").first();
-    await firstCheckbox.setChecked(!baseline.firstChecked);
-    await waitForStatusText(page, "#status", /skin\(s\) coches enregistres/);
-    await page.locator("#publicIsPublic").setChecked(true);
-    await page.locator("#publicShowOwned").setChecked(true);
+    await page.locator("#publicDisplayName").fill(`Smoke ${baseline.fallbackDisplayName}`);
+    await page.locator("#publicClub").fill("Smoke Club");
+    await page.locator("#publicFriendCode").fill("#SMOKE");
+    await page.locator("#publicTrophies").fill("12345");
     await page.click("#btnSavePublic");
     await waitForStatusText(page, "#publicStatus", /profil public enregistre/);
     await page.click("#btnPublishOwned");
@@ -212,10 +235,6 @@ async function main() {
     if (page && baseline?.userId) {
       try {
         await page.evaluate(async (snapshot) => {
-          if (snapshot.firstSkinId) {
-            await window.OwnedService.setOwned(snapshot.userId, snapshot.firstSkinId, !!snapshot.firstChecked);
-          }
-
           if (snapshot.hadProfile) {
             await window.PublicProfileService.saveProfile(snapshot.userId, snapshot.profile, {
               fallbackDisplayName: snapshot.fallbackDisplayName

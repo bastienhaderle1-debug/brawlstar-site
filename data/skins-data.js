@@ -1,6 +1,6 @@
 // data/skins-data.js
 // Loads skins from a configurable source.
-// Default mode uses local JSON until a Google Sheet is connected.
+// Default mode goes through the server proxy, then falls back to local JSON in the browser.
 (function () {
   const scriptUrl = new URL(document.currentScript?.src || window.location.href);
   const localJsonUrl = new URL("./skins.json", scriptUrl).toString();
@@ -16,10 +16,10 @@
   ];
 
   const DEFAULT_STATUS = {
-    mode: "local-json",
-    connected: false,
-    label: "Local fallback",
-    message: "Google Sheet non connecte pour le moment. Utilisation du fallback local."
+    mode: "server-proxy",
+    connected: null,
+    label: "Proxy serveur",
+    message: "Chargement du catalogue via le proxy serveur..."
   };
 
   window.RARITY_ORDER = window.RARITY_ORDER || [...FALLBACK_RARITY_ORDER];
@@ -58,7 +58,10 @@
     const img = safeStr(value);
     if (!img) return "";
     if (/^(https?:)?\/\//i.test(img) || img.startsWith("/") || img.startsWith("data:")) return img;
-    return `/assets/skins/${img}`;
+
+    const assetBaseUrl = safeStr(window.BRAWLDEX_SKINS_SOURCE?.assetBaseUrl).replace(/\/+$/, "");
+    if (!assetBaseUrl) return "";
+    return `${assetBaseUrl}/${img.replace(/^\/+/, "")}`;
   }
 
   function updateSourceStatus(patch) {
@@ -71,12 +74,29 @@
   function getConfig() {
     const source = window.BRAWLDEX_SKINS_SOURCE || {};
     return {
-      mode: safeStr(source.mode) || "local-json",
+      mode: safeStr(source.mode) || "server-proxy",
+      proxyPath: safeStr(source.proxyPath) || "/api/skins-catalog",
       spreadsheetId: safeStr(source.spreadsheetId),
       gid: safeStr(source.gid) || "0",
       csvUrl: safeStr(source.csvUrl),
+      assetBaseUrl: safeStr(source.assetBaseUrl),
       fieldMap: source.fieldMap || {}
     };
+  }
+
+  function joinUrl(baseUrl, pathname) {
+    const base = safeStr(baseUrl).replace(/\/+$/, "");
+    const value = safeStr(pathname);
+    if (!value) return base;
+    if (/^https?:\/\//i.test(value)) return value;
+
+    const normalizedPath = value.startsWith("/") ? value : `/${value}`;
+    return base ? `${base}${normalizedPath}` : normalizedPath;
+  }
+
+  function deriveProxyUrl(config) {
+    const runtimeBase = safeStr(window.BRAWLDEX_CONFIG?.skinsApiBaseUrl || window.BRAWLDEX_CONFIG?.brawlApiBaseUrl);
+    return joinUrl(runtimeBase, config.proxyPath || "/api/skins-catalog");
   }
 
   function deriveCsvUrl(config) {
@@ -218,11 +238,44 @@
     updateSourceStatus({
       mode: "local-json",
       connected: false,
-      label: "Local fallback",
-      message: "Utilisation de skins.json tant que le Google Sheet n'est pas branche."
+      label: "Snapshot local",
+      message: "Catalogue charge depuis skins.json pour garder un chargement stable."
     });
 
     return normalizeSkins(list, {});
+  }
+
+  async function loadFromServerProxy(config) {
+    const proxyUrl = deriveProxyUrl(config);
+    if (!proxyUrl) {
+      throw new Error("Server proxy mode is enabled, but no proxy URL is configured.");
+    }
+
+    const response = await fetch(proxyUrl, {
+      cache: "no-store",
+      headers: {
+        Accept: "application/json"
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`Unable to load server skins catalog (${response.status}).`);
+    }
+
+    const payload = await response.json();
+    const list = Array.isArray(payload?.skins) ? payload.skins : [];
+    if (Array.isArray(payload?.rarity_order) && payload.rarity_order.length) {
+      window.RARITY_ORDER = payload.rarity_order.map((item) => normalizeRarity(item));
+    }
+
+    updateSourceStatus({
+      mode: "server-proxy",
+      connected: payload?.source?.connected ?? true,
+      label: safeStr(payload?.source?.label) || "Proxy serveur",
+      message: safeStr(payload?.source?.message) || "Catalogue charge via le proxy serveur."
+    });
+
+    return normalizeSkins(list, config.fieldMap);
   }
 
   async function loadFromGoogleSheet(config) {
@@ -262,6 +315,27 @@
   async function loadSkins() {
     const config = getConfig();
 
+    if (config.mode === "server-proxy") {
+      try {
+        const skins = await loadFromServerProxy(config);
+        if (skins.length) return skins;
+        updateSourceStatus({
+          mode: "server-proxy",
+          connected: false,
+          label: "Snapshot local",
+          message: "Le proxy est joignable mais a renvoye un catalogue vide. Retour sur la source locale."
+        });
+      } catch (error) {
+        console.warn("[skins-data] server proxy load failed:", error);
+        updateSourceStatus({
+          mode: "server-proxy",
+          connected: false,
+          label: "Snapshot local",
+          message: error.message || "Chargement via le proxy impossible. Retour sur la source locale."
+        });
+      }
+    }
+
     if (config.mode === "google-sheet") {
       try {
         const skins = await loadFromGoogleSheet(config);
@@ -287,9 +361,7 @@
   }
 
   function getSkinImageUrl(id, imgPath) {
-    const value = safeStr(imgPath || id);
-    if (!value) return "";
-    return value;
+    return safeStr(imgPath);
   }
 
   window.getSkinImageUrl = getSkinImageUrl;

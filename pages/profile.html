@@ -11,18 +11,18 @@
   <header class="header container">
     <div class="headerbar">
       <div>
-        <p class="brand-kicker">Public directory</p>
+        <p class="brand-kicker">Profils publics</p>
         <h1>Brawldex</h1>
         <p class="muted hero-summary">
-          Explore l'annuaire public, compare les collections de skins et partage ton profil Brawldex avec une interface plus claire.
+          Explore l'annuaire public, compare les collections et partage une vraie fiche joueur avec pseudo, clan, code ami, trophees et progression.
         </p>
 
         <nav class="nav">
           <a href="../index.html">Accueil</a>
-          <a href="./mybrawl.html">Dashboard</a>
-          <a href="./brawlers.html">Roster</a>
+          <a href="./mybrawl.html">Quartier general</a>
           <a href="./profile.html">Profils</a>
-          <a href="./skins.html">Skins</a>
+          <a href="./brawlers.html">Brawlers</a>
+          <a href="./skins.html">Catalogue skins</a>
         </nav>
       </div>
 
@@ -31,34 +31,16 @@
           <span class="dot"></span>
           <span>Non connecte</span>
         </div>
-        <a class="seg-btn" href="./mybrawl.html">Mon dashboard</a>
       </div>
     </div>
   </header>
 
   <main class="container page-stack">
-    <section class="hero-grid-alt">
-      <article class="card no-lift">
-        <h2>Annuaire Brawldex</h2>
-        <p class="muted">
-          Recherche des profils, garde tes favoris en local et compare deux collections publiques sans quitter la page.
-        </p>
-      </article>
-
-      <aside class="hero-side">
-        <div class="hero-panel">
-          <span class="pill">Comparaison</span>
-          <h3>Base persistante</h3>
-          <p class="muted">Choisis une base et ouvre n'importe quel autre profil public pour lancer la comparaison.</p>
-        </div>
-      </aside>
-    </section>
-
     <section class="card" id="myProfileCard" style="display:none;">
       <div class="section-head">
         <div>
           <h2>Mon profil public</h2>
-          <p class="muted">Configure ton profil et publie tes skins coches depuis ton dashboard Brawldex.</p>
+          <p class="muted">Edite ici ta fiche partageable. Le snapshot public de progression est recalculte a chaque enregistrement.</p>
         </div>
         <div class="section-actions">
           <button class="seg-btn" id="btnMeReload" type="button">Recharger</button>
@@ -77,21 +59,25 @@
           <input class="input" id="meDisplayName" type="text" placeholder="ex: Bastien" />
         </div>
         <div class="filter">
-          <label for="meBio">Bio publique</label>
-          <input class="input" id="meBio" type="text" placeholder="ex: Fan de Brawl Stars" />
+          <label for="meClubName">Clan public</label>
+          <input class="input" id="meClubName" type="text" placeholder="ex: Kiwi Club" />
+        </div>
+        <div class="filter">
+          <label for="meFriendCode">Code ami public</label>
+          <input class="input" id="meFriendCode" type="text" placeholder="ex: #ABCD123" />
+        </div>
+        <div class="filter">
+          <label for="meTrophies">Trophees publics</label>
+          <input class="input" id="meTrophies" type="number" min="0" max="999999" placeholder="ex: 42000" />
         </div>
       </div>
 
-      <div class="section-actions">
-        <label class="switch-line">
-          <input type="checkbox" id="meIsPublic" checked />
-          <span>Profil public</span>
-        </label>
-        <label class="switch-line">
-          <input type="checkbox" id="meShowOwned" checked />
-          <span>Afficher mes skins</span>
-        </label>
+      <div class="filter">
+        <label for="meBio">Note visible</label>
+        <textarea class="textarea" id="meBio" rows="3" placeholder="ex: Main Jessie, objectif full roster avant l'ete."></textarea>
       </div>
+
+      <p class="muted">Le profil est public par defaut et les skins publies restent toujours visibles.</p>
 
       <div class="hero-actions">
         <button class="seg-btn is-active" id="btnMeSave" type="button">Enregistrer</button>
@@ -114,7 +100,7 @@
         <div class="status-card">
           <span class="small">Lien public</span>
           <strong id="meLinkState">Inactif</strong>
-          <div class="small" id="meLinkDetail">Rends ton profil public pour partager ton lien.</div>
+          <div class="small" id="meLinkDetail">Enregistre ton profil pour activer ton lien public.</div>
         </div>
       </div>
 
@@ -123,9 +109,9 @@
 
     <section class="card" id="needAuthCard" style="display:none;">
       <h2>Connexion requise</h2>
-      <p class="muted">Pour modifier ton profil public, connecte-toi depuis le dashboard.</p>
+      <p class="muted">Pour modifier ton profil public, connecte-toi depuis le Quartier general.</p>
       <div class="hero-actions">
-        <a class="seg-btn is-active" href="./mybrawl.html">Aller au dashboard</a>
+        <a class="seg-btn is-active" href="./mybrawl.html">Aller au Quartier general</a>
       </div>
     </section>
 
@@ -147,6 +133,7 @@
           <label for="sortProfiles">Tri</label>
           <select id="sortProfiles" class="select">
             <option value="latest">Plus recents</option>
+            <option value="progress">Progression globale</option>
             <option value="skins">Plus de skins</option>
             <option value="name">Pseudo</option>
           </select>
@@ -179,7 +166,7 @@
       <p class="muted" id="errorMsg"></p>
       <div class="hero-actions">
         <a class="seg-btn" href="../index.html">Retour accueil</a>
-        <a class="seg-btn" href="./mybrawl.html">Aller au dashboard</a>
+        <a class="seg-btn" href="./mybrawl.html">Aller au Quartier general</a>
       </div>
     </section>
 
@@ -198,23 +185,53 @@
         </div>
       </div>
 
-      <div class="stats-grid">
+      <div class="tag-cloud" id="profileIdentity">
+        <span class="pill" id="viewClubName">Clan : -</span>
+        <span class="pill" id="viewFriendCode">Code ami : -</span>
+        <span class="pill" id="viewTrophies">Trophees : 0</span>
+      </div>
+
+      <div class="stats-grid compact-stats">
         <div class="stat">
-          <div class="stat-label">Skins publics</div>
-          <div class="stat-value" id="statOwned">0</div>
+          <div class="stat-label">Progression jeu</div>
+          <div class="stat-value" id="statGlobalPct">0%</div>
         </div>
         <div class="stat">
-          <div class="stat-label">Total base</div>
-          <div class="stat-value" id="statTotal">0</div>
+          <div class="stat-label">Progression Brawlers</div>
+          <div class="stat-value" id="statBrawlerPct">0%</div>
         </div>
         <div class="stat">
-          <div class="stat-label">Progression</div>
-          <div class="stat-value" id="statPct">0%</div>
+          <div class="stat-label">Progression skins</div>
+          <div class="stat-value" id="statSkinsPct">0%</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Brawlers possedes</div>
+          <div class="stat-value" id="statOwnedBrawlers">0 / 0</div>
+        </div>
+      </div>
+
+      <div class="stats-grid compact-stats">
+        <div class="stat">
+          <div class="stat-label">Skins possedes</div>
+          <div class="stat-value" id="statOwnedSkins">0 / 0</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Pieces manquantes</div>
+          <div class="stat-value" id="statMissingCoins">0</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">PP manquants</div>
+          <div class="stat-value" id="statMissingPowerPoints">0</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Hypercharges</div>
+          <div class="stat-value" id="statHypercharges">0</div>
         </div>
       </div>
 
       <div class="progress"><div class="progress-bar" id="progressBar" style="width:0%"></div></div>
       <p class="muted" id="publicModeLine"></p>
+      <p class="muted" id="profileSummary"></p>
     </section>
 
     <section class="card" id="compareCard" style="display:none;">
@@ -278,11 +295,14 @@
   <script src="../js/toast.js"></script>
   <script src="../js/guard.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../data/runtime-config.js"></script>
   <script src="../data/supabase-client.js"></script>
   <script src="../js/public-profile-service.js"></script>
   <script src="../data/skins-source-config.js"></script>
   <script src="../data/skins-data.js"></script>
+  <script src="../data/brawldex-data.js"></script>
   <script src="../js/owned-service.js"></script>
+  <script src="../js/brawldex-service.js"></script>
   <script src="../js/profile.js"></script>
   <script src="../js/site.js"></script>
 </body>

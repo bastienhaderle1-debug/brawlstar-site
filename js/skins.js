@@ -1,7 +1,7 @@
-// js/skins.js (PERF: 900 skins / 80 thèmes) + images
+// js/skins.js (PERF: 900 skins / 80 themes) + images
 // - Attente window.SKINS_READY
-// - Mode thème lazy (cards rendues à l'ouverture)
-// - Rendering par chunks (évite freeze)
+// - Mode theme lazy (cards rendues a l'ouverture)
+// - Rendering par chunks (evite freeze)
 // - Debounce sur recherche/filters
 // - Cache HTML des cards
 (function () {
@@ -48,7 +48,7 @@
 
   // DOM
   const modeBrawlerBtn = $("modeBrawler");
-  const modeThemeBtn = $("modeCategory"); // bouton "Par thème" dans skins.html
+  const modeThemeBtn = $("modeCategory"); // bouton "Par theme" dans skins.html
   const selectLabel = $("selectLabel");
   const select = $("select");
   const rarity = $("rarity");
@@ -74,7 +74,7 @@
     .map(([k]) => k);
 
   if (missing.length) {
-    console.error("skins.js: éléments UI manquants:", missing);
+    console.error("skins.js: elements UI manquants:", missing);
     toast("error", "UI", "IDs manquants sur la page Skins (F12 console).");
     return;
   }
@@ -114,7 +114,7 @@
 
   async function toggleOwnedSafe(skinId, isOwned) {
     if (!canEditOwned()) {
-      toast("info", "Lecture seule", "Connecte-toi au dashboard pour cocher.");
+      toast("info", "Lecture seule", "Connecte-toi au Quartier general pour cocher.");
       return;
     }
     try {
@@ -122,8 +122,9 @@
       if (isOwned) ownedSet.add(skinId);
       else ownedSet.delete(skinId);
 
-      toast("success", "Enregistré", isOwned ? "Skin ajouté." : "Skin retiré.");
-      updateThemeOwnedBadges();
+      toast("success", "Enregistre", isOwned ? "Skin ajoute." : "Skin retire.");
+      if (mode === "theme") updateThemeOwnedBadges();
+      else render();
     } catch (e) {
       toast("error", "Erreur", e?.message || String(e));
     }
@@ -136,7 +137,6 @@
     Epic: "rarity-epic",
     Mythique: "rarity-mythic",
     Legendaire: "rarity-legendary",
-    "Légendaire": "rarity-legendary",
     Hypercharge: "rarity-hypercharge",
     Argent: "rarity-silver",
     Or: "rarity-gold",
@@ -144,12 +144,12 @@
 
   function themeOf(s) {
     const t = safeStr(s?.category).trim();
-    return t || "Sans thème";
+    return t || "Sans theme";
   }
 
   // ----- IMG helpers -----
   function imgOf(s) {
-    // Priorité: URL déjà calculée (skins-data.js: Supabase storage public)
+    // Priorite: URL deja calculee (skins-data.js: Supabase storage public)
     const direct = safeStr(s?.img).trim();
     if (direct) return direct;
 
@@ -164,7 +164,7 @@
     if (!u) return FALLBACK_IMAGE;
     if (u.startsWith("/")) return u;
     if (u.startsWith("http://") || u.startsWith("https://")) return u;
-    // évite les chemins relatifs foireux
+    // Evite les chemins relatifs foireux
     if (u.startsWith("./") || u.startsWith("../")) return u;
     return FALLBACK_IMAGE;
   }
@@ -194,6 +194,47 @@
     </svg>
   `)}`;
 
+  function hashNumber(value) {
+    const input = safeStr(value);
+    let hash = 0;
+    for (let index = 0; index < input.length; index += 1) {
+      hash = (hash * 31 + input.charCodeAt(index)) % 3600;
+    }
+    return hash;
+  }
+
+  function brawlerBaseImage(name, skinCount) {
+    const seed = hashNumber(name);
+    const hueA = seed % 360;
+    const hueB = (hueA + 58) % 360;
+    const accent = (hueA + 120) % 360;
+    const initials = safeStr(name)
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((chunk) => chunk[0])
+      .join("")
+      .toUpperCase() || "BR";
+
+    return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(`
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 320">
+        <defs>
+          <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="hsl(${hueA} 72% 56%)" />
+            <stop offset="100%" stop-color="hsl(${hueB} 78% 24%)" />
+          </linearGradient>
+        </defs>
+        <rect width="480" height="320" rx="26" fill="url(#bg)" />
+        <circle cx="112" cy="90" r="58" fill="hsla(${accent} 88% 80% / 0.20)" />
+        <circle cx="392" cy="228" r="86" fill="hsla(${accent} 90% 65% / 0.16)" />
+        <text x="42" y="64" fill="rgba(255,255,255,0.86)" font-family="Arial, sans-serif" font-size="18" font-weight="700">Brawler</text>
+        <text x="42" y="112" fill="#ffffff" font-family="Arial, sans-serif" font-size="86" font-weight="800">${initials}</text>
+        <text x="42" y="238" fill="#ffffff" font-family="Arial, sans-serif" font-size="30" font-weight="700">${escapeHtml(name)}</text>
+        <text x="42" y="272" fill="rgba(255,255,255,0.82)" font-family="Arial, sans-serif" font-size="18">${skinCount} skin(s) dans le catalogue</text>
+      </svg>
+    `)}`;
+  }
+
   // ---------- MAIN INIT (attend SKINS_READY) ----------
   (async () => {
     // Attendre la data (Supabase)
@@ -207,8 +248,8 @@
       ["Rare", "Super Rare", "Epic", "Mythique", "Legendaire", "Hypercharge", "Argent", "Or"];
 
     if (!SKINS.length) {
-      console.warn("SKINS vide: vérifie Supabase + data/skins-data.js");
-      toast("warn", "Skins", "SKINS est vide. Vérifie Supabase (table + policies) et l’ordre des scripts.");
+      console.warn("SKINS vide: verifie Supabase + data/skins-data.js");
+      toast("warn", "Skins", "SKINS est vide. Verifie Supabase (table + policies) et l'ordre des scripts.");
     }
 
     // ---------- PERF: pre-index ----------
@@ -259,21 +300,44 @@
 
           <div class="row">
             <span class="pill">${escapeHtml(t)}</span>
-            <span class="pill ${escapeHtml(rarityClass)}">${escapeHtml(s?.rarity ?? "—")}</span>
+            <span class="pill ${escapeHtml(rarityClass)}">${escapeHtml(s?.rarity ?? "-")}</span>
           </div>
 
-          <h3>${escapeHtml(s?.name ?? "—")}</h3>
-          <p class="muted">Brawler : <strong>${escapeHtml(s?.brawler ?? "—")}</strong></p>
+          <h3>${escapeHtml(s?.name ?? "-")}</h3>
+          <p class="muted">Brawler : <strong>${escapeHtml(s?.brawler ?? "-")}</strong></p>
 
           <label class="owned-toggle" style="display:flex; gap:8px; align-items:center; user-select:none; margin-top:10px;">
             <input type="checkbox" />
-            <span>Je l’ai</span>
+            <span>Je l'ai</span>
           </label>
         </article>
       `;
 
       if (id) cardHtmlCache.set(id, html);
       return html;
+    }
+
+    function buildSkinCardNode(id) {
+      const x = indexedById.get(id);
+      if (!x) return null;
+
+      const tmp = document.createElement("div");
+      tmp.innerHTML = cardHtmlFor(x.s).trim();
+      const card = tmp.firstElementChild;
+
+      const cb = card.querySelector("input[type='checkbox']");
+      const editable = canEditOwned();
+      cb.checked = ownedSet.has(id);
+      cb.disabled = !editable;
+
+      const label = card.querySelector(".owned-toggle");
+      if (label) label.style.opacity = editable ? "1" : "0.65";
+
+      cb.addEventListener("change", (event) => {
+        toggleOwnedSafe(id, event.target.checked);
+      });
+
+      return card;
     }
 
     // ---------- UI State ----------
@@ -316,8 +380,8 @@
         select.appendChild(opt);
       });
 
-      selectLabel.textContent = mode === "brawler" ? "Choisir un brawler" : "Choisir un thème";
-      resultTitle.textContent = mode === "brawler" ? "Skins par brawler" : "Skins par thème (lazy)";
+      selectLabel.textContent = mode === "brawler" ? "Choisir un brawler" : "Choisir un theme";
+      resultTitle.textContent = mode === "brawler" ? "Brawlers du catalogue" : "Skins par theme (lazy)";
     }
 
     function buildRarities() {
@@ -397,7 +461,7 @@
       bar.innerHTML = `
         <button class="seg-btn theme-mini" type="button" id="btnExpandAll">Tout ouvrir</button>
         <button class="seg-btn theme-mini is-active" type="button" id="btnCollapseAll">Tout fermer</button>
-        <span class="muted theme-hint">Rendu lazy : les cartes se chargent à l’ouverture.</span>
+        <span class="muted theme-hint">Rendu lazy : les cartes se chargent a l'ouverture.</span>
       `;
       host.prepend(bar);
 
@@ -493,23 +557,8 @@
           const frag = document.createDocumentFragment();
 
           chunkIds.forEach((id) => {
-            const x = indexedById.get(id);
-            if (!x) return;
-
-            const tmp = document.createElement("div");
-            tmp.innerHTML = cardHtmlFor(x.s).trim();
-            const card = tmp.firstElementChild;
-
-            const cb = card.querySelector("input[type='checkbox']");
-            const editable = canEditOwned();
-            cb.checked = ownedSet.has(id);
-            cb.disabled = !editable;
-
-            const label = card.querySelector(".owned-toggle");
-            if (label) label.style.opacity = editable ? "1" : "0.65";
-
-            cb.addEventListener("change", (e) => toggleOwnedSafe(id, e.target.checked));
-            frag.appendChild(card);
+            const card = buildSkinCardNode(id);
+            if (card) frag.appendChild(card);
           });
 
           grid.appendChild(frag);
@@ -542,40 +591,138 @@
       });
     }
 
-    // ---------- Render ----------
-    function renderBrawler(filtered) {
+    function buildBrawlerGroups(filtered) {
+      const groups = new Map();
+
+      filtered.forEach((x) => {
+        if (!groups.has(x.brawler)) {
+          groups.set(x.brawler, {
+            name: x.brawler,
+            ids: [],
+            owned: 0,
+            rarityMap: {}
+          });
+        }
+
+        const group = groups.get(x.brawler);
+        group.ids.push(x.id);
+        if (ownedSet.has(x.id)) group.owned += 1;
+        if (x.rarity) {
+          group.rarityMap[x.rarity] = (group.rarityMap[x.rarity] || 0) + 1;
+        }
+      });
+
+      return [...groups.values()].sort((left, right) => left.name.localeCompare(right.name, "fr"));
+    }
+
+    function renderBrawlerDirectory(filtered) {
       host.innerHTML = "";
+      resultTitle.textContent = "Brawlers du catalogue";
 
-      const CHUNK = 42;
-      const ids = filtered.map((x) => x.id).filter(Boolean);
-      resultCount.textContent = `${ids.length} skin(s) affiché(s)`;
+      const groups = buildBrawlerGroups(filtered);
+      resultCount.textContent = `${groups.length} brawler(s) - ${filtered.length} skin(s) disponibles`;
 
-      rafChunk(ids, CHUNK, (chunkIds) => {
-        const frag = document.createDocumentFragment();
+      if (!groups.length) {
+        host.innerHTML = `
+          <article class="card">
+            <h3>Aucun Brawler trouve</h3>
+            <p class="muted">Ajuste la recherche ou la rarete pour faire ressortir d'autres Brawlers.</p>
+          </article>
+        `;
+        return;
+      }
 
-        chunkIds.forEach((id) => {
-          const x = indexedById.get(id);
-          if (!x) return;
+      const frag = document.createDocumentFragment();
+      groups.forEach((group) => {
+        const topRarities = Object.entries(group.rarityMap)
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 2)
+          .map(([rarity, count]) => `${rarity} ${count}`)
+          .join(" • ");
 
-          const tmp = document.createElement("div");
-          tmp.innerHTML = cardHtmlFor(x.s).trim();
-          const card = tmp.firstElementChild;
+        const card = document.createElement("article");
+        card.className = "card clickable brawler-catalog-card";
+        card.innerHTML = `
+          <img
+            src="${escapeHtml(brawlerBaseImage(group.name, group.ids.length))}"
+            alt="${escapeHtml(group.name)}"
+            class="skin-img"
+            loading="lazy"
+            decoding="async"
+          />
+          <div class="row">
+            <span class="pill">Brawler</span>
+            <span class="pill">${group.ids.length} skins</span>
+            <span class="pill">${group.owned} possedes</span>
+          </div>
+          <h3>${escapeHtml(group.name)}</h3>
+          <p class="muted">${escapeHtml(topRarities || "Explore tous les skins de ce Brawler.")}</p>
+          <div class="brawler-card-meta">
+            <span class="small">Clique pour ouvrir le catalogue de ${escapeHtml(group.name)}</span>
+            <span class="seg-btn">Voir les skins</span>
+          </div>
+        `;
 
-          const cb = card.querySelector("input[type='checkbox']");
-          const editable = canEditOwned();
-          cb.checked = ownedSet.has(id);
-          cb.disabled = !editable;
-
-          const label = card.querySelector(".owned-toggle");
-          if (label) label.style.opacity = editable ? "1" : "0.65";
-
-          cb.addEventListener("change", (e) => toggleOwnedSafe(id, e.target.checked));
-
-          frag.appendChild(card);
+        card.addEventListener("click", () => {
+          select.value = group.name;
+          render();
         });
 
+        frag.appendChild(card);
+      });
+
+      host.appendChild(frag);
+    }
+
+    function renderSelectedBrawler(filtered, brawlerName) {
+      host.innerHTML = "";
+      resultTitle.textContent = `Skins de ${brawlerName}`;
+      resultCount.textContent = `${filtered.length} skin(s) pour ${brawlerName}`;
+
+      const toolbar = document.createElement("div");
+      toolbar.className = "catalog-inline-toolbar";
+      const ownedCount = filtered.reduce((count, item) => count + (ownedSet.has(item.id) ? 1 : 0), 0);
+      toolbar.innerHTML = `
+        <button class="seg-btn" type="button" data-back-brawlers>Retour aux Brawlers</button>
+        <p class="muted">${ownedCount}/${filtered.length} skin(s) coches pour ${escapeHtml(brawlerName)}.</p>
+      `;
+      toolbar.querySelector("[data-back-brawlers]").addEventListener("click", () => {
+        select.value = "all";
+        render();
+      });
+      host.appendChild(toolbar);
+
+      if (!filtered.length) {
+        const empty = document.createElement("article");
+        empty.className = "card";
+        empty.innerHTML = `
+          <h3>Aucun skin trouve</h3>
+          <p class="muted">Ajuste la recherche ou la rarete, ou reviens a la liste des Brawlers.</p>
+        `;
+        host.appendChild(empty);
+        return;
+      }
+
+      const ids = filtered.map((x) => x.id).filter(Boolean);
+      const CHUNK = 42;
+      rafChunk(ids, CHUNK, (chunkIds) => {
+        const frag = document.createDocumentFragment();
+        chunkIds.forEach((id) => {
+          const card = buildSkinCardNode(id);
+          if (card) frag.appendChild(card);
+        });
         host.appendChild(frag);
       });
+    }
+
+    // ---------- Render ----------
+    function renderBrawler(filtered) {
+      const selectedBrawler = select.value || "all";
+      if (selectedBrawler === "all") {
+        renderBrawlerDirectory(filtered);
+        return;
+      }
+      renderSelectedBrawler(filtered, selectedBrawler);
     }
 
     function renderTheme(filtered) {
@@ -592,7 +739,7 @@
       const themes = [...groups.keys()].sort((a, b) => a.localeCompare(b, "fr"));
       const totalSkins = filtered.length;
 
-      resultCount.textContent = `${totalSkins} skin(s) dans ${themes.length} thème(s)`;
+      resultCount.textContent = `${totalSkins} skin(s) dans ${themes.length} theme(s)`;
       if (!themes.length) return;
 
       const mobileDefaultCollapse = window.matchMedia("(max-width: 980px)").matches;
@@ -640,7 +787,7 @@
 
               <span class="theme-chip ${canEditOwned() ? "ok" : ""}">
                 <span class="theme-num" data-owned-count>${owned}</span>
-                <span class="theme-lbl">possédés</span>
+                <span class="theme-lbl">possedes</span>
               </span>
             </div>
           </div>
@@ -703,7 +850,7 @@
     // Auth (never blocks UI)
     (async () => {
       if (!supa || !supa.auth) {
-        if (accountLine) accountLine.textContent = "Mode visiteur : connecte-toi au dashboard pour cocher tes skins.";
+        if (accountLine) accountLine.textContent = "Mode visiteur : connecte-toi au Quartier general pour cocher tes skins.";
         return;
       }
 
@@ -713,8 +860,8 @@
 
         if (accountLine) {
           accountLine.textContent = currentUser
-            ? `Connecté : ${currentUser.email ?? currentUser.id} (tu peux cocher tes skins)`
-            : "Non connecte : affichage en lecture seule. Va sur le dashboard pour te connecter.";
+            ? `Connecte : ${currentUser.email ?? currentUser.id} (tu peux cocher tes skins)`
+            : "Non connecte : affichage en lecture seule. Va sur le Quartier general pour te connecter.";
         }
 
         await loadOwnedSafe();
@@ -725,8 +872,8 @@
 
           if (accountLine) {
             accountLine.textContent = currentUser
-              ? `Connecté : ${currentUser.email ?? currentUser.id} (tu peux cocher tes skins)`
-              : "Non connecte : affichage en lecture seule. Va sur le dashboard pour te connecter.";
+              ? `Connecte : ${currentUser.email ?? currentUser.id} (tu peux cocher tes skins)`
+              : "Non connecte : affichage en lecture seule. Va sur le Quartier general pour te connecter.";
           }
 
           await loadOwnedSafe();
@@ -734,7 +881,7 @@
         });
       } catch (e) {
         console.warn("Auth init failed:", e);
-        if (accountLine) accountLine.textContent = "Mode visiteur : connecte-toi au dashboard pour cocher tes skins.";
+        if (accountLine) accountLine.textContent = "Mode visiteur : connecte-toi au Quartier general pour cocher tes skins.";
       }
     })();
   })();

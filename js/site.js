@@ -3,6 +3,7 @@
   const badge = document.getElementById("globalAuthBadge");
   const navLinks = document.querySelectorAll(".nav a");
   const headerRight = document.querySelector(".header-right");
+  const disableGlobalSearch = true;
   const isPagesDir = window.location.pathname.replace(/\\/g, "/").includes("/pages/");
   const searchState = {
     viewerId: "visitor",
@@ -199,8 +200,8 @@
             <h3>Recherche rapide</h3>
             <p class="muted">Cherche un brawler, un skin ou un profil public. Raccourci clavier: <strong>Ctrl+K</strong> ou <strong>/</strong>.</p>
             <div class="section-actions">
-            <a class="seg-btn" href="${pageHref("mybrawl")}">Ouvrir le dashboard</a>
-            <a class="seg-btn" href="${pageHref("brawlers")}">Voir le roster</a>
+            <a class="seg-btn" href="${pageHref("mybrawl")}">Ouvrir le Quartier general</a>
+            <a class="seg-btn" href="${pageHref("brawlers")}">Voir les Brawlers</a>
             <a class="seg-btn" href="${pageHref("profile")}">Explorer les profils</a>
             </div>
           </div>
@@ -275,7 +276,7 @@
 
     renderSearchResults(query, [
       { id: "brawlers", label: "Brawlers", items: brawlers },
-      { id: "skins", label: "Skins", items: skins },
+      { id: "skins", label: "Catalogue skins", items: skins },
       { id: "profiles", label: "Profils", items: profiles }
     ]);
   }
@@ -310,6 +311,8 @@
   }
 
   function injectSearchUi() {
+    if (disableGlobalSearch) return;
+
     if (headerRight && !document.getElementById("btnGlobalSearch")) {
       const button = document.createElement("button");
       button.type = "button";
@@ -331,7 +334,7 @@
         <div class="section-head">
           <div>
             <h2 id="globalSearchTitle">Recherche globale</h2>
-            <p class="muted">Brawlers, skins et profils publics dans une seule barre.</p>
+            <p class="muted">Brawlers, Catalogue skins et profils publics dans une seule barre.</p>
           </div>
           <div class="section-actions">
             <button class="seg-btn" id="btnCloseGlobalSearch" type="button">Fermer</button>
@@ -346,7 +349,7 @@
         <div class="section-actions">
           <button class="choice-btn is-selected" type="button" data-search-scope="all">Tout</button>
           <button class="choice-btn" type="button" data-search-scope="brawlers">Brawlers</button>
-          <button class="choice-btn" type="button" data-search-scope="skins">Skins</button>
+          <button class="choice-btn" type="button" data-search-scope="skins">Catalogue skins</button>
           <button class="choice-btn" type="button" data-search-scope="profiles">Profils</button>
         </div>
 

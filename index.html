@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Brawldex | Hub</title>
+  <title>Brawldex | Accueil</title>
   <link rel="stylesheet" href="style.css" />
   <link rel="stylesheet" href="brawldex.css" />
 </head>
@@ -11,18 +11,18 @@
   <header class="header container">
     <div class="headerbar">
       <div>
-        <p class="brand-kicker">Brawldex Platform</p>
+        <p class="brand-kicker">Progression Brawl Stars</p>
         <h1>Brawldex</h1>
         <p class="muted hero-summary">
-          Le hub pour suivre tes skins, ton roster et ton profil public dans une seule interface reliee a ton compte Supabase.
+          Suis toute ta progression Brawl Stars au meme endroit : Brawlers, Catalogue skins, profil public et Quartier general.
         </p>
 
         <nav class="nav">
           <a href="index.html">Accueil</a>
-          <a href="pages/mybrawl.html">Dashboard</a>
-          <a href="pages/brawlers.html">Roster</a>
+          <a href="pages/mybrawl.html">Quartier general</a>
           <a href="pages/profile.html">Profils</a>
-          <a href="pages/skins.html">Skins</a>
+          <a href="pages/brawlers.html">Brawlers</a>
+          <a href="pages/skins.html">Catalogue skins</a>
         </nav>
       </div>
 
@@ -31,7 +31,6 @@
           <span class="dot"></span>
           <span>Non connecte</span>
         </div>
-        <a class="seg-btn is-active" href="pages/mybrawl.html">Ouvrir le dashboard</a>
       </div>
     </div>
   </header>
@@ -39,16 +38,15 @@
   <main class="container home-shell">
     <section class="hero-grid-alt">
       <article class="card no-lift hero-intro-card">
-        <p class="brand-kicker">Nouveau cycle</p>
-        <h2>Une base prete pour la vraie data</h2>
+        <p class="brand-kicker">Vue d'ensemble</p>
+        <h2>Le point d'entree pour tout ton compte Brawldex</h2>
         <p class="muted">
-          La refonte met Brawldex au centre : UI plus lisible, profils publics plus nets, source skins prete pour Google Sheets
-          et un vrai flow Supabase deja solide pour sauvegarder ta collection.
+          Renseigne tes Brawlers, coche tes skins, publie ton profil et laisse Brawldex te dire ce qu'il manque pour arriver au full.
         </p>
         <div class="hero-actions">
-          <a class="seg-btn is-active" href="pages/mybrawl.html">Configurer mon espace</a>
-          <a class="seg-btn" href="pages/skins.html">Explorer les skins</a>
-          <a class="seg-btn" href="pages/profile.html">Voir l'annuaire</a>
+          <a class="seg-btn is-active" href="pages/mybrawl.html">Ouvrir mon Quartier general</a>
+          <a class="seg-btn" href="pages/brawlers.html">Gerer mes Brawlers</a>
+          <a class="seg-btn" href="pages/skins.html">Explorer le Catalogue skins</a>
         </div>
       </article>
 
@@ -61,16 +59,20 @@
 
         <div class="status-grid">
           <div class="status-card">
-            <span class="small">Roster</span>
+            <span class="small">Progression jeu</span>
+            <strong id="homeGlobalPct">0%</strong>
+          </div>
+          <div class="status-card">
+            <span class="small">Progression Brawlers</span>
             <strong id="homeBrawlerPct">0%</strong>
           </div>
           <div class="status-card">
-            <span class="small">Unlocks</span>
-            <strong id="homeUnlocks">0</strong>
+            <span class="small">Progression skins</span>
+            <strong id="homeSkinsPct">0%</strong>
           </div>
           <div class="status-card">
-            <span class="small">Source skins</span>
-            <strong id="homeSourceStatus">Local fallback</strong>
+            <span class="small">Profil public</span>
+            <strong id="homePublicState">Brouillon</strong>
           </div>
         </div>
       </aside>
@@ -78,63 +80,86 @@
 
     <section class="signal-grid">
       <article class="signal-card signal-card--accent">
-        <span class="small">Google Sheets</span>
-        <strong id="homeSourceStatusLabel">En attente</strong>
+        <span class="small">Catalogue skins</span>
+        <strong id="homeSourceStatusLabel">Proxy serveur</strong>
         <p class="muted" id="homeSourceMessage">
-          Le connecteur est pret. Il suffira de brancher ton lien Google Sheet pour alimenter le catalogue.
+          Le catalogue passe par le proxy serveur avec fallback local pour rester stable.
         </p>
       </article>
 
       <article class="signal-card">
-        <span class="small">Cap actuel</span>
-        <strong id="homeApiStatus">Supabase first</strong>
+        <span class="small">Pilotage</span>
+        <strong id="homeApiStatus">Quartier general pret</strong>
         <p class="muted" id="homeApiMessage">
-          Connexion, collection, publication et comparaison sont les priorites du produit.
+          Retrouve ici un resume de ta progression globale, de tes ressources manquantes et de ton profil partageable.
         </p>
       </article>
 
       <article class="signal-card">
-        <span class="small">Profils publics</span>
-        <strong>Annuaire actif</strong>
-        <p class="muted">
-          Partage ton lien, compare les collections et garde une fiche publique propre depuis le dashboard.
+        <span class="small">Vue rapide</span>
+        <strong id="homeOwnedLine">0 / 0 Brawlers</strong>
+        <p class="muted" id="homeMissingLine">
+          Brawldex calcule aussi les pieces et points de pouvoir qui te manquent pour finir ton compte.
         </p>
       </article>
     </section>
 
     <section class="home-grid">
       <article class="card quick-card">
-        <span class="pill">Dashboard</span>
-        <h3>Espace personnel</h3>
-        <p class="muted">Connexion Supabase, profil public, statistiques locales et gestion rapide des skins.</p>
-        <a class="seg-btn" href="pages/mybrawl.html">Aller au dashboard</a>
+        <span class="pill">Quartier general</span>
+        <h3>Centre de pilotage</h3>
+        <p class="muted">Resume global, progression du jeu, ressources restantes, activite recente et edition rapide du profil public.</p>
+        <a class="seg-btn" href="pages/mybrawl.html">Ouvrir mon Quartier general</a>
       </article>
 
       <article class="card quick-card">
-        <span class="pill">Roster</span>
-        <h3>Builds et progression</h3>
-        <p class="muted">Puissance, trophees, mastery, gears et vue detaillee pour chaque brawler.</p>
-        <a class="seg-btn" href="pages/brawlers.html">Gerer le roster</a>
+        <span class="pill">Brawlers</span>
+        <h3>Catalogue progression</h3>
+        <p class="muted">Possession, niveau, gadgets, pouvoirs stars, equipements, buffs, hypercharge et couts restants par personnage.</p>
+        <a class="seg-btn" href="pages/brawlers.html">Gerer mes Brawlers</a>
       </article>
 
       <article class="card quick-card">
-        <span class="pill">Profils</span>
-        <h3>Annuaire public</h3>
-        <p class="muted">Compare les collections publiques, suis tes favoris et partage ton profil en un clic.</p>
-        <a class="seg-btn" href="pages/profile.html">Ouvrir l'annuaire</a>
+        <span class="pill">Catalogue skins</span>
+        <h3>Collection cosmetique</h3>
+        <p class="muted">Recherche, filtres et case "Je l'ai" pour suivre toute ta collection de skins separerement du gameplay.</p>
+        <a class="seg-btn" href="pages/skins.html">Explorer le Catalogue skins</a>
+      </article>
+
+      <article class="card quick-card">
+        <span class="pill">Profil public</span>
+        <h3>Fiche partageable</h3>
+        <p class="muted">Pseudo, clan, code ami, trophees, note visible et resume public de progression dans une page claire.</p>
+        <a class="seg-btn" href="pages/profile.html">Ouvrir les Profils</a>
       </article>
     </section>
 
     <section class="dashboard-grid">
       <article class="card dashboard-card">
+        <h2>Pourquoi Brawldex</h2>
+        <div class="home-checks one-column" id="homeBenefits">
+          <p class="muted">Suivre ta progression Brawl Stars sans te perdre entre gameplay, skins et profil public.</p>
+          <p class="muted">Savoir exactement ce qu'il te manque en pieces et points de pouvoir pour tout full.</p>
+          <p class="muted">Partager une fiche publique propre avec ton identite joueur et ton resume de progression.</p>
+        </div>
+      </article>
+
+      <article class="card dashboard-card">
         <h2>Badges et objectifs</h2>
         <div class="tag-cloud" id="homeBadges"></div>
         <div class="home-checks one-column" id="homeGoals"></div>
       </article>
+    </section>
 
+    <section class="dashboard-grid">
       <article class="card dashboard-card">
         <h2>Top brawlers locaux</h2>
         <div class="list-stack" id="homeTopBrawlers"></div>
+      </article>
+
+      <article class="card dashboard-card">
+        <h2>Sections produit</h2>
+        <div class="home-checks one-column" id="homeSectionNotes"></div>
       </article>
     </section>
 
@@ -164,6 +189,7 @@
   <script src="data/skins-source-config.js"></script>
   <script src="data/skins-data.js"></script>
   <script src="data/brawldex-data.js"></script>
+  <script src="js/owned-service.js"></script>
   <script src="js/brawldex-service.js"></script>
   <script src="js/brawl-stars-api.js"></script>
   <script src="js/home.js"></script>

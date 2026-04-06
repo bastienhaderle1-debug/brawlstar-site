@@ -3,9 +3,10 @@
   const COMPARE_KEY = "brawldex_compare_base";
   const supa = window.supabaseClient;
   const PublicProfiles = window.PublicProfileService;
+  const Brawldex = window.BrawldexService;
 
-  if (!supa || !window.OwnedService || !PublicProfiles) {
-    console.error("Supabase, OwnedService ou PublicProfileService introuvable.");
+  if (!supa || !window.OwnedService || !PublicProfiles || !Brawldex) {
+    console.error("Supabase, OwnedService, BrawldexService ou PublicProfileService introuvable.");
     return;
   }
 
@@ -17,9 +18,10 @@
   const btnMeReload = $("btnMeReload");
   const btnMeLogout = $("btnMeLogout");
   const meDisplayName = $("meDisplayName");
+  const meClubName = $("meClubName");
+  const meFriendCode = $("meFriendCode");
+  const meTrophies = $("meTrophies");
   const meBio = $("meBio");
-  const meIsPublic = $("meIsPublic");
-  const meShowOwned = $("meShowOwned");
   const btnMeSave = $("btnMeSave");
   const btnMePublish = $("btnMePublish");
   const btnMeOpen = $("btnMeOpen");
@@ -48,10 +50,19 @@
   const bioEl = $("bio");
   const updatedLine = $("updatedLine");
   const shareLine = $("shareLine");
+  const viewClubName = $("viewClubName");
+  const viewFriendCode = $("viewFriendCode");
+  const viewTrophies = $("viewTrophies");
   const publicModeLine = $("publicModeLine");
-  const statOwned = $("statOwned");
-  const statTotal = $("statTotal");
-  const statPct = $("statPct");
+  const profileSummary = $("profileSummary");
+  const statGlobalPct = $("statGlobalPct");
+  const statBrawlerPct = $("statBrawlerPct");
+  const statSkinsPct = $("statSkinsPct");
+  const statOwnedBrawlers = $("statOwnedBrawlers");
+  const statOwnedSkins = $("statOwnedSkins");
+  const statMissingCoins = $("statMissingCoins");
+  const statMissingPowerPoints = $("statMissingPowerPoints");
+  const statHypercharges = $("statHypercharges");
   const progressBar = $("progressBar");
   const btnSetCompareBase = $("btnSetCompareBase");
   const btnFavoriteProfile = $("btnFavoriteProfile");
@@ -190,6 +201,28 @@
     return (value ?? "").toString().trim();
   }
 
+  function formatNumber(value) {
+    return new Intl.NumberFormat("fr-FR").format(Number(value) || 0);
+  }
+
+  function computeProgressSnapshot(userId, ownedIds) {
+    const stats = Brawldex.getStats(userId);
+    const skinStats = window.OwnedService.computeOwnedStats(new Set(uniqueIds(ownedIds)));
+    const global = Brawldex.getGlobalProgress(userId, skinStats);
+    return {
+      global_pct: global.globalPct,
+      brawler_pct: stats.completionPct,
+      skins_pct: skinStats.pct,
+      owned_brawlers: stats.owned,
+      total_brawlers: stats.total,
+      owned_skins: skinStats.owned,
+      total_skins: skinStats.total,
+      missing_coins: stats.missingCoins,
+      missing_power_points: stats.missingPowerPoints,
+      hypercharges: stats.hypercharges
+    };
+  }
+
   function uniqueIds(list) {
     return [...new Set((Array.isArray(list) ? list : []).map((item) => safeStr(item)).filter(Boolean))];
   }
@@ -207,11 +240,16 @@
   }
 
   function normalizeMeDraft(source) {
+    const snapshot = source?.progress_snapshot || computeProgressSnapshot(me?.id || "visitor", myOwnedIds);
     return {
       display_name: safeStr(source?.display_name ?? meDisplayName?.value) || fallbackMeDisplayName(),
       bio: safeStr(source?.bio ?? meBio?.value),
-      is_public: source?.is_public ?? !!meIsPublic?.checked,
-      show_owned: source?.show_owned ?? !!meShowOwned?.checked
+      club_name: safeStr(source?.club_name ?? meClubName?.value),
+      friend_code: safeStr(source?.friend_code ?? meFriendCode?.value),
+      trophies: Math.max(0, Number(source?.trophies ?? meTrophies?.value) || 0),
+      is_public: true,
+      show_owned: true,
+      progress_snapshot: snapshot
     };
   }
 
@@ -220,22 +258,26 @@
       !!right &&
       safeStr(left.display_name) === safeStr(right.display_name) &&
       safeStr(left.bio) === safeStr(right.bio) &&
+      safeStr(left.club_name) === safeStr(right.club_name) &&
+      safeStr(left.friend_code) === safeStr(right.friend_code) &&
+      Number(left.trophies || 0) === Number(right.trophies || 0) &&
       !!left.is_public === !!right.is_public &&
-      !!left.show_owned === !!right.show_owned;
+      !!left.show_owned === !!right.show_owned &&
+      JSON.stringify(PublicProfiles.normalizeProgressSnapshot(left.progress_snapshot)) ===
+        JSON.stringify(PublicProfiles.normalizeProgressSnapshot(right.progress_snapshot));
   }
 
   function syncMyProfileSnapshot(profile) {
-    myProfileSnapshot = profile ? { ...profile, ...normalizeMeDraft(profile) } : null;
+    myProfileSnapshot = profile ? { ...profile } : null;
   }
 
   function renderMyProfileState() {
     const draft = normalizeMeDraft();
-    const live = myProfileSnapshot ? normalizeMeDraft(myProfileSnapshot) : null;
+    const live = myProfileSnapshot ? { ...myProfileSnapshot } : null;
     const localCount = myOwnedIds.length;
     const publishedCount = myPublishedIds.length;
     const hasLiveProfile = !!myProfileSnapshot;
     const liveIsPublic = !!myProfileSnapshot?.is_public;
-    const liveShowOwned = !!myProfileSnapshot && myProfileSnapshot.show_owned !== false;
     const draftDirty = !live || !sameMeDraft(draft, live);
     const needsPublish = !sameIdSet(myOwnedIds, myPublishedIds);
     const canShare = !!me && liveIsPublic;
@@ -250,7 +292,7 @@
       if (!hasLiveProfile) meDraftState.textContent = "Enregistre une premiere fois pour creer ton profil public.";
       else if (draftDirty) meDraftState.textContent = "Des modifications locales attendent encore un enregistrement.";
       else if (liveIsPublic) meDraftState.textContent = "Ton profil en ligne est aligne avec le formulaire.";
-      else meDraftState.textContent = "Ton profil est sauvegarde, mais il reste prive.";
+      else meDraftState.textContent = "Reenregistre ton profil pour reappliquer le mode public par defaut.";
     }
 
     if (meCollectionState) {
@@ -262,21 +304,18 @@
       else if (needsPublish && !localCount) meCollectionDetail.textContent = "Ta liste publique n'est pas vide. Republie pour la vider.";
       else if (needsPublish) meCollectionDetail.textContent = `Local: ${localCount} skin(s) coches. Republie pour aligner la version en ligne.`;
       else if (!publishedCount) meCollectionDetail.textContent = "Aucune collection publique pour l'instant.";
-      else if (!liveShowOwned) meCollectionDetail.textContent = `${publishedCount} skins sont publies, mais masques dans ton profil.`;
       else meCollectionDetail.textContent = `${publishedCount} skins sont visibles et prets pour la comparaison.`;
     }
 
     if (meLinkState) {
       if (!hasLiveProfile) meLinkState.textContent = "Inactif";
       else if (!liveIsPublic) meLinkState.textContent = "Prive";
-      else if (!liveShowOwned) meLinkState.textContent = "Partage OK";
       else meLinkState.textContent = "Comparaison OK";
     }
 
     if (meLinkDetail) {
       if (!hasLiveProfile) meLinkDetail.textContent = "Le lien sera pret apres le premier enregistrement.";
-      else if (!liveIsPublic) meLinkDetail.textContent = "Passe le profil en public puis enregistre pour activer le lien.";
-      else if (!liveShowOwned) meLinkDetail.textContent = "Le profil est partageable, mais la liste de skins reste masquee.";
+      else if (!liveIsPublic) meLinkDetail.textContent = "Enregistre a nouveau ton profil pour activer le lien public.";
       else if (!publishedCount) meLinkDetail.textContent = "Le profil est public, mais aucune collection n'est encore publiee.";
       else meLinkDetail.textContent = "Lien actif et comparaison disponible depuis cette page.";
     }
@@ -284,13 +323,11 @@
     if (btnMeSave) btnMeSave.classList.toggle("is-active", draftDirty);
     if (btnMePublish) {
       btnMePublish.classList.toggle("is-active", needsPublish);
-      btnMePublish.title = draft.show_owned
-        ? "Mettre a jour la liste publique de skins."
-        : "Les skins seront publies, mais resteront masques tant que cette option est desactivee.";
+      btnMePublish.title = "Mettre a jour la liste publique de skins.";
     }
     if (btnMeOpen) {
       btnMeOpen.disabled = !canShare;
-      btnMeOpen.title = canShare ? "Ouvrir ton profil public." : "Rends le profil public puis enregistre pour activer le lien.";
+      btnMeOpen.title = canShare ? "Ouvrir ton profil public." : "Enregistre ton profil pour activer le lien public.";
     }
     if (btnMeCopy) {
       btnMeCopy.disabled = !canShare;
@@ -378,6 +415,7 @@
     const next = list.filter((profile) => (favoritesMode ? profile.favorite : true));
 
     next.sort((a, b) => {
+      if (mode === "progress" && b.globalPct !== a.globalPct) return b.globalPct - a.globalPct;
       if (mode === "skins" && b.ownedCount !== a.ownedCount) return b.ownedCount - a.ownedCount;
       if (mode === "name") return (a.display_name || "").localeCompare(b.display_name || "", "fr");
       return new Date(b.updated_at || 0).getTime() - new Date(a.updated_at || 0).getTime();
@@ -389,6 +427,12 @@
   function buildDirectoryCard(profile, mode) {
     const isCompareBase = compareBase?.userId === profile.user_id;
     const compareAvailable = profile.skinsVisible !== false;
+    const progressValue = Number.isFinite(Number(profile.globalPct)) ? Number(profile.globalPct) : Number(profile.pct || 0);
+    const progressLabel = `${progressValue}% jeu`;
+    const identityLine = [
+      profile.club_name ? `Clan: ${profile.club_name}` : "",
+      profile.trophies ? `${formatNumber(profile.trophies)} troph.` : ""
+    ].filter(Boolean).join(" - ");
     const card = document.createElement("article");
     card.className = "card clickable";
     card.innerHTML = `
@@ -397,10 +441,11 @@
           <div class="row">
             <span class="pill">Profil public</span>
             <span class="pill">${compareAvailable ? `${profile.ownedCount} skins` : "Skins masques"}</span>
-            <span class="pill">${compareAvailable ? `${profile.pct}%` : "Comparaison off"}</span>
+            <span class="pill">${compareAvailable ? progressLabel : "Comparaison off"}</span>
           </div>
           <h3>${escapeHtml(profile.display_name || "Profil")}</h3>
           <p class="muted">${escapeHtml(profile.bio || "-")}</p>
+          <p class="small">${escapeHtml(identityLine || "Profil public partageable")}</p>
         </div>
       </div>
       <div class="section-actions">
@@ -499,6 +544,7 @@
     const ownedIds = payload.ownedIds || [];
     const pct = allSkins.length ? Math.round((ownedIds.length / allSkins.length) * 100) : 0;
     const skinsVisible = profile.show_owned !== false;
+    const snapshot = PublicProfiles.normalizeProgressSnapshot(profile.progress_snapshot);
     const detailLine = skinsVisible ? `Top brawler skins: ${topBrawlerLabel(ownedIds)}` : "Liste des skins masquee pour ce profil.";
 
     target.innerHTML = `
@@ -506,7 +552,7 @@
         <span class="pill">${isCurrent ? "Profil ouvert" : "Base"}</span>
         <span class="pill">${skinsVisible ? "Skins visibles" : "Skins masques"}</span>
         <span class="pill">${ownedIds.length} skins</span>
-        <span class="pill">${pct}%</span>
+        <span class="pill">${Number.isFinite(Number(snapshot.global_pct)) ? Number(snapshot.global_pct) : pct}%</span>
       </div>
       <h3>${escapeHtml(profile.display_name || "Profil")}</h3>
       <p class="muted">${escapeHtml(profile.bio || "-")}</p>
@@ -671,18 +717,31 @@
     currentProfile = profile;
     publicOwnedIds = ownedIds;
     const canCompare = !!profile.show_owned;
+    const snapshot = PublicProfiles.normalizeProgressSnapshot(profile.progress_snapshot);
 
     profileCard.style.display = "block";
     displayNameEl.textContent = profile.display_name || "Profil";
     bioEl.textContent = profile.bio || "-";
     updatedLine.textContent = profile.updated_at ? `Derniere mise a jour : ${fmtDate(profile.updated_at)}` : "";
     shareLine.textContent = `Lien : ${shareUrlFor(userId)}`;
-    statOwned.textContent = String(ownedIds.length);
-    statTotal.textContent = String(allSkins.length);
-
-    const pct = allSkins.length > 0 ? Math.round((ownedIds.length / allSkins.length) * 100) : 0;
-    statPct.textContent = `${pct}%`;
-    progressBar.style.width = `${pct}%`;
+    if (viewClubName) viewClubName.textContent = `Clan : ${profile.club_name || "-"}`;
+    if (viewFriendCode) viewFriendCode.textContent = `Code ami : ${profile.friend_code || "-"}`;
+    if (viewTrophies) viewTrophies.textContent = `Trophees : ${formatNumber(profile.trophies || 0)}`;
+    if (statGlobalPct) statGlobalPct.textContent = `${snapshot.global_pct}%`;
+    if (statBrawlerPct) statBrawlerPct.textContent = `${snapshot.brawler_pct}%`;
+    if (statSkinsPct) statSkinsPct.textContent = `${snapshot.skins_pct}%`;
+    if (statOwnedBrawlers) statOwnedBrawlers.textContent = `${snapshot.owned_brawlers} / ${snapshot.total_brawlers}`;
+    if (statOwnedSkins) statOwnedSkins.textContent = `${snapshot.owned_skins} / ${snapshot.total_skins}`;
+    if (statMissingCoins) statMissingCoins.textContent = formatNumber(snapshot.missing_coins);
+    if (statMissingPowerPoints) statMissingPowerPoints.textContent = formatNumber(snapshot.missing_power_points);
+    if (statHypercharges) statHypercharges.textContent = String(snapshot.hypercharges);
+    progressBar.style.width = `${snapshot.global_pct}%`;
+    if (profileSummary) {
+      profileSummary.textContent =
+        `${snapshot.global_pct}% de progression jeu, ${snapshot.owned_brawlers}/${snapshot.total_brawlers} Brawlers, ` +
+        `${snapshot.owned_skins}/${snapshot.total_skins} skins et ${formatNumber(snapshot.missing_coins)} pieces / ` +
+        `${formatNumber(snapshot.missing_power_points)} PP manquants pour tout full.`;
+    }
     btnFavoriteProfile.textContent = isFavorite(userId) ? "Retirer des favoris" : "Ajouter aux favoris";
     btnSetCompareBase.classList.toggle("is-active", compareBase?.userId === userId && canCompare);
     btnSetCompareBase.disabled = !canCompare;
@@ -695,8 +754,8 @@
       ? "Utiliser ce profil comme base de comparaison."
       : "Impossible de comparer un profil qui masque sa liste de skins.";
 
-    if (!profile.is_public) publicModeLine.textContent = "Profil non public.";
-    else if (!profile.show_owned) publicModeLine.textContent = "Profil public, mais liste des skins masquee.";
+    if (!profile.is_public) publicModeLine.textContent = "Profil non public. Un nouvel enregistrement reappliquera le mode public par defaut.";
+    else if (!profile.show_owned) publicModeLine.textContent = "Profil public, collection en attente de republication.";
     else publicModeLine.textContent = "Profil public avec liste de skins visible.";
 
     if (profile.show_owned) {
@@ -798,15 +857,17 @@
     setMeMsg("Chargement de ton profil...");
 
     try {
+      const localProfile = Brawldex.getProfile(me.id);
       const [data, ownedSet, publishedIds] = await Promise.all([
         loadProfile(me.id),
         loadOwnedMe(),
         PublicProfiles.loadOwned(me.id).catch(() => [])
       ]);
       meDisplayName.value = data?.display_name ?? ((me.email || "").split("@")[0] || "");
+      meClubName.value = data?.club_name ?? localProfile.club ?? "";
+      meFriendCode.value = data?.friend_code ?? "";
+      meTrophies.value = String(data?.trophies ?? localProfile.trophies ?? 0);
       meBio.value = data?.bio ?? "";
-      meIsPublic.checked = data?.is_public ?? true;
-      meShowOwned.checked = data?.show_owned ?? true;
       syncMyProfileSnapshot(data);
       myOwnedIds = uniqueIds([...ownedSet]);
       myPublishedIds = uniqueIds(publishedIds);
@@ -825,6 +886,7 @@
     setMeMsg("Enregistrement...");
 
     try {
+      myOwnedIds = uniqueIds([...await loadOwnedMe()]);
       const payload = normalizeMeDraft();
       await PublicProfiles.saveProfile(
         me.id,
@@ -926,7 +988,7 @@
   async function copyMyLink() {
     if (!me) return;
     if (!myProfileSnapshot?.is_public) {
-      setMeMsg("Aucun lien actif tant que le profil reste prive.");
+      setMeMsg("Enregistre ton profil pour activer le lien public.");
       return;
     }
     try {
@@ -941,7 +1003,7 @@
   function openMyProfile() {
     if (!me) return;
     if (!myProfileSnapshot?.is_public) {
-      setMeMsg("Rends le profil public puis enregistre pour ouvrir le lien.");
+      setMeMsg("Enregistre a nouveau ton profil pour activer le lien public.");
       return;
     }
     window.open(myUrl(), "_blank");
@@ -959,9 +1021,10 @@
   btnMeOpen.addEventListener("click", openMyProfile);
   btnMeReload.addEventListener("click", refreshMe);
   meDisplayName.addEventListener("input", renderMyProfileState);
+  meClubName.addEventListener("input", renderMyProfileState);
+  meFriendCode.addEventListener("input", renderMyProfileState);
+  meTrophies.addEventListener("input", renderMyProfileState);
   meBio.addEventListener("input", renderMyProfileState);
-  meIsPublic.addEventListener("change", renderMyProfileState);
-  meShowOwned.addEventListener("change", renderMyProfileState);
   btnMeLogout.addEventListener("click", async () => {
     await supa.auth.signOut();
   });
@@ -972,6 +1035,12 @@
     try {
       if (window.SKINS_READY && typeof window.SKINS_READY.then === "function") {
         await window.SKINS_READY;
+      }
+    } catch {}
+
+    try {
+      if (window.BRAWLDEX_READY && typeof window.BRAWLDEX_READY.then === "function") {
+        await window.BRAWLDEX_READY;
       }
     } catch {}
 

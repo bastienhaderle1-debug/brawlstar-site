@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Brawldex | Dashboard</title>
+  <title>Brawldex | Quartier general</title>
   <link rel="stylesheet" href="../style.css" />
   <link rel="stylesheet" href="../brawldex.css" />
 </head>
@@ -11,18 +11,18 @@
   <header class="header container">
     <div class="headerbar">
       <div>
-        <p class="brand-kicker">Personal workspace</p>
+        <p class="brand-kicker">Pilotage prive</p>
         <h1>Brawldex</h1>
         <p class="muted hero-summary">
-          Ton dashboard central pour te connecter, cocher tes skins et publier ton profil via ton compte Supabase.
+          Ton Quartier general pour suivre ta progression globale, piloter tes Brawlers, gerer ton profil public et garder un cap clair vers le full.
         </p>
 
         <nav class="nav">
           <a href="../index.html">Accueil</a>
-          <a href="./mybrawl.html">Dashboard</a>
-          <a href="./brawlers.html">Roster</a>
+          <a href="./mybrawl.html">Quartier general</a>
           <a href="./profile.html">Profils</a>
-          <a href="./skins.html">Skins</a>
+          <a href="./brawlers.html">Brawlers</a>
+          <a href="./skins.html">Catalogue skins</a>
         </nav>
       </div>
 
@@ -31,7 +31,6 @@
           <span class="dot"></span>
           <span>Non connecte</span>
         </div>
-        <a class="seg-btn" href="./brawlers.html">Ouvrir le roster</a>
       </div>
     </div>
   </header>
@@ -69,8 +68,8 @@
     <section id="app" style="display:none;">
       <section class="hero-grid-alt">
         <article class="card dashboard-card dashboard-hero-card">
-          <p class="brand-kicker">Control center</p>
-          <h2>Centre de commande Brawldex</h2>
+          <p class="brand-kicker">Quartier general</p>
+          <h2>Centre de commandement Brawldex</h2>
           <p class="muted" id="collectionSummary">Chargement de ton espace...</p>
 
           <div class="status-grid">
@@ -80,10 +79,10 @@
             </div>
             <div class="status-card">
               <span class="small">Source skins</span>
-              <strong id="dataSourceLabel">Local fallback</strong>
+              <strong id="dataSourceLabel">Proxy serveur</strong>
             </div>
             <div class="status-card">
-              <span class="small">Etat</span>
+              <span class="small">Cap du jour</span>
               <strong id="status">-</strong>
             </div>
           </div>
@@ -103,16 +102,16 @@
             <span class="pill">Navigation</span>
             <h3>Actions rapides</h3>
             <div class="section-actions">
-              <a class="seg-btn" href="./brawlers.html">Roster</a>
+              <a class="seg-btn" href="./brawlers.html">Brawlers</a>
               <a class="seg-btn" href="./skins.html">Catalogue skins</a>
               <a class="seg-btn" href="./profile.html">Profils publics</a>
             </div>
           </div>
 
           <div class="hero-panel">
-            <span class="pill">Google Sheet</span>
-            <h3 id="dataSourceMessage">Le connecteur est pret a recevoir ton lien.</h3>
-            <p class="muted">Dès que tu m'envoies le lien du Google Sheet, je branche la source reelle.</p>
+            <span class="pill">Catalogue</span>
+            <h3 id="dataSourceMessage">Le proxy catalogue est pret.</h3>
+            <p class="muted">Le site passe par un proxy serveur pour la source distante et retombe sur le snapshot local si besoin.</p>
           </div>
         </aside>
       </section>
@@ -120,7 +119,7 @@
       <section class="split-grid">
         <article class="card dashboard-card">
           <h2>Profil joueur local</h2>
-          <p class="muted">Ces infos restent dans ton espace Brawldex et servent de base a l'experience.</p>
+          <p class="muted">Ces infos restent dans ton espace prive et servent a piloter ta progression et tes prefills publics.</p>
 
           <div class="collection-fields">
             <div class="filter">
@@ -153,7 +152,7 @@
         </article>
 
         <article class="card dashboard-card workflow-card">
-          <p class="brand-kicker">Parcours recommande</p>
+          <p class="brand-kicker">Cap recommande</p>
           <h2>Ta prochaine meilleure action</h2>
           <p class="muted" id="dashboardFocusMessage">Connecte-toi pour commencer a construire ton espace.</p>
 
@@ -171,7 +170,7 @@
               <span class="workflow-index">2</span>
               <div>
                 <span class="small">Collection</span>
-                <h3>Skins et progression</h3>
+                <h3>Brawlers et progression</h3>
               </div>
               <strong class="step-status" id="dashboardStepCollection">A remplir</strong>
             </article>
@@ -187,12 +186,13 @@
           </div>
 
           <div class="surface-note surface-note--soft">
-            <strong>Cap actuel</strong>
-            <p class="muted">On concentre le produit sur connexion, collection, publication et comparaison. La synchro live reviendra plus tard sans bloquer ton flow principal.</p>
+            <strong>Role de la page</strong>
+            <p class="muted">Le Quartier general sert de poste de pilotage: progression globale, ressources restantes, profil public et acces rapides vers les catalogues.</p>
           </div>
 
           <div class="section-actions">
-            <a class="seg-btn" href="./skins.html">Ouvrir le catalogue</a>
+            <a class="seg-btn" href="./brawlers.html">Gerer mes Brawlers</a>
+            <a class="seg-btn" href="./skins.html">Explorer le catalogue skins</a>
             <a class="seg-btn" href="./profile.html">Voir les profils</a>
           </div>
         </article>
@@ -201,7 +201,7 @@
       <section class="split-grid">
         <article class="card dashboard-card">
           <h2>Profil public</h2>
-          <p class="muted">Parametre ce que les autres voient et publie les skins coches de ton compte Supabase.</p>
+          <p class="muted">Parametre ta fiche partageable avec identite joueur et resume public de progression.</p>
 
           <div class="collection-fields public-grid">
             <div class="filter">
@@ -209,21 +209,25 @@
               <input id="publicDisplayName" class="input" type="text" placeholder="ex: Bastien" />
             </div>
             <div class="filter">
-              <label for="publicBio">Bio publique</label>
-              <input id="publicBio" class="input" type="text" placeholder="ex: Fan de Brawl Stars" />
+              <label for="publicClub">Clan public</label>
+              <input id="publicClub" class="input" type="text" placeholder="ex: Kiwi Club" />
+            </div>
+            <div class="filter">
+              <label for="publicFriendCode">Code ami public</label>
+              <input id="publicFriendCode" class="input" type="text" placeholder="ex: #ABCD123" />
+            </div>
+            <div class="filter">
+              <label for="publicTrophies">Trophees publics</label>
+              <input id="publicTrophies" class="input" type="number" min="0" max="999999" placeholder="ex: 42000" />
             </div>
           </div>
 
-          <div class="section-actions">
-            <label class="switch-line">
-              <input type="checkbox" id="publicIsPublic" checked />
-              <span>Profil public</span>
-            </label>
-            <label class="switch-line">
-              <input type="checkbox" id="publicShowOwned" checked />
-              <span>Afficher mes skins</span>
-            </label>
+          <div class="filter">
+            <label for="publicBio">Note visible</label>
+            <textarea id="publicBio" class="textarea" rows="3" placeholder="Ex: Main Jessie, objectif full roster avant l'ete."></textarea>
           </div>
+
+          <p class="muted">Le profil est public par defaut et les skins publies restent toujours visibles.</p>
 
           <div class="hero-actions">
             <button class="seg-btn is-active" id="btnSavePublic" type="button">Enregistrer le profil</button>
@@ -245,47 +249,46 @@
             <div class="status-card">
               <span class="small">Lien public</span>
               <strong id="publicLinkState">Inactif</strong>
-              <div class="small" id="publicLinkDetail">Rends ton profil public pour partager ton lien.</div>
+              <div class="small" id="publicLinkDetail">Enregistre ton profil pour activer ton lien public.</div>
             </div>
           </div>
           <p class="muted" id="publicStatus"></p>
         </article>
 
         <article class="card dashboard-card">
-          <h2>Resume rapide</h2>
+          <h2>Resume global</h2>
           <div class="stats-grid compact-stats">
             <div class="stat">
-              <div class="stat-label">Brawlers</div>
-              <div class="stat-value" id="brawlerOwned">0</div>
-              <div class="small" id="brawlerTotal">/ 0</div>
+              <div class="stat-label">Progression jeu</div>
+              <div class="stat-value" id="globalProgressPct">0%</div>
             </div>
             <div class="stat">
-              <div class="stat-label">Puissance moy.</div>
-              <div class="stat-value" id="avgPower">0.0</div>
+              <div class="stat-label">Progression Brawlers</div>
+              <div class="stat-value" id="brawlerProgressPct">0%</div>
             </div>
             <div class="stat">
-              <div class="stat-label">Trophees locaux</div>
-              <div class="stat-value" id="trophyTotal">0</div>
+              <div class="stat-label">Progression skins</div>
+              <div class="stat-value" id="skinsProgressPct">0%</div>
             </div>
           </div>
 
           <div class="stats-grid compact-stats">
             <div class="stat">
-              <div class="stat-label">Unlocks</div>
-              <div class="stat-value" id="unlockTotal">0</div>
+              <div class="stat-label">Brawlers full</div>
+              <div class="stat-value" id="fullBrawlersCount">0</div>
             </div>
             <div class="stat">
-              <div class="stat-label">Hypercharges</div>
-              <div class="stat-value" id="hyperchargeTotal">0</div>
+              <div class="stat-label">Pieces manquantes</div>
+              <div class="stat-value" id="missingCoinsTotal">0</div>
             </div>
             <div class="stat">
-              <div class="stat-label">Skins</div>
-              <div class="stat-value" id="skinOwned">0</div>
-              <div class="small" id="skinTotal">/ 0</div>
+              <div class="stat-label">PP manquants</div>
+              <div class="stat-value" id="missingPowerPointsTotal">0</div>
             </div>
           </div>
 
-          <div class="progress"><div class="progress-bar" id="skinProgressBar"></div></div>
+          <div class="progress"><div class="progress-bar" id="gameProgressBar"></div></div>
+          <p class="muted" id="publicProfileHeadline">Ton profil public pourra aussi afficher un resume clair de ta progression.</p>
           <div class="tag-cloud" id="badgeCloud"></div>
           <div class="home-checks one-column" id="collectionHighlights"></div>
         </article>
@@ -296,10 +299,10 @@
           <div class="section-head">
             <div>
               <h2>Mes meilleurs brawlers</h2>
-              <p class="muted">Classement automatique de ton roster local.</p>
+              <p class="muted">Classement automatique de tes meilleurs picks a partir de ta collection locale.</p>
             </div>
             <div class="section-actions">
-              <a class="seg-btn" href="./brawlers.html">Ouvrir le roster</a>
+              <a class="seg-btn" href="./brawlers.html">Ouvrir mes Brawlers</a>
             </div>
           </div>
           <div class="list-stack" id="topBrawlers"></div>
@@ -314,41 +317,17 @@
       <section class="card dashboard-card">
         <div class="section-head">
           <div>
-            <h2>Skins personnels</h2>
-            <p class="muted">Les skins affiches ici viennent de la source catalogue Brawldex. La possession, elle, est sauvee dans Supabase.</p>
+            <h2>Vue rapide skins</h2>
+            <p class="muted">Ton catalogue skins reste sur sa page dediee. Ici, on garde seulement les indicateurs utiles et les raccourcis.</p>
           </div>
           <div class="section-actions">
-            <a class="seg-btn" href="./skins.html">Catalogue complet</a>
+            <a class="seg-btn" href="./skins.html">Ouvrir le catalogue skins</a>
+            <a class="seg-btn" href="./profile.html">Voir les profils publics</a>
           </div>
         </div>
-
-        <div class="collection-toolbar">
-          <div class="filter">
-            <label for="search">Recherche</label>
-            <input class="input" id="search" type="text" placeholder="ex: shelly star, pirate..." />
-          </div>
-
-          <div class="filter">
-            <label for="filterBrawler">Brawler</label>
-            <select id="filterBrawler" class="select"></select>
-          </div>
-
-          <div class="filter">
-            <label for="filterRarity">Rarete</label>
-            <select id="filterRarity" class="select"></select>
-          </div>
-
-          <div class="filter">
-            <label>Affichage</label>
-            <label class="switch-line">
-              <input type="checkbox" id="onlyOwned" />
-              <span>Uniquement mes skins</span>
-            </label>
-          </div>
-        </div>
-
-        <p class="muted" id="resultCount"></p>
-        <div class="cards" id="cards"></div>
+        <p class="muted" id="skinQuickSummary">Chargement de ton resume skins...</p>
+        <div class="tag-cloud" id="skinRarityCloud"></div>
+        <div class="home-checks one-column" id="skinQuickHighlights"></div>
       </section>
     </section>
   </main>

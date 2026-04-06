@@ -1,21 +1,525 @@
 {
-  "rarity_order": ["Rare", "Super Rare", "Epic", "Mythique", "Légendaire", "Hypercharge"],
+  "rarity_order": [
+    "Rare",
+    "Super Rare",
+    "Epic",
+    "Mythique",
+    "Legendaire",
+    "Argent",
+    "Or"
+  ],
   "skins": [
     {
-      "id": "shelly_star",
-      "name": "Star Shelly",
+      "id": "pierce_flambeur",
+      "name": "Pierce Flambeur",
+      "brawler": "Pierce",
+      "category": "Divers",
+      "rarity": "Mythique",
+      "img": ""
+    },
+    {
+      "id": "pierce_tmraire",
+      "name": "Pierce Temeraire",
+      "brawler": "Pierce",
+      "category": "Divers",
+      "rarity": "Mythique",
+      "img": ""
+    },
+    {
+      "id": "pierce__chasseur_de_vampires",
+      "name": "Pierce : Chasseur De Vampires",
+      "brawler": "Pierce",
+      "category": "Divers",
+      "rarity": "Mythique",
+      "img": ""
+    },
+    {
+      "id": "shelly_danseuse_dahlia",
+      "name": "Shelly Danseuse Dahlia",
+      "brawler": "Shelly",
+      "category": "Sables Du Temps",
+      "rarity": "Epic",
+      "img": ""
+    },
+    {
+      "id": "shelly_squad_buster",
+      "name": "Shelly Squad Buster",
+      "brawler": "Shelly",
+      "category": "Squad Buster",
+      "rarity": "Mythique",
+      "img": ""
+    },
+    {
+      "id": "shelly_argent_massif",
+      "name": "Shelly Argent Massif",
+      "brawler": "Shelly",
+      "category": "Argent Massif",
+      "rarity": "Argent",
+      "img": ""
+    },
+    {
+      "id": "shelly_bandita",
+      "name": "Shelly Bandita",
+      "brawler": "Shelly",
+      "category": "Hors-La-Loi",
+      "rarity": "Rare",
+      "img": ""
+    },
+    {
+      "id": "shelly_classique",
+      "name": "Shelly Classique",
       "brawler": "Shelly",
       "category": "Anniversaire",
       "rarity": "Rare",
-      "img": "/assets/skins/shelly_star.webp"
+      "img": ""
     },
     {
-      "id": "colt_outlaw",
-      "name": "Outlaw Colt",
-      "brawler": "Colt",
-      "category": "Bandits",
+      "id": "shelly_danseuse",
+      "name": "Shelly Danseuse",
+      "brawler": "Shelly",
+      "category": "Sables Du Temps",
       "rarity": "Epic",
-      "img": "/assets/skins/colt_outlaw.webp"
+      "img": ""
+    },
+    {
+      "id": "shelly_danseuse_iris",
+      "name": "Shelly Danseuse Iris",
+      "brawler": "Shelly",
+      "category": "Sables Du Temps",
+      "rarity": "Epic",
+      "img": ""
+    },
+    {
+      "id": "shelly_hibouuuh",
+      "name": "Shelly Hibouuuh",
+      "brawler": "Shelly",
+      "category": "Brawl-O-Ween",
+      "rarity": "Mythique",
+      "img": ""
+    },
+    {
+      "id": "shelly_or_massif",
+      "name": "Shelly Or Massif",
+      "brawler": "Shelly",
+      "category": "Or Massif",
+      "rarity": "Or",
+      "img": ""
+    },
+    {
+      "id": "shelly_psg",
+      "name": "Shelly PSG",
+      "brawler": "Shelly",
+      "category": "PSG",
+      "rarity": "Super Rare",
+      "img": ""
+    },
+    {
+      "id": "shelly_shriffe",
+      "name": "Shelly Sheriffe",
+      "brawler": "Shelly",
+      "category": "Hors-La-Loi",
+      "rarity": "Super Rare",
+      "img": ""
+    },
+    {
+      "id": "shelly_stellaire",
+      "name": "Shelly Stellaire",
+      "brawler": "Shelly",
+      "category": "Divers",
+      "rarity": "Epic",
+      "img": ""
+    },
+    {
+      "id": "colt_ange_dechu",
+      "name": "Colt Ange Dechu",
+      "brawler": "Colt",
+      "category": "Ange Vs Demon",
+      "rarity": "Epic",
+      "img": ""
+    },
+    {
+      "id": "colt_mcha_parangon",
+      "name": "Colt Mecha Parangon",
+      "brawler": "Colt",
+      "category": "Squad Mecha",
+      "rarity": "Legendaire",
+      "img": ""
+    },
+    {
+      "id": "colt_mcha_rengat",
+      "name": "Colt Mecha Renegat",
+      "brawler": "Colt",
+      "category": "Squad Mecha",
+      "rarity": "Legendaire",
+      "img": ""
+    },
+    {
+      "id": "colt_ange_de_lumire",
+      "name": "Colt Ange De Lumiere",
+      "brawler": "Colt",
+      "category": "Ange Vs Demon",
+      "rarity": "Epic",
+      "img": ""
+    },
+    {
+      "id": "colt_argent_massif",
+      "name": "Colt Argent Massif",
+      "brawler": "Colt",
+      "category": "Argent Massif",
+      "rarity": "Argent",
+      "img": ""
+    },
+    {
+      "id": "colt_astral_1",
+      "name": "Colt Astral 1",
+      "brawler": "Colt",
+      "category": "Pass Pro",
+      "rarity": "Rare",
+      "img": ""
+    },
+    {
+      "id": "colt_astral_4",
+      "name": "Colt Astral 4",
+      "brawler": "Colt",
+      "category": "Pass Pro",
+      "rarity": "Rare",
+      "img": ""
+    },
+    {
+      "id": "colt_braqueur",
+      "name": "Colt Braqueur",
+      "brawler": "Colt",
+      "category": "Rififi Dans La Ville",
+      "rarity": "Super Rare",
+      "img": ""
+    },
+    {
+      "id": "colt_chimpanz",
+      "name": "Colt Chimpanze",
+      "brawler": "Colt",
+      "category": "Heros De La Jungle",
+      "rarity": "Epic",
+      "img": ""
+    },
+    {
+      "id": "colt_dent_de_requin",
+      "name": "Colt Dent De Requin",
+      "brawler": "Colt",
+      "category": "Ligue Des Profondeurs",
+      "rarity": "Super Rare",
+      "img": ""
+    },
+    {
+      "id": "colt_gchette_folle",
+      "name": "Colt Gachette Folle",
+      "brawler": "Colt",
+      "category": "Hors-La-Loi",
+      "rarity": "Super Rare",
+      "img": ""
+    },
+    {
+      "id": "colt_horslaloi",
+      "name": "Colt Hors-La-Loi",
+      "brawler": "Colt",
+      "category": "Hors-La-Loi",
+      "rarity": "Rare",
+      "img": ""
+    },
+    {
+      "id": "colt_le_rockeur",
+      "name": "Colt Le Rockeur",
+      "brawler": "Colt",
+      "category": "Pur Son",
+      "rarity": "Rare",
+      "img": ""
+    },
+    {
+      "id": "colt_mcha",
+      "name": "Colt Mecha",
+      "brawler": "Colt",
+      "category": "Squad Mecha",
+      "rarity": "Legendaire",
+      "img": ""
+    },
+    {
+      "id": "colt_or_massif",
+      "name": "Colt Or Massif",
+      "brawler": "Colt",
+      "category": "Or Massif",
+      "rarity": "Or",
+      "img": ""
+    },
+    {
+      "id": "b800",
+      "name": "B-800",
+      "brawler": "Bull",
+      "category": "Starrs De Brawlywood",
+      "rarity": "Super Rare",
+      "img": ""
+    },
+    {
+      "id": "bull_dragon_du_kansai",
+      "name": "Bull Dragon Du Kansai",
+      "brawler": "Bull",
+      "category": "Nuits De Retropolis",
+      "rarity": "Rare",
+      "img": ""
+    },
+    {
+      "id": "bull_argent_massif",
+      "name": "Bull Argent Massif",
+      "brawler": "Bull",
+      "category": "Argent Massif",
+      "rarity": "Argent",
+      "img": ""
+    },
+    {
+      "id": "bull_foot_amricain",
+      "name": "Bull Foot Americain",
+      "brawler": "Bull",
+      "category": "Super Brawl",
+      "rarity": "Super Rare",
+      "img": ""
+    },
+    {
+      "id": "bull_guerrier_nordique",
+      "name": "Bull Guerrier Nordique",
+      "brawler": "Bull",
+      "category": "Saga Nordique",
+      "rarity": "Super Rare",
+      "img": ""
+    },
+    {
+      "id": "bull_lion",
+      "name": "Bull Lion",
+      "brawler": "Bull",
+      "category": "Regne Animal",
+      "rarity": "Epic",
+      "img": ""
+    },
+    {
+      "id": "bull_magnat",
+      "name": "Bull Magnat",
+      "brawler": "Bull",
+      "category": "Permis De Brawler",
+      "rarity": "Epic",
+      "img": ""
+    },
+    {
+      "id": "bull_mang",
+      "name": "Bull Mang",
+      "brawler": "Bull",
+      "category": "BT21",
+      "rarity": "Epic",
+      "img": ""
+    },
+    {
+      "id": "bull_minotaure",
+      "name": "Bull Minotaure",
+      "brawler": "Bull",
+      "category": "Legendes De L'olympe",
+      "rarity": "Mythique",
+      "img": ""
+    },
+    {
+      "id": "bull_or_massif",
+      "name": "Bull Or Massif",
+      "brawler": "Bull",
+      "category": "Or Massif",
+      "rarity": "Or",
+      "img": ""
+    },
+    {
+      "id": "bull_roi_des_barbares",
+      "name": "Bull Roi Des Barbares",
+      "brawler": "Bull",
+      "category": "Conte De Clash",
+      "rarity": "Super Rare",
+      "img": ""
+    },
+    {
+      "id": "bull_viking",
+      "name": "Bull Viking",
+      "brawler": "Bull",
+      "category": "Saga Nordique",
+      "rarity": "Super Rare",
+      "img": ""
+    },
+    {
+      "id": "superbull",
+      "name": "Superbull",
+      "brawler": "Bull",
+      "category": "Super Brawl",
+      "rarity": "Super Rare",
+      "img": ""
+    },
+    {
+      "id": "brock_styl",
+      "name": "Brock Style",
+      "brawler": "Brock",
+      "category": "Divers",
+      "rarity": "Rare",
+      "img": ""
+    },
+    {
+      "id": "brock_hacker",
+      "name": "Brock Hacker",
+      "brawler": "Brock",
+      "category": "Cyberbrawl",
+      "rarity": "Epic",
+      "img": ""
+    },
+    {
+      "id": "brock_hacker_dor",
+      "name": "Brock Hacker Dore",
+      "brawler": "Brock",
+      "category": "Cyberbrawl",
+      "rarity": "Epic",
+      "img": ""
+    },
+    {
+      "id": "brock_hacker_rvb",
+      "name": "Brock Hacker RVB",
+      "brawler": "Brock",
+      "category": "Cyberbrawl",
+      "rarity": "Epic",
+      "img": ""
+    },
+    {
+      "id": "brock_danse_le_mia",
+      "name": "Brock Danse Le Mia",
+      "brawler": "Brock",
+      "category": "Pur Son",
+      "rarity": "Super Rare",
+      "img": ""
+    },
+    {
+      "id": "brock_facteur",
+      "name": "Brock Facteur",
+      "brawler": "Brock",
+      "category": "Rififi Dans La Ville",
+      "rarity": "Epic",
+      "img": ""
+    },
+    {
+      "id": "brock_marshal",
+      "name": "Brock Marshal",
+      "brawler": "Brock",
+      "category": "Hors-La-Loi",
+      "rarity": "Super Rare",
+      "img": ""
+    },
+    {
+      "id": "brock_old_school",
+      "name": "Brock Old School",
+      "brawler": "Brock",
+      "category": "Anniversaire",
+      "rarity": "Super Rare",
+      "img": ""
+    },
+    {
+      "id": "brock_super_ranger_bleu",
+      "name": "Brock Super Ranger Bleu",
+      "brawler": "Brock",
+      "category": "Force Max",
+      "rarity": "Epic",
+      "img": ""
+    },
+    {
+      "id": "brock_super_ranger_jaune",
+      "name": "Brock Super Ranger Jaune",
+      "brawler": "Brock",
+      "category": "Force Max",
+      "rarity": "Epic",
+      "img": ""
+    },
+    {
+      "id": "brock_super_ranger_noir",
+      "name": "Brock Super Ranger Noir",
+      "brawler": "Brock",
+      "category": "Force Max",
+      "rarity": "Epic",
+      "img": ""
+    },
+    {
+      "id": "brock_super_ranger_rose",
+      "name": "Brock Super Ranger Rose",
+      "brawler": "Brock",
+      "category": "Force Max",
+      "rarity": "Epic",
+      "img": ""
+    },
+    {
+      "id": "brock_super_ranger_rouge",
+      "name": "Brock Super Ranger Rouge",
+      "brawler": "Brock",
+      "category": "Force Max",
+      "rarity": "Epic",
+      "img": ""
+    },
+    {
+      "id": "brock_tuning",
+      "name": "Brock Tuning",
+      "brawler": "Brock",
+      "category": "Nuits De Retropolis",
+      "rarity": "Epic",
+      "img": ""
+    },
+    {
+      "id": "brock_zeus",
+      "name": "Brock Zeus",
+      "brawler": "Brock",
+      "category": "Legendes De L'olympe",
+      "rarity": "Mythique",
+      "img": ""
+    },
+    {
+      "id": "brock__la_plage",
+      "name": "Brock A La Plage",
+      "brawler": "Brock",
+      "category": "Brawl Estival",
+      "rarity": "Super Rare",
+      "img": ""
+    },
+    {
+      "id": "brown_roquette",
+      "name": "Brown Roquette",
+      "brawler": "Brock",
+      "category": "Brown & Friends",
+      "rarity": "Epic",
+      "img": ""
+    },
+    {
+      "id": "zombrock",
+      "name": "Zombrock",
+      "brawler": "Brock",
+      "category": "Brawl-O-Ween",
+      "rarity": "Rare",
+      "img": ""
+    },
+    {
+      "id": "brock_argent_massif",
+      "name": "Brock Argent Massif",
+      "brawler": "Brock",
+      "category": "Argent Massif",
+      "rarity": "Argent",
+      "img": ""
+    },
+    {
+      "id": "brock_or_massif",
+      "name": "Brock Or Massif",
+      "brawler": "Brock",
+      "category": "Or Massif",
+      "rarity": "Or",
+      "img": ""
+    },
+    {
+      "id": "brock_le_boss",
+      "name": "Brock Le Boss",
+      "brawler": "Brock",
+      "category": "Steampunk",
+      "rarity": "Mythique",
+      "img": ""
     }
   ]
 }

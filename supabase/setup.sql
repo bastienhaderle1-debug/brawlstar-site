@@ -18,10 +18,19 @@ create table if not exists public.public_profiles (
   user_id uuid primary key references auth.users (id) on delete cascade,
   display_name text not null default '',
   bio text not null default '',
+  club_name text not null default '',
+  friend_code text not null default '',
+  trophies integer not null default 0,
   is_public boolean not null default true,
   show_owned boolean not null default true,
+  progress_snapshot jsonb not null default '{}'::jsonb,
   updated_at timestamptz not null default now()
 );
+
+alter table public.public_profiles add column if not exists club_name text not null default '';
+alter table public.public_profiles add column if not exists friend_code text not null default '';
+alter table public.public_profiles add column if not exists trophies integer not null default 0;
+alter table public.public_profiles add column if not exists progress_snapshot jsonb not null default '{}'::jsonb;
 
 create table if not exists public.public_user_skins (
   user_id uuid not null references auth.users (id) on delete cascade,

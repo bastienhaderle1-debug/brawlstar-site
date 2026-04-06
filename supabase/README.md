@@ -7,6 +7,17 @@ Le front Brawldex attend actuellement :
 - Table `public_profiles`
 - Table `public_user_skins`
 
+La table `public_profiles` stocke aussi les champs publics du profil :
+
+- `display_name`
+- `bio` (note visible)
+- `club_name`
+- `friend_code`
+- `trophies`
+- `is_public`
+- `show_owned`
+- `progress_snapshot` (resume JSON de progression publique)
+
 Le schema et les policies de reference sont dans [setup.sql](./setup.sql).
 
 ## Remise en route rapide

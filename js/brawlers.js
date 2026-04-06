@@ -19,22 +19,24 @@
   const btnOnlyMissing = $("btnOnlyMissing");
   const btnClearFilters = $("btnClearFilters");
   const brawlerInsights = $("brawlerInsights");
+  const rules = Brawldex.getRules ? Brawldex.getRules() : { maxPowerLevel: 11 };
 
   const statOwnedBrawlers = $("statOwnedBrawlers");
   const statTotalBrawlers = $("statTotalBrawlers");
-  const statAvgPower = $("statAvgPower");
-  const statTrophies = $("statTrophies");
-  const statUnlocks = $("statUnlocks");
-  const statHypercharges = $("statHypercharges");
+  const statCompletionPct = $("statCompletionPct");
+  const statMissingCoins = $("statMissingCoins");
+  const statMissingPowerPoints = $("statMissingPowerPoints");
+  const statFullBrawlers = $("statFullBrawlers");
 
   const detailModal = $("brawlerDetailModal");
   const btnCloseDetail = $("btnCloseBrawlerDetail");
   const detailName = $("detailName");
   const detailMeta = $("detailMeta");
   const detailOwned = $("detailOwned");
-  const detailPower = $("detailPower");
-  const detailTrophies = $("detailTrophies");
-  const detailMastery = $("detailMastery");
+  const detailLevel = $("detailLevel");
+  const detailCompletionPct = $("detailCompletionPct");
+  const detailMissingCoins = $("detailMissingCoins");
+  const detailMissingPowerPoints = $("detailMissingPowerPoints");
   const detailRelatedSkins = $("detailRelatedSkins");
   const detailProgress = $("detailProgress");
   const detailSummary = $("detailSummary");
@@ -42,6 +44,18 @@
   const detailNotes = $("detailNotes");
   const detailUnlocked = $("detailUnlocked");
   const detailMissing = $("detailMissing");
+  const detailEditHint = $("detailEditHint");
+  const detailOwnedToggle = $("detailOwnedToggle");
+  const detailFavoriteToggle = $("detailFavoriteToggle");
+  const detailHyperchargeToggle = $("detailHyperchargeToggle");
+  const detailPowerInput = $("detailPowerInput");
+  const detailTrophiesInput = $("detailTrophiesInput");
+  const detailMasteryInput = $("detailMasteryInput");
+  const detailGadgets = $("detailGadgets");
+  const detailStarPowers = $("detailStarPowers");
+  const detailGears = $("detailGears");
+  const detailBuffs = $("detailBuffs");
+  const detailNotesInput = $("detailNotesInput");
 
   const supa = window.supabaseClient || null;
   let viewerId = "visitor";
@@ -73,6 +87,10 @@
       .replace(/^-+|-+$/g, "");
   }
 
+  function formatNumber(value) {
+    return Number(value || 0).toLocaleString("fr-FR");
+  }
+
   function viewerKey() {
     return viewerId || "visitor";
   }
@@ -100,7 +118,7 @@
       if (mode === "favorites" && !entry.favorite) return false;
 
       if (build === "incomplete" && (!entry.owned || completion.current >= completion.total)) return false;
-      if (build === "maxed" && entry.powerLevel < 11) return false;
+      if (build === "maxed" && entry.powerLevel < rules.maxPowerLevel) return false;
       if (build === "hypercharge" && !entry.hypercharge) return false;
       if (build === "ready" && (!entry.owned || completion.current < completion.total - 1 || completion.current >= completion.total)) {
         return false;
@@ -129,15 +147,15 @@
 
     statOwnedBrawlers.textContent = String(stats.owned);
     statTotalBrawlers.textContent = String(stats.total);
-    statAvgPower.textContent = String(stats.avgPower);
-    statTrophies.textContent = String(stats.trophies);
-    statUnlocks.textContent = String(stats.unlocks);
-    statHypercharges.textContent = String(stats.hypercharges);
+    statCompletionPct.textContent = `${stats.completionPct}%`;
+    statMissingCoins.textContent = formatNumber(stats.missingCoins);
+    statMissingPowerPoints.textContent = formatNumber(stats.missingPowerPoints);
+    statFullBrawlers.textContent = String(stats.full);
 
     const lines = [
-      `${stats.incompleteOwned} brawler(s) possedes ont encore un build incomplet.`,
-      insights.recommendations[0] || "Commence a remplir les builds de tes brawlers preferes.",
-      insights.recommendations[1] || "Astuce: ajoute un brawler manquant ou vise une hypercharge."
+      `${stats.completionPct}% de progression globale sur ${stats.completionCurrent}/${stats.completionTotal} etapes.`,
+      `Il manque ${formatNumber(stats.missingCoins)} pieces et ${formatNumber(stats.missingPowerPoints)} points de pouvoir pour tout full.`,
+      insights.recommendations[0] || "Commence par monter les niveaux et cocher les premiers builds."
     ];
 
     brawlerInsights.innerHTML = "";
@@ -149,57 +167,80 @@
     });
   }
 
-  function syncCardState(card, meta, entry) {
-    const completion = Brawldex.getCompletion(meta, entry);
-    const disabled = !entry.owned;
+  function getMetaById(brawlerId) {
+    return getCollection().catalog.find((item) => item.id === brawlerId) || null;
+  }
 
-    card.dataset.owned = entry.owned ? "1" : "0";
-    card.querySelector("[data-owned-text]").textContent = entry.owned ? "Possede" : "Manquant";
-    card.querySelector("[data-owned-toggle]").checked = entry.owned;
-    card.querySelector("[data-favorite-toggle]").checked = entry.favorite;
-    card.querySelector("[data-power]").value = entry.powerLevel;
-    card.querySelector("[data-trophies]").value = entry.trophies;
-    card.querySelector("[data-mastery]").value = entry.mastery;
-    card.querySelector("[data-hypercharge]").checked = entry.hypercharge;
-    card.querySelector("[data-notes]").value = entry.notes;
-    card.querySelector("[data-completion]").textContent = `${completion.current}/${completion.total} unlocks`;
-    card.querySelector("[data-progress]").style.width = `${Math.round((completion.current / completion.total) * 100)}%`;
+  function getActiveDetailMeta() {
+    return detailBrawlerId ? getMetaById(detailBrawlerId) : null;
+  }
 
-    card.querySelectorAll("[data-lockable='1']").forEach((node) => {
-      node.disabled = disabled;
-    });
+  function getChoiceMax(meta, field) {
+    if (field === "gadgets") return meta.gadgets.length;
+    if (field === "starPowers") return meta.starPowers.length;
+    if (field === "gears") return meta.gears.length;
+    return meta.buffs.length;
+  }
 
-    card.querySelectorAll("[data-choice-group]").forEach((group) => {
-      const field = group.getAttribute("data-choice-group");
-      group.querySelectorAll("[data-choice-id]").forEach((button) => {
-        const id = button.getAttribute("data-choice-id");
-        button.classList.toggle("is-selected", Array.isArray(entry[field]) && entry[field].includes(id));
-        button.disabled = disabled;
-      });
+  function renderDetailChoiceGroup(target, options, selected, disabled) {
+    if (!target) return;
+    target.innerHTML = "";
+
+    options.forEach((option) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "choice-btn";
+      button.setAttribute("data-choice-id", option.id);
+      button.textContent = option.label;
+      button.classList.toggle("is-selected", selected.includes(option.id));
+      button.disabled = disabled;
+      target.appendChild(button);
     });
   }
 
-  function createChoiceButtons(label, field, options, selected) {
-    const wrap = document.createElement("div");
-    wrap.className = "choice-block";
-    wrap.innerHTML = `<div class="choice-title">${escapeHtml(label)}</div>`;
+  function syncMiniCardState(card, meta, entry) {
+    const progress = Brawldex.getProgress(meta, entry);
+    const completion = progress.completion;
 
-    const group = document.createElement("div");
-    group.className = "choice-grid";
-    group.setAttribute("data-choice-group", field);
+    card.dataset.owned = entry.owned ? "1" : "0";
+    card.querySelector("[data-mini-state]").textContent = entry.owned ? "Possede" : "Manquant";
+    card.querySelector("[data-mini-percent]").textContent = `${completion.pct}%`;
+    card.querySelector("[data-mini-progress]").style.width = `${completion.pct}%`;
+    card.querySelector("[data-mini-level]").textContent = entry.owned ? `Niveau ${entry.powerLevel}` : "Pas encore renseigne";
+    card.querySelector("[data-mini-steps]").textContent = `${completion.current}/${completion.total} etapes completees`;
+  }
 
-    options.forEach((option) => {
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.className = "choice-btn";
-      btn.setAttribute("data-choice-id", option.id);
-      btn.textContent = option.label;
-      btn.classList.toggle("is-selected", selected.includes(option.id));
-      group.appendChild(btn);
+  function syncDetailEditor(meta, entry) {
+    if (!detailOwnedToggle) return;
+    const completion = Brawldex.getCompletion(meta, entry);
+    const disabled = !entry.owned;
+
+    detailOwnedToggle.checked = entry.owned;
+    detailFavoriteToggle.checked = entry.favorite;
+    detailHyperchargeToggle.checked = entry.hypercharge;
+    detailFavoriteToggle.disabled = disabled;
+    detailHyperchargeToggle.disabled = disabled;
+
+    detailPowerInput.max = String(rules.maxPowerLevel);
+    detailPowerInput.value = String(entry.powerLevel);
+    detailTrophiesInput.value = String(entry.trophies);
+    detailMasteryInput.value = String(entry.mastery);
+    detailNotesInput.value = entry.notes;
+
+    [detailPowerInput, detailTrophiesInput, detailMasteryInput, detailNotesInput].forEach((node) => {
+      if (node) node.disabled = disabled;
     });
 
-    wrap.appendChild(group);
-    return wrap;
+    renderDetailChoiceGroup(detailGadgets, meta.gadgets, entry.gadgets, disabled);
+    renderDetailChoiceGroup(detailStarPowers, meta.starPowers, entry.starPowers, disabled);
+    renderDetailChoiceGroup(detailGears, meta.gears, entry.gears, disabled);
+    renderDetailChoiceGroup(detailBuffs, meta.buffs, entry.buffs, disabled);
+
+    if (detailEditHint) {
+      detailEditHint.textContent = disabled
+        ? `Ajoute ${meta.name} a ta collection pour debloquer le niveau, les gadgets, les pouvoirs stars, les equipements, les buffs et l'hypercharge.`
+        : `${meta.name} est a ${completion.pct}% de completion. Mets a jour ce build directement ici.`;
+    }
   }
 
   function setBrawlerInUrl(brawlerId) {
@@ -236,12 +277,16 @@
       else missing.push(`Gadget: ${item.label}`);
     });
     meta.starPowers.forEach((item) => {
-      if (entry.starPowers.includes(item.id)) unlocked.push(`Star power: ${item.label}`);
-      else missing.push(`Star power: ${item.label}`);
+      if (entry.starPowers.includes(item.id)) unlocked.push(`Pouvoir star: ${item.label}`);
+      else missing.push(`Pouvoir star: ${item.label}`);
     });
     meta.gears.forEach((item) => {
-      if (entry.gears.includes(item.id)) unlocked.push(`Gear: ${item.label}`);
-      else missing.push(`Gear: ${item.label}`);
+      if (entry.gears.includes(item.id)) unlocked.push(`Equipement: ${item.label}`);
+      else missing.push(`Equipement: ${item.label}`);
+    });
+    meta.buffs.forEach((item) => {
+      if (entry.buffs.includes(item.id)) unlocked.push(`Buff: ${item.label}`);
+      else missing.push(`Buff: ${item.label}`);
     });
 
     if (entry.hypercharge) unlocked.push("Hypercharge");
@@ -252,7 +297,9 @@
 
   function nextStepFor(meta, entry) {
     if (!entry.owned) return `Ajoute ${meta.name} a ta collection pour commencer son build.`;
-    if (entry.powerLevel < 11) return `Monte ${meta.name} au niveau ${Math.min(entry.powerLevel + 1, 11)}.`;
+    if (entry.powerLevel < rules.maxPowerLevel) {
+      return `Monte ${meta.name} au niveau ${Math.min(entry.powerLevel + 1, rules.maxPowerLevel)}.`;
+    }
 
     const firstMissingGadget = meta.gadgets.find((item) => !entry.gadgets.includes(item.id));
     if (firstMissingGadget) return `Debloque le gadget "${firstMissingGadget.label}".`;
@@ -261,7 +308,10 @@
     if (firstMissingStar) return `Ajoute le pouvoir star "${firstMissingStar.label}".`;
 
     const firstMissingGear = meta.gears.find((item) => !entry.gears.includes(item.id));
-    if (firstMissingGear) return `Equipe le gear "${firstMissingGear.label}".`;
+    if (firstMissingGear) return `Equipe l'equipement "${firstMissingGear.label}".`;
+
+    const firstMissingBuff = meta.buffs.find((item) => !entry.buffs.includes(item.id));
+    if (firstMissingBuff) return `Active le buff "${firstMissingBuff.label}".`;
 
     if (!entry.hypercharge) return "Vise l'hypercharge pour finaliser le build.";
     return `${meta.name} est complet. Tu peux maintenant optimiser tes notes et tes trophees.`;
@@ -271,33 +321,38 @@
     if (!detailModal || !meta) return;
     const collection = getCollection();
     const entry = collection.entries[meta.id];
-    const completion = Brawldex.getCompletion(meta, entry);
+    const progress = Brawldex.getProgress(meta, entry);
+    const completion = progress.completion;
+    const resources = progress.resources;
     const relatedSkins = (Array.isArray(window.SKINS) ? window.SKINS : []).filter((skin) => skin?.brawler === meta.name);
     const unlockLabels = buildUnlockLabels(meta, entry);
-    const pct = completion.total ? Math.round((completion.current / completion.total) * 100) : 0;
 
     detailBrawlerId = meta.id;
     detailName.textContent = meta.name;
-    detailMeta.textContent = `${meta.rarity} • ${meta.role} • ${meta.difficulty}`;
+    detailMeta.textContent = `${meta.rarity} - ${meta.role} - ${meta.difficulty}`;
     detailOwned.textContent = entry.owned ? "Possede" : "Manquant";
-    detailPower.textContent = String(entry.powerLevel);
-    detailTrophies.textContent = String(entry.trophies);
-    detailMastery.textContent = String(entry.mastery);
+    detailLevel.textContent = String(entry.powerLevel);
+    detailCompletionPct.textContent = `${completion.pct}%`;
+    detailMissingCoins.textContent = formatNumber(resources.missing.coins);
+    detailMissingPowerPoints.textContent = formatNumber(resources.missing.powerPoints);
     detailRelatedSkins.textContent = String(relatedSkins.length);
-    detailProgress.style.width = `${pct}%`;
-    detailSummary.textContent = `${completion.current}/${completion.total} unlocks actifs • ${pct}% de build.`;
+    detailProgress.style.width = `${completion.pct}%`;
+    detailSummary.textContent =
+      `${completion.current}/${completion.total} etapes remplies. Il manque ${formatNumber(resources.missing.coins)} pieces et ` +
+      `${formatNumber(resources.missing.powerPoints)} points de pouvoir.`;
     detailNext.textContent = nextStepFor(meta, entry);
     detailNotes.textContent = entry.notes || "Aucune note pour ce brawler.";
 
-    renderDetailTags(detailUnlocked, unlockLabels.unlocked, "Aucun unlock equipe");
+    renderDetailTags(detailUnlocked, unlockLabels.unlocked, "Aucun element obtenu");
     renderDetailTags(detailMissing, unlockLabels.missing, "Build complet");
+    syncDetailEditor(meta, entry);
 
     detailModal.hidden = false;
     setBrawlerInUrl(meta.id);
   }
 
   function openDetailById(brawlerId) {
-    const meta = getCollection().catalog.find((item) => item.id === brawlerId);
+    const meta = getMetaById(brawlerId);
     if (meta) openDetailByMeta(meta);
   }
 
@@ -310,128 +365,32 @@
 
   function createCard(meta, entry) {
     const article = document.createElement("article");
-    article.className = "card collection-card";
+    article.className = "card mini-brawler-card clickable";
     article.dataset.brawlerId = meta.id;
+    article.tabIndex = 0;
+    article.setAttribute("role", "button");
+    article.setAttribute("aria-label", `Ouvrir ${meta.name}`);
 
     article.innerHTML = `
-      <div class="collection-head">
-        <div>
-          <div class="row">
-            <span class="pill">${escapeHtml(meta.rarity)}</span>
-            <span class="pill">${escapeHtml(meta.role)}</span>
-            <span class="pill">${escapeHtml(meta.difficulty)}</span>
-          </div>
-          <h3>${escapeHtml(meta.name)}</h3>
-          <p class="muted" data-completion>0/0 unlocks</p>
-        </div>
-        <div class="collection-toggles">
-          <label class="switch-line">
-            <input type="checkbox" data-owned-toggle />
-            <span data-owned-text>Manquant</span>
-          </label>
-          <label class="switch-line">
-            <input type="checkbox" data-favorite-toggle />
-            <span>Favori</span>
-          </label>
-          <button class="choice-btn" type="button" data-open-detail>Details</button>
-        </div>
+      <div class="mini-brawler-head">
+        <h3>${escapeHtml(meta.name)}</h3>
+        <span class="mini-brawler-state" data-mini-state>Manquant</span>
       </div>
-      <div class="progress"><div class="progress-bar" data-progress style="width:0%"></div></div>
+      <div class="mini-brawler-percent" data-mini-percent>0%</div>
+      <div class="progress"><div class="progress-bar" data-mini-progress style="width:0%"></div></div>
+      <p class="muted mini-brawler-level" data-mini-level>Pas encore renseigne</p>
+      <p class="small mini-brawler-steps" data-mini-steps>0/0 etapes completees</p>
     `;
 
-    const fields = document.createElement("div");
-    fields.className = "collection-fields";
-    fields.innerHTML = `
-      <div class="filter">
-        <label>Puissance</label>
-        <input class="input" type="number" min="1" max="11" data-power data-lockable="1" />
-      </div>
-      <div class="filter">
-        <label>Trophees</label>
-        <input class="input" type="number" min="0" max="99999" data-trophies data-lockable="1" />
-      </div>
-      <div class="filter">
-        <label>Mastery</label>
-        <input class="input" type="number" min="0" max="30000" data-mastery data-lockable="1" />
-      </div>
-      <label class="switch-line hyper-line">
-        <input type="checkbox" data-hypercharge data-lockable="1" />
-        <span>Hypercharge</span>
-      </label>
-    `;
-    article.appendChild(fields);
-    article.appendChild(createChoiceButtons("Gadgets", "gadgets", meta.gadgets, entry.gadgets));
-    article.appendChild(createChoiceButtons("Pouvoirs stars", "starPowers", meta.starPowers, entry.starPowers));
-    article.appendChild(createChoiceButtons("Gears", "gears", meta.gears, entry.gears));
-
-    const notes = document.createElement("div");
-    notes.className = "choice-block";
-    notes.innerHTML = `
-      <div class="choice-title">Notes perso</div>
-      <textarea class="textarea" rows="3" data-notes data-lockable="1" placeholder="Mode prefere, build, objectif..."></textarea>
-    `;
-    article.appendChild(notes);
-
-    article.querySelector("[data-open-detail]").addEventListener("click", () => openDetailByMeta(meta));
-
-    article.querySelector("[data-owned-toggle]").addEventListener("change", (event) => {
-      const next = Brawldex.patchEntry(viewerKey(), meta.id, { owned: event.target.checked });
-      if (!next) return;
-      syncCardState(article, meta, next);
-      updateSummary();
-      if (detailBrawlerId === meta.id) openDetailByMeta(meta);
-      toast("success", "Brawler", `${meta.name} ${next.owned ? "ajoute" : "retire"} de ta collection.`);
+    article.addEventListener("click", () => openDetailByMeta(meta));
+    article.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        openDetailByMeta(meta);
+      }
     });
 
-    article.querySelector("[data-favorite-toggle]").addEventListener("change", (event) => {
-      const next = Brawldex.patchEntry(viewerKey(), meta.id, { favorite: event.target.checked });
-      if (!next) return;
-      syncCardState(article, meta, next);
-      updateSummary();
-      if (detailBrawlerId === meta.id) openDetailByMeta(meta);
-    });
-
-    ["power", "trophies", "mastery"].forEach((field) => {
-      article.querySelector(`[data-${field}]`).addEventListener("change", (event) => {
-        const patchField = field === "power" ? "powerLevel" : field;
-        const next = Brawldex.patchEntry(viewerKey(), meta.id, { [patchField]: event.target.value, owned: true });
-        if (!next) return;
-        syncCardState(article, meta, next);
-        updateSummary();
-        if (detailBrawlerId === meta.id) openDetailByMeta(meta);
-      });
-    });
-
-    article.querySelector("[data-hypercharge]").addEventListener("change", (event) => {
-      const next = Brawldex.patchEntry(viewerKey(), meta.id, { hypercharge: event.target.checked, owned: true });
-      if (!next) return;
-      syncCardState(article, meta, next);
-      updateSummary();
-      if (detailBrawlerId === meta.id) openDetailByMeta(meta);
-    });
-
-    article.querySelectorAll("[data-choice-group]").forEach((group) => {
-      const field = group.getAttribute("data-choice-group");
-      const maxSize = field === "gears" ? meta.gears.length : 2;
-      group.addEventListener("click", (event) => {
-        const button = event.target.closest("[data-choice-id]");
-        if (!button || button.disabled) return;
-        const next = Brawldex.toggleChoice(viewerKey(), meta.id, field, button.getAttribute("data-choice-id"), maxSize);
-        if (!next) return;
-        syncCardState(article, meta, next);
-        updateSummary();
-        if (detailBrawlerId === meta.id) openDetailByMeta(meta);
-      });
-    });
-
-    article.querySelector("[data-notes]").addEventListener("change", (event) => {
-      const next = Brawldex.patchEntry(viewerKey(), meta.id, { notes: event.target.value, owned: true });
-      if (!next) return;
-      syncCardState(article, meta, next);
-      if (detailBrawlerId === meta.id) openDetailByMeta(meta);
-    });
-
-    syncCardState(article, meta, entry);
+    syncMiniCardState(article, meta, entry);
     return article;
   }
 
@@ -491,14 +450,14 @@
       viewerId = user?.id || "visitor";
       accountLine.textContent = user
         ? `Collection locale liee a ${user.email ?? user.id}.`
-        : "Mode local visiteur: connecte-toi au dashboard pour lier ta collection a ton compte.";
+        : "Mode local visiteur: connecte-toi au Quartier general pour lier ta collection a ton compte.";
 
       supa.auth.onAuthStateChange((_event, session) => {
         const nextUser = session?.user ?? null;
         viewerId = nextUser?.id || "visitor";
         accountLine.textContent = nextUser
           ? `Collection locale liee a ${nextUser.email ?? nextUser.id}.`
-          : "Mode local visiteur: connecte-toi au dashboard pour lier ta collection a ton compte.";
+          : "Mode local visiteur: connecte-toi au Quartier general pour lier ta collection a ton compte.";
         updateSummary();
         render();
       });
@@ -581,6 +540,64 @@
       render();
       if (detailBrawlerId) openDetailById(detailBrawlerId);
     });
+
+    if (detailOwnedToggle) {
+      detailOwnedToggle.addEventListener("change", (event) => {
+        const meta = getActiveDetailMeta();
+        if (!meta) return;
+        const next = Brawldex.patchEntry(viewerKey(), meta.id, { owned: event.target.checked });
+        if (!next) return;
+        toast("success", "Brawler", `${meta.name} ${next.owned ? "ajoute" : "retire"} de ta collection.`);
+      });
+    }
+
+    if (detailFavoriteToggle) {
+      detailFavoriteToggle.addEventListener("change", (event) => {
+        const meta = getActiveDetailMeta();
+        if (!meta) return;
+        Brawldex.patchEntry(viewerKey(), meta.id, { favorite: event.target.checked });
+      });
+    }
+
+    if (detailHyperchargeToggle) {
+      detailHyperchargeToggle.addEventListener("change", (event) => {
+        const meta = getActiveDetailMeta();
+        if (!meta) return;
+        Brawldex.patchEntry(viewerKey(), meta.id, { hypercharge: event.target.checked, owned: true });
+      });
+    }
+
+    [
+      { node: detailPowerInput, field: "powerLevel" },
+      { node: detailTrophiesInput, field: "trophies" },
+      { node: detailMasteryInput, field: "mastery" }
+    ].forEach(({ node, field }) => {
+      if (!node) return;
+      node.addEventListener("change", (event) => {
+        const meta = getActiveDetailMeta();
+        if (!meta) return;
+        Brawldex.patchEntry(viewerKey(), meta.id, { [field]: event.target.value, owned: true });
+      });
+    });
+
+    [detailGadgets, detailStarPowers, detailGears, detailBuffs].forEach((group) => {
+      if (!group) return;
+      group.addEventListener("click", (event) => {
+        const meta = getActiveDetailMeta();
+        const button = event.target.closest("[data-choice-id]");
+        const field = group.getAttribute("data-detail-choice-group");
+        if (!meta || !button || !field || button.disabled) return;
+        Brawldex.toggleChoice(viewerKey(), meta.id, field, button.getAttribute("data-choice-id"), getChoiceMax(meta, field));
+      });
+    });
+
+    if (detailNotesInput) {
+      detailNotesInput.addEventListener("change", (event) => {
+        const meta = getActiveDetailMeta();
+        if (!meta) return;
+        Brawldex.patchEntry(viewerKey(), meta.id, { notes: event.target.value, owned: true });
+      });
+    }
 
     if (btnCloseDetail) btnCloseDetail.addEventListener("click", closeDetail);
     if (detailModal) {

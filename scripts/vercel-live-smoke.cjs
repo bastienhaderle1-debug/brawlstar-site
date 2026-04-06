@@ -30,6 +30,13 @@ async function main() {
     throw new Error("The deployed proxy is not configured yet. Add BRAWL_STARS_API_TOKEN on Vercel and redeploy.");
   }
 
+  const skins = await fetchJson(`${BASE_URL}/api/skins-catalog`);
+  assert(skins.status === 200, `Skins catalog failed with status ${skins.status}`);
+  assert(Array.isArray(skins.payload?.skins) && skins.payload.skins.length > 0, "Skins catalog payload is empty.");
+
+  console.log(`Skins source: ${skins.payload?.source?.label || "unknown"}`);
+  console.log(`Skins loaded: ${skins.payload.skins.length}`);
+
   if (!TEST_TAG) {
     console.log("SKIP - live player fetch (set BRAWL_STARS_TEST_TAG to verify /api/brawl-player)");
     return;

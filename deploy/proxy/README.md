@@ -1,6 +1,6 @@
-# Deployer Le Proxy Brawl Stars
+# Deployer Le Proxy Brawldex
 
-Ce dossier sert a mettre le proxy Brawl Stars sur un petit serveur avec IP fixe, tout en laissant le front sur Vercel.
+Ce dossier sert a mettre le proxy Brawldex sur un petit serveur avec IP fixe, tout en laissant le front sur Vercel.
 
 ## Ce que tu dois faire
 
@@ -52,11 +52,15 @@ Contenu attendu :
 
 ```text
 BRAWL_STARS_API_TOKEN=ton_nouveau_token_brawl_stars
+BRAWLDEX_SKINS_SOURCE_MODE=remote-csv
+BRAWLDEX_SKINS_SOURCE_URL=https://ton-catalogue.example.com/skins.csv
+BRAWLDEX_SKINS_ASSET_BASE_URL=https://cdn.example.com/skins
 HOST=127.0.0.1
 PORT=3000
 ```
 
 Important : revoque le token Brawl Stars expose plus tot et genere un nouveau token reserve au serveur.
+Si tu laisses `BRAWLDEX_SKINS_SOURCE_URL` vide, le proxy utilisera l'URL distante par defaut embarquee dans le repo. Si la source distante tombe, le serveur renverra automatiquement le snapshot local.
 
 ## Lancer le proxy avec systemd
 
@@ -91,7 +95,8 @@ Dans [runtime-config.js](../../data/runtime-config.js), mets l'URL publique du p
 
 ```js
 window.BRAWLDEX_CONFIG = window.BRAWLDEX_CONFIG || {
-  brawlApiBaseUrl: "https://api.ton-domaine.fr"
+  brawlApiBaseUrl: "https://api.ton-domaine.fr",
+  skinsApiBaseUrl: "https://api.ton-domaine.fr"
 };
 ```
 
@@ -112,4 +117,5 @@ Tu peux aussi verifier vite a la main :
 ```bash
 curl https://api.ton-domaine.fr/api/brawl-health
 curl "https://api.ton-domaine.fr/api/brawl-player?tag=%238VP9Q9LUU"
+curl https://api.ton-domaine.fr/api/skins-catalog
 ```

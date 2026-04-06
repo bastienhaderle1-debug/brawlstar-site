@@ -1,6 +1,7 @@
 const http = require("http");
 const playerHandler = require("./brawl-player.js");
 const healthHandler = require("./brawl-health.js");
+const skinsCatalogHandler = require("./skins-catalog.js");
 
 const HOST = process.env.HOST || "0.0.0.0";
 const PORT = Number(process.env.PORT || 3000);
@@ -15,6 +16,10 @@ const server = http.createServer((req, res) => {
 
   if (url.pathname === "/api/brawl-player") {
     return playerHandler(req, res);
+  }
+
+  if (url.pathname === "/api/skins-catalog") {
+    return skinsCatalogHandler(req, res);
   }
 
   res.statusCode = 404;

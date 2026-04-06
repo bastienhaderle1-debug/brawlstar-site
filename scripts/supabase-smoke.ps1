@@ -100,7 +100,7 @@ try {
   $results.user_skins_write = [ordered]@{ ok = $true; inserted = (@($probeUserSkinRead).Count -gt 0); cleaned = $true }
 
   Write-Step "Lecture public_profiles"
-  $publicProfile = Invoke-SupabaseJson -Method "Get" -Uri "$SupabaseUrl/rest/v1/public_profiles?select=user_id,display_name,bio,is_public,show_owned,updated_at&user_id=eq.$userId" -Headers $restHeaders -Body $null
+  $publicProfile = Invoke-SupabaseJson -Method "Get" -Uri "$SupabaseUrl/rest/v1/public_profiles?select=user_id,display_name,bio,club_name,friend_code,trophies,is_public,show_owned,progress_snapshot,updated_at&user_id=eq.$userId" -Headers $restHeaders -Body $null
   $profileRow = if (@($publicProfile).Count -gt 0) { $publicProfile[0] } else { $null }
   $results.public_profile_read = [ordered]@{
     ok           = $true
@@ -114,8 +114,23 @@ try {
       user_id      = $userId
       display_name = "Codex Probe"
       bio          = "probe"
+      club_name    = "Codex Club"
+      friend_code  = "#PROBE"
+      trophies     = 12345
       is_public    = $true
       show_owned   = $true
+      progress_snapshot = @{
+        global_pct           = 12
+        brawler_pct          = 8
+        skins_pct            = 25
+        owned_brawlers       = 3
+        total_brawlers       = 90
+        owned_skins          = 2
+        total_skins          = 10
+        missing_coins        = 1000
+        missing_power_points = 2000
+        hypercharges         = 1
+      }
       updated_at   = (Get-Date).ToUniversalTime().ToString("o")
     }
   } else {
@@ -123,8 +138,12 @@ try {
       user_id      = $profileRow.user_id
       display_name = $profileRow.display_name
       bio          = $profileRow.bio
+      club_name    = $profileRow.club_name
+      friend_code  = $profileRow.friend_code
+      trophies     = $profileRow.trophies
       is_public    = $profileRow.is_public
       show_owned   = $profileRow.show_owned
+      progress_snapshot = $profileRow.progress_snapshot
       updated_at   = $profileRow.updated_at
     }
   }

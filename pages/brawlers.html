@@ -3,26 +3,26 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Brawldex | Roster</title>
+  <title>Brawldex | Brawlers</title>
   <link rel="stylesheet" href="../style.css" />
   <link rel="stylesheet" href="../brawldex.css" />
 </head>
-<body>
+<body data-disable-global-search="true">
   <header class="header container">
     <div class="headerbar">
       <div>
-        <p class="brand-kicker">Roster builder</p>
+        <p class="brand-kicker">Progression Brawlers</p>
         <h1>Brawldex</h1>
         <p class="muted hero-summary">
-          Gere ton roster comme une vraie base de progression : possession, builds, mastery, hypercharges et fiche detaillee par brawler.
+          Gere tes Brawlers comme un vrai plan de progression : niveau, gadgets, pouvoirs stars, equipements, buffs, hypercharges et ressources restantes.
         </p>
 
         <nav class="nav">
           <a href="../index.html">Accueil</a>
-          <a href="./mybrawl.html">Dashboard</a>
-          <a href="./brawlers.html">Roster</a>
+          <a href="./mybrawl.html">Quartier general</a>
           <a href="./profile.html">Profils</a>
-          <a href="./skins.html">Skins</a>
+          <a href="./brawlers.html">Brawlers</a>
+          <a href="./skins.html">Catalogue skins</a>
         </nav>
       </div>
 
@@ -31,7 +31,6 @@
           <span class="dot"></span>
           <span>Non connecte</span>
         </div>
-        <a class="seg-btn" href="./mybrawl.html">Retour dashboard</a>
       </div>
     </div>
   </header>
@@ -61,23 +60,23 @@
           <div class="stat-value" id="statTotalBrawlers">0</div>
         </div>
         <div class="stat">
-          <div class="stat-label">Puissance moy.</div>
-          <div class="stat-value" id="statAvgPower">0.0</div>
+          <div class="stat-label">Completion</div>
+          <div class="stat-value" id="statCompletionPct">0%</div>
         </div>
       </div>
 
       <div class="stats-grid collection-stats">
         <div class="stat">
-          <div class="stat-label">Trophees</div>
-          <div class="stat-value" id="statTrophies">0</div>
+          <div class="stat-label">Pieces manquantes</div>
+          <div class="stat-value" id="statMissingCoins">0</div>
         </div>
         <div class="stat">
-          <div class="stat-label">Unlocks</div>
-          <div class="stat-value" id="statUnlocks">0</div>
+          <div class="stat-label">PP manquants</div>
+          <div class="stat-value" id="statMissingPowerPoints">0</div>
         </div>
         <div class="stat">
-          <div class="stat-label">Hypercharges</div>
-          <div class="stat-value" id="statHypercharges">0</div>
+          <div class="stat-label">Brawlers full</div>
+          <div class="stat-value" id="statFullBrawlers">0</div>
         </div>
       </div>
 
@@ -106,7 +105,7 @@
           <select id="buildFilter" class="select">
             <option value="all">Tous</option>
             <option value="incomplete">Builds incomplets</option>
-            <option value="maxed">Puissance 11</option>
+            <option value="maxed">Niveau max</option>
             <option value="hypercharge">Avec hypercharge</option>
             <option value="ready">Presque completes</option>
           </select>
@@ -117,7 +116,7 @@
           <select id="sortBy" class="select">
             <option value="name">Nom</option>
             <option value="trophies">Trophees</option>
-            <option value="power">Puissance</option>
+            <option value="power">Niveau</option>
             <option value="completion">Progression</option>
           </select>
         </div>
@@ -132,7 +131,7 @@
       </div>
 
       <p class="muted" id="resultCount">0 brawler(s)</p>
-      <div class="collection-grid" id="cards"></div>
+      <div class="collection-grid mini-brawler-grid" id="cards"></div>
     </section>
   </main>
 
@@ -154,16 +153,20 @@
           <div class="stat-value" id="detailOwned">-</div>
         </div>
         <div class="stat">
-          <div class="stat-label">Puissance</div>
-          <div class="stat-value" id="detailPower">0</div>
+          <div class="stat-label">Niveau</div>
+          <div class="stat-value" id="detailLevel">0</div>
         </div>
         <div class="stat">
-          <div class="stat-label">Trophees</div>
-          <div class="stat-value" id="detailTrophies">0</div>
+          <div class="stat-label">Completion</div>
+          <div class="stat-value" id="detailCompletionPct">0%</div>
         </div>
         <div class="stat">
-          <div class="stat-label">Mastery</div>
-          <div class="stat-value" id="detailMastery">0</div>
+          <div class="stat-label">Pieces manquantes</div>
+          <div class="stat-value" id="detailMissingCoins">0</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">PP manquants</div>
+          <div class="stat-value" id="detailMissingPowerPoints">0</div>
         </div>
         <div class="stat">
           <div class="stat-label">Skins lies</div>
@@ -188,13 +191,84 @@
 
       <div class="detail-grid">
         <div class="choice-block">
-          <div class="choice-title">Unlocks equipes</div>
+          <div class="choice-title">Elements obtenus</div>
           <div class="tag-cloud" id="detailUnlocked"></div>
         </div>
 
         <div class="choice-block">
-          <div class="choice-title">Unlocks manquants</div>
+          <div class="choice-title">Elements manquants</div>
           <div class="tag-cloud" id="detailMissing"></div>
+        </div>
+      </div>
+
+      <div class="choice-block detail-editor-card">
+        <div class="choice-title">Edition rapide</div>
+        <p class="muted" id="detailEditHint">
+          Active la possession du brawler pour renseigner son niveau, ses gadgets et son build complet.
+        </p>
+
+        <div class="detail-switches">
+          <label class="switch-line">
+            <input id="detailOwnedToggle" type="checkbox" />
+            <span>Je possede ce brawler</span>
+          </label>
+          <label class="switch-line">
+            <input id="detailFavoriteToggle" type="checkbox" />
+            <span>Favori</span>
+          </label>
+          <label class="switch-line">
+            <input id="detailHyperchargeToggle" type="checkbox" />
+            <span>Hypercharge</span>
+          </label>
+        </div>
+
+        <div class="collection-fields detail-fields">
+          <div class="filter">
+            <label for="detailPowerInput">Niveau</label>
+            <input class="input" id="detailPowerInput" type="number" min="1" max="11" />
+          </div>
+          <div class="filter">
+            <label for="detailTrophiesInput">Trophees</label>
+            <input class="input" id="detailTrophiesInput" type="number" min="0" max="99999" />
+          </div>
+          <div class="filter">
+            <label for="detailMasteryInput">Mastery</label>
+            <input class="input" id="detailMasteryInput" type="number" min="0" max="30000" />
+          </div>
+        </div>
+
+        <div class="detail-grid">
+          <div class="choice-block">
+            <div class="choice-title">Gadgets</div>
+            <div class="choice-grid" id="detailGadgets" data-detail-choice-group="gadgets"></div>
+          </div>
+
+          <div class="choice-block">
+            <div class="choice-title">Pouvoirs stars</div>
+            <div class="choice-grid" id="detailStarPowers" data-detail-choice-group="starPowers"></div>
+          </div>
+        </div>
+
+        <div class="detail-grid">
+          <div class="choice-block">
+            <div class="choice-title">Equipements</div>
+            <div class="choice-grid" id="detailGears" data-detail-choice-group="gears"></div>
+          </div>
+
+          <div class="choice-block">
+            <div class="choice-title">Buffs</div>
+            <div class="choice-grid" id="detailBuffs" data-detail-choice-group="buffs"></div>
+          </div>
+        </div>
+
+        <div class="choice-block">
+          <div class="choice-title">Notes perso</div>
+          <textarea
+            class="textarea"
+            id="detailNotesInput"
+            rows="3"
+            placeholder="Mode prefere, build, objectif..."
+          ></textarea>
         </div>
       </div>
     </div>
